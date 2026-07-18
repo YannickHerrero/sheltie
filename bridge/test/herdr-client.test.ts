@@ -43,6 +43,37 @@ describe("Herdr Unix-socket client", () => {
     expect(await client.ping()).toEqual({ version: "0.7.3", protocol: 17, capabilities: { live_handoff: true } });
   });
 
+  test("focuses pane IDs through Herdr's agent target API", async () => {
+    let received: { method: string; params: Record<string, unknown> } | null = null;
+    const client = startMockHerdr((request) => {
+      received = request;
+      return { id: request.id, result: { type: "agent_info" } };
+    });
+
+    await client.focusPane("w1:p2");
+    expect(received).toMatchObject({ method: "agent.focus", params: { target: "w1:p2" } });
+  });
+
+  test("focuses a plain terminal by activating its tab", async () => {
+    const methods: string[] = [];
+    const client = startMockHerdr((request) => {
+      methods.push(request.method);
+      if (request.method === "agent.focus") {
+        return { id: request.id, error: { code: "agent_not_found", message: "not an agent" } };
+      }
+      if (request.method === "pane.get") {
+        return { id: request.id, result: { type: "pane_info", pane: { pane_id: "w1:p2", tab_id: "w1:t1" } } };
+      }
+      if (request.method === "pane.current") {
+        return { id: request.id, result: { type: "pane_current", pane: { pane_id: "w1:p2", tab_id: "w1:t1" } } };
+      }
+      return { id: request.id, result: { type: "ok" } };
+    });
+
+    await client.focusPane("w1:p2");
+    expect(methods).toEqual(["agent.focus", "pane.get", "tab.focus", "pane.current"]);
+  });
+
   test("keeps event subscriptions open and decodes streamed events", async () => {
     socketPath = join(tmpdir(), `sheltie-events-${crypto.randomUUID()}.sock`);
     server = Bun.listen({

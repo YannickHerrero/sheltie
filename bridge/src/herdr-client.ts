@@ -218,6 +218,38 @@ export class HerdrClient {
     return result.read;
   }
 
+  async focusPane(paneID: string): Promise<void> {
+    // Herdr has no direct pane.focus RPC. Agent panes accept their legacy pane ID as an
+    // agent.focus target; plain shell panes need their tab activated first.
+    try {
+      await this.request<unknown>("agent.focus", { target: paneID });
+      return;
+    } catch (error) {
+      if (!(error instanceof HerdrRequestError) || error.code !== "agent_not_found") throw error;
+    }
+
+    const pane = await this.request<{ type: "pane_info"; pane: RawHerdrPane }>("pane.get", { pane_id: paneID });
+    await this.request<unknown>("tab.focus", { tab_id: pane.pane.tab_id });
+    const current = await this.request<{ type: "pane_current"; pane: RawHerdrPane }>("pane.current");
+    if (current.pane.pane_id === paneID) return;
+
+    const opposite = { left: "right", right: "left", up: "down", down: "up" } as const;
+    for (const direction of Object.keys(opposite) as Array<keyof typeof opposite>) {
+      const result = await this.request<{
+        type: "pane_neighbor";
+        neighbor: { pane_id: string };
+      }>("pane.neighbor", { pane_id: paneID, direction });
+      if (result.neighbor.pane_id === paneID) continue;
+      await this.request<unknown>("pane.focus_direction", {
+        pane_id: result.neighbor.pane_id,
+        direction: opposite[direction],
+      });
+      return;
+    }
+
+    throw new Error(`herdr could not focus pane ${paneID}`);
+  }
+
   async perform(method: string, params: Record<string, unknown>): Promise<void> {
     await this.request<unknown>(method, params);
   }

@@ -126,7 +126,7 @@ export class BridgeStateEngine implements BridgeStateProviding {
       case "tab.close":
         return await client.perform("tab.close", { tab_id: target() });
       case "pane.focus":
-        return await client.perform("pane.focus", { pane_id: target() });
+        return await client.focusPane(target());
       case "pane.split":
         return await client.perform("pane.split", {
           target_pane_id: target(),
