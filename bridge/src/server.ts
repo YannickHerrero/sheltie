@@ -22,7 +22,7 @@ interface WebSocketData {
 const ACTION_TYPES = new Set([
   "workspace.focus", "workspace.create", "workspace.rename", "workspace.close",
   "tab.focus", "tab.create", "tab.rename", "tab.close",
-  "pane.focus", "pane.split", "pane.resize", "pane.zoom", "pane.rename", "pane.close",
+  "pane.focus", "pane.split", "pane.move", "pane.resize", "layout.set_split_ratio", "pane.zoom", "pane.rename", "pane.close",
   "terminal.input", "terminal.keys", "terminal.resize", "agent.message",
 ]);
 

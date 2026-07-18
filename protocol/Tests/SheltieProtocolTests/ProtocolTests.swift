@@ -67,9 +67,17 @@ import Testing
         targetID: "w1:p1",
         text: "Ship it"
     )
+    let move = ActionCommand(
+        requestID: "request-3",
+        sessionID: "default",
+        type: .movePane,
+        targetID: "w1:p1",
+        moveDestination: .newTab(workspaceID: "w1", label: "moved")
+    )
     let messages: [StreamClientMessage] = [
         .subscribe([.init(sessionID: "default", paneID: "w1:p1", columns: 100, rows: 32, writable: true)]),
         .action(action),
+        .action(move),
         .resync,
         .pong(id: "ping-2"),
     ]

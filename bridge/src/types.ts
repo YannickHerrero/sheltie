@@ -153,7 +153,9 @@ export type ActionType =
   | "tab.close"
   | "pane.focus"
   | "pane.split"
+  | "pane.move"
   | "pane.resize"
+  | "layout.set_split_ratio"
   | "pane.zoom"
   | "pane.rename"
   | "pane.close"
@@ -161,6 +163,11 @@ export type ActionType =
   | "terminal.keys"
   | "terminal.resize"
   | "agent.message";
+
+export type PaneMoveDestination =
+  | { type: "tab"; tabID: string; targetPaneID?: string | null; split: SplitDirection }
+  | { type: "new_tab"; workspaceID?: string | null; label?: string | null }
+  | { type: "new_workspace"; label?: string | null; tabLabel?: string | null };
 
 export interface ActionCommand {
   requestID: string;
@@ -173,6 +180,8 @@ export interface ActionCommand {
   splitDirection?: SplitDirection | null;
   paneDirection?: PaneDirection | null;
   ratio?: number | null;
+  splitPath?: boolean[] | null;
+  moveDestination?: PaneMoveDestination | null;
   label?: string | null;
   cwd?: string | null;
   columns?: number | null;

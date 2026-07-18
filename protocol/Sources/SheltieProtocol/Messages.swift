@@ -83,7 +83,9 @@ public enum ActionType: String, Codable, Sendable {
     case closeTab = "tab.close"
     case focusPane = "pane.focus"
     case splitPane = "pane.split"
+    case movePane = "pane.move"
     case resizePane = "pane.resize"
+    case setSplitRatio = "layout.set_split_ratio"
     case zoomPane = "pane.zoom"
     case renamePane = "pane.rename"
     case closePane = "pane.close"
@@ -91,6 +93,63 @@ public enum ActionType: String, Codable, Sendable {
     case terminalKeys = "terminal.keys"
     case terminalResize = "terminal.resize"
     case agentMessage = "agent.message"
+}
+
+public enum PaneMoveDestination: Codable, Equatable, Sendable {
+    case tab(tabID: String, targetPaneID: String?, split: SplitDirection)
+    case newTab(workspaceID: String?, label: String?)
+    case newWorkspace(label: String?, tabLabel: String?)
+
+    private enum CodingKeys: String, CodingKey {
+        case type, tabID, targetPaneID, split, workspaceID, label, tabLabel
+    }
+
+    private enum DestinationType: String, Codable {
+        case tab
+        case newTab = "new_tab"
+        case newWorkspace = "new_workspace"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        switch try container.decode(DestinationType.self, forKey: .type) {
+        case .tab:
+            self = .tab(
+                tabID: try container.decode(String.self, forKey: .tabID),
+                targetPaneID: try container.decodeIfPresent(String.self, forKey: .targetPaneID),
+                split: try container.decode(SplitDirection.self, forKey: .split)
+            )
+        case .newTab:
+            self = .newTab(
+                workspaceID: try container.decodeIfPresent(String.self, forKey: .workspaceID),
+                label: try container.decodeIfPresent(String.self, forKey: .label)
+            )
+        case .newWorkspace:
+            self = .newWorkspace(
+                label: try container.decodeIfPresent(String.self, forKey: .label),
+                tabLabel: try container.decodeIfPresent(String.self, forKey: .tabLabel)
+            )
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case let .tab(tabID, targetPaneID, split):
+            try container.encode(DestinationType.tab, forKey: .type)
+            try container.encode(tabID, forKey: .tabID)
+            try container.encodeIfPresent(targetPaneID, forKey: .targetPaneID)
+            try container.encode(split, forKey: .split)
+        case let .newTab(workspaceID, label):
+            try container.encode(DestinationType.newTab, forKey: .type)
+            try container.encodeIfPresent(workspaceID, forKey: .workspaceID)
+            try container.encodeIfPresent(label, forKey: .label)
+        case let .newWorkspace(label, tabLabel):
+            try container.encode(DestinationType.newWorkspace, forKey: .type)
+            try container.encodeIfPresent(label, forKey: .label)
+            try container.encodeIfPresent(tabLabel, forKey: .tabLabel)
+        }
+    }
 }
 
 public struct ActionCommand: Codable, Equatable, Sendable {
@@ -104,6 +163,8 @@ public struct ActionCommand: Codable, Equatable, Sendable {
     public let splitDirection: SplitDirection?
     public let paneDirection: PaneDirection?
     public let ratio: Double?
+    public let splitPath: [Bool]?
+    public let moveDestination: PaneMoveDestination?
     public let label: String?
     public let cwd: String?
     public let columns: Int?
@@ -120,6 +181,8 @@ public struct ActionCommand: Codable, Equatable, Sendable {
         splitDirection: SplitDirection? = nil,
         paneDirection: PaneDirection? = nil,
         ratio: Double? = nil,
+        splitPath: [Bool]? = nil,
+        moveDestination: PaneMoveDestination? = nil,
         label: String? = nil,
         cwd: String? = nil,
         columns: Int? = nil,
@@ -135,6 +198,8 @@ public struct ActionCommand: Codable, Equatable, Sendable {
         self.splitDirection = splitDirection
         self.paneDirection = paneDirection
         self.ratio = ratio
+        self.splitPath = splitPath
+        self.moveDestination = moveDestination
         self.label = label
         self.cwd = cwd
         self.columns = columns

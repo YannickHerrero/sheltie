@@ -123,11 +123,23 @@ export class BridgeStateEngine implements BridgeStateProviding {
           ...(action.cwd ? { cwd: action.cwd } : {}),
           focus: true,
         });
+      case "pane.move":
+        return await client.perform("pane.move", {
+          pane_id: target(),
+          destination: herdrMoveDestination(required(action.moveDestination, "moveDestination")),
+          focus: true,
+        });
       case "pane.resize":
         return await client.perform("pane.resize", {
           pane_id: target(),
           direction: required(action.paneDirection, "paneDirection"),
           ...(action.ratio ? { amount: action.ratio } : {}),
+        });
+      case "layout.set_split_ratio":
+        return await client.perform("layout.set_split_ratio", {
+          tab_id: target(),
+          path: action.splitPath ?? [],
+          ratio: clampedRatio(required(action.ratio, "ratio")),
         });
       case "pane.zoom":
         return await client.perform("pane.zoom", { pane_id: target(), mode: "toggle" });
@@ -247,4 +259,33 @@ function failure(action: ActionCommand, errorCode: string, message: string): Act
 
 function snapshotFingerprint(snapshot: BootstrapSnapshot): string {
   return JSON.stringify({ ...snapshot, generatedAtMillis: 0 });
+}
+
+function clampedRatio(value: number): number {
+  if (!Number.isFinite(value)) throw new Error("ratio must be finite");
+  return Math.max(0.1, Math.min(0.9, value));
+}
+
+function herdrMoveDestination(destination: NonNullable<ActionCommand["moveDestination"]>): Record<string, unknown> {
+  switch (destination.type) {
+    case "tab":
+      return {
+        type: "tab",
+        tab_id: destination.tabID,
+        ...(destination.targetPaneID ? { target_pane_id: destination.targetPaneID } : {}),
+        split: destination.split,
+      };
+    case "new_tab":
+      return {
+        type: "new_tab",
+        ...(destination.workspaceID ? { workspace_id: destination.workspaceID } : {}),
+        ...(destination.label ? { label: destination.label } : {}),
+      };
+    case "new_workspace":
+      return {
+        type: "new_workspace",
+        ...(destination.label ? { label: destination.label } : {}),
+        ...(destination.tabLabel ? { tab_label: destination.tabLabel } : {}),
+      };
+  }
 }
