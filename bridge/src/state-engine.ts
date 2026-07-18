@@ -151,6 +151,9 @@ export class BridgeStateEngine implements BridgeStateProviding {
       case "terminal.input": {
         const text = terminalText(action);
         if (Buffer.byteLength(text, "utf8") > 64 * 1024) throw new Error("terminal input exceeds 64 KiB");
+        if (action.keys?.length) {
+          return await client.perform("pane.send_input", { pane_id: target(), text, keys: action.keys });
+        }
         return await client.perform("pane.send_text", { pane_id: target(), text });
       }
       case "terminal.keys": {
