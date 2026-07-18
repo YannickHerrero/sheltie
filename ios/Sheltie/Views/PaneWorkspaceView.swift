@@ -223,8 +223,11 @@ private struct TerminalPaneView: View {
                     renameText = pane.title
                     isRenaming = true
                 }
-                Button("Move to New Tab", systemImage: "rectangle.on.rectangle") {
-                    store.movePaneToNewTab(pane.id, workspaceID: pane.workspaceID)
+                Menu("Move Pane", systemImage: "rectangle.on.rectangle") {
+                    ForEach(destinationTabs) { tab in
+                        Button(tab.label) { store.movePane(pane.id, to: tab.id) }
+                    }
+                    Button("New Tab") { store.movePaneToNewTab(pane.id, workspaceID: pane.workspaceID) }
                 }
                 Divider()
                 Button("Close Pane", systemImage: "xmark", role: .destructive) {
@@ -242,6 +245,10 @@ private struct TerminalPaneView: View {
         .padding(.leading, 12)
         .frame(height: 38)
         .background(SheltieTheme.surface.opacity(0.45))
+    }
+
+    private var destinationTabs: [TabSnapshot] {
+        store.snapshot?.tabs.filter { $0.workspaceID == pane.workspaceID && $0.id != pane.tabID } ?? []
     }
 
     private var composer: some View {

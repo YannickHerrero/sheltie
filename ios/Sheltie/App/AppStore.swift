@@ -8,6 +8,7 @@ final class AppStore: ObservableObject {
     @Published private(set) var phase: ConnectionPhase = .noInstances
     @Published private(set) var profiles: [InstanceProfile]
     @Published var selectedProfileID: String?
+    @Published var selectedSessionID: String?
     @Published private(set) var snapshot: BootstrapSnapshot?
     @Published private(set) var terminalFrames: [String: TerminalFrame] = [:]
     @Published private(set) var toast: ToastMessage?
@@ -41,6 +42,7 @@ final class AppStore: ObservableObject {
             )
             profiles = [profile]
             selectedProfileID = profile.id
+            selectedSessionID = DemoData.snapshot.activeSessionID
             apply(DemoData.snapshot)
             terminalFrames = DemoData.terminalFrames
             phase = .connected
@@ -93,9 +95,19 @@ final class AppStore: ObservableObject {
         phase = profiles.isEmpty ? .noInstances : .disconnected
     }
 
+    func selectSession(_ id: String) {
+        guard id != selectedSessionID,
+              storeSessions.contains(where: { $0.id == id && $0.reachable }) else { return }
+        selectedSessionID = id
+        snapshot = nil
+        terminalFrames = [:]
+        connectSelectedInstance()
+    }
+
     func selectInstance(_ id: String) {
         guard id != selectedProfileID, profiles.contains(where: { $0.id == id }) else { return }
         selectedProfileID = id
+        selectedSessionID = nil
         repository.saveSelectedID(id)
         snapshot = nil
         terminalFrames = [:]
@@ -108,6 +120,7 @@ final class AppStore: ObservableObject {
         repository.saveProfiles(profiles)
         if selectedProfileID == id {
             selectedProfileID = profiles.first?.id
+            selectedSessionID = nil
             repository.saveSelectedID(selectedProfileID)
             snapshot = nil
             terminalFrames = [:]
@@ -155,6 +168,7 @@ final class AppStore: ObservableObject {
         repository.saveProfiles(profiles)
         try repository.setAccessToken(response.accessToken, for: profile.id)
         selectedProfileID = profile.id
+        selectedSessionID = nil
         repository.saveSelectedID(profile.id)
         connectSelectedInstance()
     }
@@ -217,11 +231,6 @@ final class AppStore: ObservableObject {
             targetID: paneID,
             bytesBase64: data.base64EncodedString()
         ))
-    }
-
-    func sendTerminalText(_ text: String, to paneID: String) {
-        guard !text.isEmpty else { return }
-        perform(.init(sessionID: activeSessionID, type: .terminalInput, targetID: paneID, text: text))
     }
 
     func sendTerminalCommand(_ text: String, to paneID: String) {
@@ -310,6 +319,15 @@ final class AppStore: ObservableObject {
         perform(.init(sessionID: activeSessionID, type: .renamePane, targetID: id, label: label))
     }
 
+    func movePane(_ id: String, to tabID: String) {
+        perform(.init(
+            sessionID: activeSessionID,
+            type: .movePane,
+            targetID: id,
+            moveDestination: .tab(tabID: tabID, targetPaneID: nil, split: .horizontal)
+        ))
+    }
+
     func movePaneToNewTab(_ id: String, workspaceID: String) {
         perform(.init(
             sessionID: activeSessionID,
@@ -379,7 +397,7 @@ final class AppStore: ObservableObject {
                 activeClient = client
                 let credential = try await client.refreshSession(accessToken: accessToken)
                 activeSessionToken = credential.sessionToken
-                let initial = try await client.bootstrap(sessionID: nil, sessionToken: credential.sessionToken)
+                let initial = try await client.bootstrap(sessionID: selectedSessionID, sessionToken: credential.sessionToken)
                 apply(initial)
                 phase = .connected
                 attempt = 0
@@ -430,8 +448,13 @@ final class AppStore: ObservableObject {
         }
     }
 
+    private var storeSessions: [SessionSummary] {
+        snapshot?.sessions ?? []
+    }
+
     private func apply(_ newSnapshot: BootstrapSnapshot) {
         snapshot = newSnapshot
+        selectedSessionID = newSnapshot.activeSessionID
         let workspaceIDs = Set(newSnapshot.workspaces.map(\.id))
         if selectedWorkspaceID == nil || !workspaceIDs.contains(selectedWorkspaceID!) {
             selectedWorkspaceID = newSnapshot.focus.workspaceID ?? newSnapshot.workspaces.first?.id

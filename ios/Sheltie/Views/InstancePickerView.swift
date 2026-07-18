@@ -16,6 +16,9 @@ struct InstancePickerView: View {
                     if !store.profiles.isEmpty {
                         instancesSection
                     }
+                    if (store.snapshot?.sessions.count ?? 0) > 1 {
+                        sessionsSection
+                    }
                     pairingSection
                 }
                 .padding(24)
@@ -75,6 +78,44 @@ struct InstancePickerView: View {
                 .contextMenu {
                     Button("Remove", role: .destructive) { store.removeInstance(profile.id) }
                 }
+            }
+        }
+    }
+
+    private var sessionsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionLabel("HERDR SESSIONS")
+            ForEach(store.snapshot?.sessions ?? []) { session in
+                Button {
+                    store.selectSession(session.id)
+                    dismiss()
+                } label: {
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(session.reachable ? SheltieTheme.success : SheltieTheme.danger)
+                            .frame(width: 8, height: 8)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(session.name)
+                                .font(SheltieTheme.body(14, weight: .semibold))
+                            Text(session.isDefault ? "default session" : "named session")
+                                .font(SheltieTheme.mono(10))
+                                .foregroundStyle(SheltieTheme.muted)
+                        }
+                        Spacer()
+                        if session.id == store.selectedSessionID {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(SheltieTheme.success)
+                        }
+                    }
+                    .foregroundStyle(SheltieTheme.foreground)
+                    .padding(.horizontal, 14)
+                    .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(SheltieTheme.surface.opacity(0.5)))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(SheltieTheme.border, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .disabled(!session.reachable)
             }
         }
     }
