@@ -1,0 +1,28 @@
+# Local design and reference files (never commit these)
+/do-not-commit/
+
+# macOS
+.DS_Store
+
+# Xcode
+DerivedData/
+build/
+*.moved-aside
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Other dependency managers
+Pods/
+Carthage/Build/
+
+# Local configuration and logs
+.env
+.env.*
+!.env.example
+*.log
