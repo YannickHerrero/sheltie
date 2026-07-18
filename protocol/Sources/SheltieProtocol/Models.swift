@@ -22,6 +22,13 @@ public enum SplitDirection: String, Codable, Sendable {
     case vertical
 }
 
+public enum PaneDirection: String, Codable, Sendable {
+    case left
+    case right
+    case up
+    case down
+}
+
 public struct BridgeInfo: Codable, Equatable, Sendable {
     public let version: String
     public let protocolVersion: Int

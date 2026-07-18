@@ -100,7 +100,8 @@ public struct ActionCommand: Codable, Equatable, Sendable {
     public let targetID: String?
     public let text: String?
     public let keys: [String]?
-    public let direction: SplitDirection?
+    public let splitDirection: SplitDirection?
+    public let paneDirection: PaneDirection?
     public let ratio: Double?
     public let label: String?
     public let cwd: String?
@@ -114,7 +115,8 @@ public struct ActionCommand: Codable, Equatable, Sendable {
         targetID: String? = nil,
         text: String? = nil,
         keys: [String]? = nil,
-        direction: SplitDirection? = nil,
+        splitDirection: SplitDirection? = nil,
+        paneDirection: PaneDirection? = nil,
         ratio: Double? = nil,
         label: String? = nil,
         cwd: String? = nil,
@@ -127,7 +129,8 @@ public struct ActionCommand: Codable, Equatable, Sendable {
         self.targetID = targetID
         self.text = text
         self.keys = keys
-        self.direction = direction
+        self.splitDirection = splitDirection
+        self.paneDirection = paneDirection
         self.ratio = ratio
         self.label = label
         self.cwd = cwd

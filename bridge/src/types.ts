@@ -4,6 +4,7 @@ export const BRIDGE_VERSION = "0.1.0";
 export type AgentStatus = "idle" | "working" | "blocked" | "done" | "unknown";
 export type PaneKind = "agent" | "shell";
 export type SplitDirection = "horizontal" | "vertical";
+export type PaneDirection = "left" | "right" | "up" | "down";
 
 export interface BridgeInfo {
   version: string;
@@ -168,7 +169,8 @@ export interface ActionCommand {
   targetID?: string | null;
   text?: string | null;
   keys?: string[] | null;
-  direction?: SplitDirection | null;
+  splitDirection?: SplitDirection | null;
+  paneDirection?: PaneDirection | null;
   ratio?: number | null;
   label?: string | null;
   cwd?: string | null;
