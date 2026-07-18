@@ -100,7 +100,7 @@ Use available window width rather than device identity or orientation:
 - Above 820 points: keep the sidebar persistent and show the complete Herdr pane split.
 - At or below 820 points: present the sidebar as a drawer and show one pane at a time with an explicit pane switcher.
 - At or below 560 points: condense connection metadata, usage presentation, tabs, and keybar notes for narrow Split View and possible future phone support.
-- Remove the outer frame margin, radius, and shadow when the app is edge-to-edge in compact layouts.
+- Fill the iPad window edge to edge at every width; the prototype’s outer presentation frame is not application chrome.
 
 The prototype documents the connected success path. Before implementation, specify native loading, empty, pairing-required, connecting, disconnected, reconnecting, incompatible-server, revoked-device, pane-stream-error, and optional-data-unavailable states without changing the established geometry unnecessarily.
 

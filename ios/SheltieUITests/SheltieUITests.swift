@@ -15,6 +15,6 @@ final class SheltieUITests: XCTestCase {
         XCTAssertTrue(app.buttons["instance.selector"].exists)
         XCTAssertTrue(app.staticTexts["Claude Code"].firstMatch.exists)
         XCTAssertTrue(app.descendants(matching: .any)["terminal.keybar"].exists)
-        XCTAssertTrue(app.buttons["Show spaces and agents"].exists)
+        XCTAssertTrue(app.staticTexts["SPACES"].exists)
     }
 }

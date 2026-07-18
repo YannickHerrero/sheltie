@@ -7,23 +7,16 @@ struct RootView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            // The approved 820-point breakpoint applies to the framed content width.
-            let isCompact = proxy.size.width - 24 <= 820
+            let isCompact = proxy.size.width <= 820
             let isNarrow = proxy.size.width <= 560
             let sidebarWidth = max(205, min(240, proxy.size.width * 0.21))
-            let outerMargin: CGFloat = isCompact ? 0 : 12
 
             ZStack(alignment: .topLeading) {
-                Color.black.opacity(0.08).ignoresSafeArea()
                 appFrame(
                     sidebarWidth: sidebarWidth,
                     isCompact: isCompact,
                     isNarrow: isNarrow
                 )
-                .clipShape(RoundedRectangle(cornerRadius: isCompact ? 0 : 18, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: isCompact ? 0 : 18, style: .continuous).stroke(SheltieTheme.border, lineWidth: isCompact ? 0 : 1))
-                .shadow(color: .black.opacity(isCompact ? 0 : 0.08), radius: 18, y: 8)
-                .padding(outerMargin)
 
                 if isCompact, store.isSidebarPresented {
                     Color.black.opacity(0.18)
@@ -41,7 +34,7 @@ struct RootView: View {
                 if let toast = store.toast {
                     ToastView(toast: toast) { store.dismissToast() }
                         .frame(maxWidth: 420)
-                        .padding(.top, outerMargin + 68)
+                        .padding(.top, 68)
                         .padding(.horizontal, 20)
                         .frame(maxWidth: .infinity)
                         .transition(.move(edge: .top).combined(with: .opacity))

@@ -35,13 +35,13 @@ Boundaries are low-contrast one-point rules. The selected pane receives a restra
 
 ## Adaptive behavior
 
-The HTML breakpoint is based on 820 points of framed content. The native root accounts for the 12-point wide-layout frame before applying that threshold.
+The adaptive breakpoint is based directly on the iPad window’s available width. The prototype’s outer presentation frame is a mockup device, not part of the native application.
 
 - Wide: persistent sidebar and complete recursive pane split.
 - Compact: app-bar menu button, drawer sidebar, one pane at a time, explicit pane switcher.
 - Narrow (560 points or less): condensed connection and usage metadata and no keybar note.
-- Wide layouts use a 12-point outer margin, 18-point corner radius, and subtle shadow.
-- Compact layouts become edge-to-edge and remove outer decoration.
+- Wide and compact layouts both fill the window edge to edge without an outer margin, rounded container, or drop shadow.
+- Internal surfaces retain their own borders and hierarchy; only the enclosing presentation card is removed.
 
 Window width—not orientation or device model—controls adaptation so Split View and Stage Manager behave consistently.
 
@@ -85,4 +85,4 @@ The app preserves the connected geometry when practical and presents explicit na
 
 ## Visual verification
 
-Use `--demo` for deterministic screenshots. Verify portrait/compact and landscape/wide layouts, then test widths around framed 820 points and raw 560 points. Screenshots prove geometry only; keyboard repeat, marked text, gestures, menus, dictation, background suspension, and biometric behavior require device testing.
+Use `--demo` for deterministic screenshots. Verify portrait/compact and landscape/wide layouts, then test raw window widths around 820 and 560 points. Screenshots prove geometry only; keyboard repeat, marked text, gestures, menus, dictation, background suspension, and biometric behavior require device testing.
