@@ -327,15 +327,15 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					4A1F93EC22F0A1E6C561BDAF = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = KY6RHJR4LZ;
 						ProvisioningStyle = Automatic;
 					};
 					A317E398CC333F3187C03781 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = KY6RHJR4LZ;
 						TestTargetID = 4A1F93EC22F0A1E6C561BDAF;
 					};
 					B9447CAAC7E8EB2CEF951963 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = KY6RHJR4LZ;
 					};
 				};
 			};
@@ -503,7 +503,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = KY6RHJR4LZ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -552,7 +552,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yannickherrero.Sheltie;
 				PRODUCT_NAME = Sheltie;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 2;
 			};
 			name = Debug;
 		};
@@ -608,7 +608,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = KY6RHJR4LZ;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -667,7 +667,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yannickherrero.Sheltie;
 				PRODUCT_NAME = Sheltie;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 2;
 			};
 			name = Release;
 		};

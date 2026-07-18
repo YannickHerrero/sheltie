@@ -1,0 +1,101 @@
+default_platform(:ios)
+
+APP_IDENTIFIER = "com.yannickherrero.Sheltie".freeze
+TEAM_ID = "KY6RHJR4LZ".freeze
+PROJECT = "Sheltie.xcodeproj".freeze
+SCHEME = "Sheltie".freeze
+
+platform :ios do
+  private_lane :connect_api_key do
+    app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV.fetch('ASC_KEY_ID')}.p8"),
+      duration: 1200
+    )
+  end
+
+  private_lane :ensure_app_record do
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      filepath: File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV.fetch('ASC_KEY_ID')}.p8")
+    )
+
+    bundle = Spaceship::ConnectAPI::BundleId.find(APP_IDENTIFIER)
+    if bundle.nil?
+      UI.message("Registering bundle ID #{APP_IDENTIFIER}")
+      bundle = Spaceship::ConnectAPI::BundleId.create(
+        name: "Sheltie",
+        identifier: APP_IDENTIFIER,
+        platform: "IOS"
+      )
+    end
+
+    next unless Spaceship::ConnectAPI::App.find(APP_IDENTIFIER).nil?
+
+    UI.message("Creating the Sheltie App Store Connect record")
+    Spaceship::ConnectAPI::App.create(
+      name: "Sheltie",
+      version_string: "0.1.0",
+      sku: "sheltie-ipad",
+      primary_locale: "en-US",
+      bundle_id: bundle.id,
+      platforms: ["IOS"]
+    )
+  end
+
+  def export_auth_xcargs
+    key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV.fetch('ASC_KEY_ID')}.p8")
+    "-allowProvisioningUpdates " \
+      "-authenticationKeyID #{ENV.fetch('ASC_KEY_ID')} " \
+      "-authenticationKeyIssuerID #{ENV.fetch('ASC_ISSUER_ID')} " \
+      "-authenticationKeyPath #{key_path}"
+  end
+
+  def build_number
+    Time.now.utc.strftime("%Y%m%d%H%M")
+  end
+
+  desc "Register the bundle ID and App Store Connect record if needed"
+  lane :bootstrap do
+    connect_api_key
+    ensure_app_record
+  end
+
+  desc "Create a signed App Store IPA without uploading"
+  lane :build do
+    connect_api_key
+    ensure_app_record
+    sh("cd .. && xcodegen generate")
+    build_app(
+      project: PROJECT,
+      scheme: SCHEME,
+      configuration: "Release",
+      destination: "generic/platform=iOS",
+      export_method: "app-store",
+      xcargs: "-allowProvisioningUpdates DEVELOPMENT_TEAM=#{TEAM_ID} CURRENT_PROJECT_VERSION=#{build_number}",
+      export_xcargs: export_auth_xcargs,
+      output_directory: "build",
+      output_name: "Sheltie.ipa",
+      archive_path: "build/Sheltie.xcarchive",
+      clean: true
+    )
+  end
+
+  desc "Build, upload, and wait for the new TestFlight build to process"
+  lane :beta do
+    api_key = connect_api_key
+    ensure_app_record
+    build
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      ipa: "build/Sheltie.ipa",
+      changelog: "Initial native iPad build with secure Herdr pairing, adaptive terminal workspaces, and the new Liquid Glass app icon.",
+      skip_submission: true,
+      skip_waiting_for_build_processing: false,
+      distribute_external: false
+    )
+  end
+end
