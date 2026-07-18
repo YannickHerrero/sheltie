@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  protocol:
+    name: Protocol
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Swift protocol package
+        run: swift test --package-path protocol
+
+  bridge:
+    name: Bridge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Install locked dependencies
+        working-directory: bridge
+        run: bun install --frozen-lockfile
+      - name: Type-check
+        working-directory: bridge
+        run: bun run typecheck
+      - name: Test
+        working-directory: bridge
+        run: bun test
+
+  ios:
+    name: iPad app
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Regenerate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+      - name: Verify generated project is committed
+        run: git diff --exit-code -- ios/Sheltie.xcodeproj ios/Sheltie/Resources/Info.plist
+      - name: Build iPad simulator app
+        working-directory: ios
+        run: >-
+          xcodebuild
+          -project Sheltie.xcodeproj
+          -scheme Sheltie
+          -configuration Debug
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build
