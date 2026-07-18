@@ -100,7 +100,7 @@ enum DemoData {
             full: true,
             columns: 100,
             rows: 36,
-            bytesBase64: Data(text.utf8).base64EncodedString()
+            bytesBase64: Data(text.replacingOccurrences(of: "\n", with: "\r\n").utf8).base64EncodedString()
         )
     }
 }

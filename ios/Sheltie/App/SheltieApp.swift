@@ -23,5 +23,8 @@ struct SheltieApp: App {
                     }
                 }
         }
+        .commands {
+            SheltieCommands(store: store)
+        }
     }
 }

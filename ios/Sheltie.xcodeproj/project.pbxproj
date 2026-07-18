@@ -11,15 +11,25 @@
 		311947DB0D215A4C1F245F8B /* AppStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4FEDB4D69A35ADD7F86ACED /* AppStoreTests.swift */; };
 		365F75E58B0A2731EE9FC4D6 /* DemoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6951CEF16C1BA5B8F95A0 /* DemoData.swift */; };
 		3B205C8BA48FA1DB056F630C /* InstanceRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEC8E71F5542FBCC46C66B87 /* InstanceRepository.swift */; };
+		417D590A892287C1BED8F9B8 /* SheltieCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3923CE5EED6ED3F9FD0914F9 /* SheltieCommands.swift */; };
 		47E5DFD7317CFAA9B2DB88BB /* SheltieProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 17192AF47C360D606ABAB389 /* SheltieProtocol */; };
 		4EA9F7D73D7770C6FC213A99 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E09DE6B1270DC6AA63F0F7E1 /* Assets.xcassets */; };
 		50F35323671032D581CF2A37 /* SheltieProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 61488497FE606435EF739AE4 /* SheltieProtocol */; };
 		5C2CD5CB10CDA9CCB4735E02 /* BridgeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A9CA58EEC7872A889209724 /* BridgeClient.swift */; };
 		5D1A7EC96657D05FE1211A19 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF806E4AAB4E91C4FD2C1437 /* AppStore.swift */; };
+		77CA290F648A7F08451CE8B6 /* InstancePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57BA8A890D1CA2736A0F9B5 /* InstancePickerView.swift */; };
+		8163C52605A230F9C70A601C /* BridgeClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CB01B631976E5F834B1DBEC /* BridgeClientTests.swift */; };
 		8CC74870DA0115328F7EBF42 /* SheltieUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B24274FE9A0C8F790C640A3B /* SheltieUITests.swift */; };
 		913892FCBB002C9701406D12 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = 5A55C864C8042B31DFBF8B0A /* SwiftTerm */; };
+		978DF35971A3ABEC19A10C64 /* TerminalSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CF1898F97E25C37436A64 /* TerminalSurface.swift */; };
+		97A2F55A729872CED5E99E8D /* PaneWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1655081AC10F3ED6C1E3F97F /* PaneWorkspaceView.swift */; };
+		A1CDB64A74E4F14B5E57DB9B /* AppBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C135BB2F5FE86FE2FD05F98 /* AppBar.swift */; };
 		BE7E38DDEED3C24E1A2AE1D1 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADB83BDE6DB46981EE0B32E /* KeychainStore.swift */; };
+		C553C491FBF795700864C369 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B06FC9763958271E7C32BA8 /* SidebarView.swift */; };
 		CBAAE4249A47EFD3D68AC155 /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D255E4FF872E67C1C39260FE /* DeviceIdentity.swift */; };
+		DA16A3614EC89B2550F885E4 /* SessionTabsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B38DA9F398450BBD66C09811 /* SessionTabsView.swift */; };
+		E580386368039C8E3A53F216 /* SheltieTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63FE19A679A1C227979FFBB2 /* SheltieTheme.swift */; };
+		F15F7A28FA3002F322A28346 /* TerminalKeybar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB7F68197303916D2668778 /* TerminalKeybar.swift */; };
 		FA4BDE20B06AB75AE7EA590F /* InstanceProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD2EA260DCBBC01364873D26 /* InstanceProfile.swift */; };
 		FCA1E192F005A8FA1FEE5D88 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E776A6A880896B5B8150BA8 /* RootView.swift */; };
 /* End PBXBuildFile section */
@@ -42,22 +52,32 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0C135BB2F5FE86FE2FD05F98 /* AppBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBar.swift; sourceTree = "<group>"; };
 		0E018312155652FBE89BF774 /* SheltieUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SheltieUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1655081AC10F3ED6C1E3F97F /* PaneWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneWorkspaceView.swift; sourceTree = "<group>"; };
 		22A6951CEF16C1BA5B8F95A0 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
 		2ADB83BDE6DB46981EE0B32E /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		2CB01B631976E5F834B1DBEC /* BridgeClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeClientTests.swift; sourceTree = "<group>"; };
 		2DE68CA8F2058CAA516DF82A /* protocol */ = {isa = PBXFileReference; lastKnownFileType = folder; name = protocol; path = ../protocol; sourceTree = SOURCE_ROOT; };
 		318EB1500AF85FC6DC08FEA9 /* Sheltie.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Sheltie.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3923CE5EED6ED3F9FD0914F9 /* SheltieCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheltieCommands.swift; sourceTree = "<group>"; };
 		4A361361AA73A2826220318D /* SheltieApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheltieApp.swift; sourceTree = "<group>"; };
+		4B06FC9763958271E7C32BA8 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		4F5CF1898F97E25C37436A64 /* TerminalSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSurface.swift; sourceTree = "<group>"; };
 		5A9CA58EEC7872A889209724 /* BridgeClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeClient.swift; sourceTree = "<group>"; };
+		63FE19A679A1C227979FFBB2 /* SheltieTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheltieTheme.swift; sourceTree = "<group>"; };
 		6E776A6A880896B5B8150BA8 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		7594A95E304F8FD1A4A60A1C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		814BFD0844B235A1E99C3B3B /* SheltieTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SheltieTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DB7F68197303916D2668778 /* TerminalKeybar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalKeybar.swift; sourceTree = "<group>"; };
 		B24274FE9A0C8F790C640A3B /* SheltieUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheltieUITests.swift; sourceTree = "<group>"; };
+		B38DA9F398450BBD66C09811 /* SessionTabsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTabsView.swift; sourceTree = "<group>"; };
 		B4FEDB4D69A35ADD7F86ACED /* AppStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreTests.swift; sourceTree = "<group>"; };
 		BEC8E71F5542FBCC46C66B87 /* InstanceRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstanceRepository.swift; sourceTree = "<group>"; };
 		D255E4FF872E67C1C39260FE /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
 		DD2EA260DCBBC01364873D26 /* InstanceProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstanceProfile.swift; sourceTree = "<group>"; };
 		E09DE6B1270DC6AA63F0F7E1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F57BA8A890D1CA2736A0F9B5 /* InstancePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstancePickerView.swift; sourceTree = "<group>"; };
 		FF806E4AAB4E91C4FD2C1437 /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -103,12 +123,14 @@
 			isa = PBXGroup;
 			children = (
 				95117E145685572FB803B5A1 /* App */,
+				F7D96D34A00004657D4DD4FB /* Design */,
 				B6AEC0424C46B1B10E1624D3 /* Models */,
 				F0CCDC9C1FD0C2BC4F3865DA /* Networking */,
 				718342B98E4BF0473C10B99C /* Persistence */,
 				E27FEF5FCD14E53F6856106E /* Preview */,
 				053F807248A94B5E5AD8F961 /* Resources */,
 				F4208F1602A165221145D16D /* Security */,
+				EE3B3D17A8B61CBFB7344163 /* Terminal */,
 				8683A5B11AE6F171D790B45C /* Views */,
 			);
 			path = Sheltie;
@@ -118,6 +140,7 @@
 			isa = PBXGroup;
 			children = (
 				B4FEDB4D69A35ADD7F86ACED /* AppStoreTests.swift */,
+				2CB01B631976E5F834B1DBEC /* BridgeClientTests.swift */,
 			);
 			path = SheltieTests;
 			sourceTree = "<group>";
@@ -154,7 +177,13 @@
 		8683A5B11AE6F171D790B45C /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				0C135BB2F5FE86FE2FD05F98 /* AppBar.swift */,
+				F57BA8A890D1CA2736A0F9B5 /* InstancePickerView.swift */,
+				1655081AC10F3ED6C1E3F97F /* PaneWorkspaceView.swift */,
 				6E776A6A880896B5B8150BA8 /* RootView.swift */,
+				B38DA9F398450BBD66C09811 /* SessionTabsView.swift */,
+				4B06FC9763958271E7C32BA8 /* SidebarView.swift */,
+				8DB7F68197303916D2668778 /* TerminalKeybar.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -164,6 +193,7 @@
 			children = (
 				FF806E4AAB4E91C4FD2C1437 /* AppStore.swift */,
 				4A361361AA73A2826220318D /* SheltieApp.swift */,
+				3923CE5EED6ED3F9FD0914F9 /* SheltieCommands.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -192,6 +222,14 @@
 			path = Preview;
 			sourceTree = "<group>";
 		};
+		EE3B3D17A8B61CBFB7344163 /* Terminal */ = {
+			isa = PBXGroup;
+			children = (
+				4F5CF1898F97E25C37436A64 /* TerminalSurface.swift */,
+			);
+			path = Terminal;
+			sourceTree = "<group>";
+		};
 		F0CCDC9C1FD0C2BC4F3865DA /* Networking */ = {
 			isa = PBXGroup;
 			children = (
@@ -207,6 +245,14 @@
 				2ADB83BDE6DB46981EE0B32E /* KeychainStore.swift */,
 			);
 			path = Security;
+			sourceTree = "<group>";
+		};
+		F7D96D34A00004657D4DD4FB /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				63FE19A679A1C227979FFBB2 /* SheltieTheme.swift */,
+			);
+			path = Design;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -335,6 +381,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				311947DB0D215A4C1F245F8B /* AppStoreTests.swift in Sources */,
+				8163C52605A230F9C70A601C /* BridgeClientTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -342,15 +389,24 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1CDB64A74E4F14B5E57DB9B /* AppBar.swift in Sources */,
 				5D1A7EC96657D05FE1211A19 /* AppStore.swift in Sources */,
 				5C2CD5CB10CDA9CCB4735E02 /* BridgeClient.swift in Sources */,
 				365F75E58B0A2731EE9FC4D6 /* DemoData.swift in Sources */,
 				CBAAE4249A47EFD3D68AC155 /* DeviceIdentity.swift in Sources */,
+				77CA290F648A7F08451CE8B6 /* InstancePickerView.swift in Sources */,
 				FA4BDE20B06AB75AE7EA590F /* InstanceProfile.swift in Sources */,
 				3B205C8BA48FA1DB056F630C /* InstanceRepository.swift in Sources */,
 				BE7E38DDEED3C24E1A2AE1D1 /* KeychainStore.swift in Sources */,
+				97A2F55A729872CED5E99E8D /* PaneWorkspaceView.swift in Sources */,
 				FCA1E192F005A8FA1FEE5D88 /* RootView.swift in Sources */,
+				DA16A3614EC89B2550F885E4 /* SessionTabsView.swift in Sources */,
 				30D114C7AFC610F852115E04 /* SheltieApp.swift in Sources */,
+				417D590A892287C1BED8F9B8 /* SheltieCommands.swift in Sources */,
+				E580386368039C8E3A53F216 /* SheltieTheme.swift in Sources */,
+				C553C491FBF795700864C369 /* SidebarView.swift in Sources */,
+				F15F7A28FA3002F322A28346 /* TerminalKeybar.swift in Sources */,
+				978DF35971A3ABEC19A10C64 /* TerminalSurface.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

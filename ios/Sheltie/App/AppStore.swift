@@ -23,8 +23,7 @@ final class AppStore: ObservableObject {
     private var activeClient: BridgeClient?
     private var activeSessionToken: String?
     private var visiblePaneIDs = Set<String>()
-    private var terminalColumns = 100
-    private var terminalRows = 36
+    private var terminalViewports: [String: TerminalViewport] = [:]
 
     init(
         repository: any InstancePersisting = InstanceRepository(),
@@ -184,6 +183,7 @@ final class AppStore: ObservableObject {
     func selectPane(_ id: String) {
         selectedPaneID = id
         compactPaneID = id
+        sendSubscriptions()
         perform(.init(sessionID: activeSessionID, type: .focusPane, targetID: id))
     }
 
@@ -196,14 +196,18 @@ final class AppStore: ObservableObject {
         perform(.init(sessionID: activeSessionID, type: .focusPane, targetID: agent.paneID))
     }
 
-    func updateVisiblePanes(_ paneIDs: [String], columns: Int, rows: Int) {
+    func updateVisiblePanes(_ paneIDs: [String]) {
         let ids = Set(paneIDs)
-        let dimensionsChanged = columns != terminalColumns || rows != terminalRows
-        guard ids != visiblePaneIDs || dimensionsChanged else { return }
+        guard ids != visiblePaneIDs else { return }
         visiblePaneIDs = ids
-        terminalColumns = max(20, columns)
-        terminalRows = max(5, rows)
         sendSubscriptions()
+    }
+
+    func updateTerminalSize(paneID: String, columns: Int, rows: Int) {
+        let viewport = TerminalViewport(columns: max(20, columns), rows: max(5, rows))
+        guard terminalViewports[paneID] != viewport else { return }
+        terminalViewports[paneID] = viewport
+        if visiblePaneIDs.contains(paneID) { sendSubscriptions() }
     }
 
     func sendTerminalData(_ data: Data, to paneID: String) {
@@ -220,6 +224,17 @@ final class AppStore: ObservableObject {
         perform(.init(sessionID: activeSessionID, type: .terminalInput, targetID: paneID, text: text))
     }
 
+    func sendTerminalCommand(_ text: String, to paneID: String) {
+        guard !text.isEmpty else { return }
+        perform(.init(
+            sessionID: activeSessionID,
+            type: .terminalInput,
+            targetID: paneID,
+            text: text,
+            keys: ["Enter"]
+        ))
+    }
+
     func sendAgentMessage(_ text: String, to paneID: String) {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         perform(.init(sessionID: activeSessionID, type: .agentMessage, targetID: paneID, text: text))
@@ -228,6 +243,109 @@ final class AppStore: ObservableObject {
     func sendKeys(_ keys: [String], to paneID: String? = nil) {
         guard let target = paneID ?? selectedPaneID, !keys.isEmpty else { return }
         perform(.init(sessionID: activeSessionID, type: .terminalKeys, targetID: target, keys: keys))
+    }
+
+    func createWorkspace(cwd: String, label: String?) {
+        guard !cwd.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        perform(.init(
+            sessionID: activeSessionID,
+            type: .createWorkspace,
+            label: label?.trimmingCharacters(in: .whitespacesAndNewlines),
+            cwd: cwd.trimmingCharacters(in: .whitespacesAndNewlines)
+        ))
+    }
+
+    func renameWorkspace(_ id: String, label: String) {
+        let value = label.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return }
+        perform(.init(sessionID: activeSessionID, type: .renameWorkspace, targetID: id, label: value))
+    }
+
+    func closeWorkspace(_ id: String) {
+        perform(.init(sessionID: activeSessionID, type: .closeWorkspace, targetID: id))
+    }
+
+    func createTab() {
+        guard let workspaceID = selectedWorkspaceID else { return }
+        perform(.init(sessionID: activeSessionID, type: .createTab, targetID: workspaceID))
+    }
+
+    func renameTab(_ id: String, label: String) {
+        let value = label.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return }
+        perform(.init(sessionID: activeSessionID, type: .renameTab, targetID: id, label: value))
+    }
+
+    func closeTab(_ id: String) {
+        perform(.init(sessionID: activeSessionID, type: .closeTab, targetID: id))
+    }
+
+    func splitSelectedPane(_ direction: SplitDirection) {
+        guard let paneID = selectedPaneID else { return }
+        perform(.init(
+            sessionID: activeSessionID,
+            type: .splitPane,
+            targetID: paneID,
+            splitDirection: direction,
+            ratio: 0.5
+        ))
+    }
+
+    func setSplitRatio(tabID: String, path: [Bool], ratio: Double) {
+        perform(.init(
+            sessionID: activeSessionID,
+            type: .setSplitRatio,
+            targetID: tabID,
+            ratio: ratio,
+            splitPath: path
+        ))
+    }
+
+    func zoomSelectedPane() {
+        guard let paneID = selectedPaneID else { return }
+        perform(.init(sessionID: activeSessionID, type: .zoomPane, targetID: paneID))
+    }
+
+    func renamePane(_ id: String, label: String?) {
+        perform(.init(sessionID: activeSessionID, type: .renamePane, targetID: id, label: label))
+    }
+
+    func movePaneToNewTab(_ id: String, workspaceID: String) {
+        perform(.init(
+            sessionID: activeSessionID,
+            type: .movePane,
+            targetID: id,
+            moveDestination: .newTab(workspaceID: workspaceID, label: nil)
+        ))
+    }
+
+    func closeSelectedPane() {
+        guard let paneID = selectedPaneID else { return }
+        perform(.init(sessionID: activeSessionID, type: .closePane, targetID: paneID))
+    }
+
+    func selectNextTab() {
+        guard let snapshot else { return }
+        let tabs = snapshot.tabs.filter { $0.workspaceID == selectedWorkspaceID }
+        guard !tabs.isEmpty else { return }
+        let index = tabs.firstIndex { $0.id == selectedTabID } ?? -1
+        selectTab(tabs[(index + 1) % tabs.count].id)
+    }
+
+    func selectNextPane() {
+        guard let snapshot else { return }
+        let panes = snapshot.panes.filter { $0.tabID == selectedTabID }
+        guard !panes.isEmpty else { return }
+        let index = panes.firstIndex { $0.id == selectedPaneID } ?? -1
+        selectPane(panes[(index + 1) % panes.count].id)
+    }
+
+    func toggleSidebar() {
+        isSidebarPresented.toggle()
+    }
+
+    func retryConnection() {
+        connectSelectedInstance()
     }
 
     func dismissToast() {
@@ -343,13 +461,14 @@ final class AppStore: ObservableObject {
     private func sendSubscriptions() {
         guard !isDemo, let client = activeClient, phase.isConnected else { return }
         let sessionID = activeSessionID
-        let subscriptions = visiblePaneIDs.map {
-            TerminalSubscription(
+        let subscriptions = visiblePaneIDs.map { paneID in
+            let viewport = terminalViewports[paneID] ?? .fallback
+            return TerminalSubscription(
                 sessionID: sessionID,
-                paneID: $0,
-                columns: terminalColumns,
-                rows: terminalRows,
-                writable: $0 == selectedPaneID
+                paneID: paneID,
+                columns: viewport.columns,
+                rows: viewport.rows,
+                writable: paneID == selectedPaneID
             )
         }
         Task {

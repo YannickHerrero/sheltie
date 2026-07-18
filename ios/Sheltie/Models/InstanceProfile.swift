@@ -48,3 +48,10 @@ struct ToastMessage: Equatable, Identifiable {
     let text: String
     let isError: Bool
 }
+
+struct TerminalViewport: Equatable {
+    let columns: Int
+    let rows: Int
+
+    static let fallback = TerminalViewport(columns: 100, rows: 36)
+}
