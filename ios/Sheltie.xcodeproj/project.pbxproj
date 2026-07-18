@@ -1,0 +1,694 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		30D114C7AFC610F852115E04 /* SheltieApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A361361AA73A2826220318D /* SheltieApp.swift */; };
+		311947DB0D215A4C1F245F8B /* AppStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4FEDB4D69A35ADD7F86ACED /* AppStoreTests.swift */; };
+		365F75E58B0A2731EE9FC4D6 /* DemoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6951CEF16C1BA5B8F95A0 /* DemoData.swift */; };
+		3B205C8BA48FA1DB056F630C /* InstanceRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEC8E71F5542FBCC46C66B87 /* InstanceRepository.swift */; };
+		47E5DFD7317CFAA9B2DB88BB /* SheltieProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 17192AF47C360D606ABAB389 /* SheltieProtocol */; };
+		4EA9F7D73D7770C6FC213A99 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E09DE6B1270DC6AA63F0F7E1 /* Assets.xcassets */; };
+		50F35323671032D581CF2A37 /* SheltieProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 61488497FE606435EF739AE4 /* SheltieProtocol */; };
+		5C2CD5CB10CDA9CCB4735E02 /* BridgeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A9CA58EEC7872A889209724 /* BridgeClient.swift */; };
+		5D1A7EC96657D05FE1211A19 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF806E4AAB4E91C4FD2C1437 /* AppStore.swift */; };
+		8CC74870DA0115328F7EBF42 /* SheltieUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B24274FE9A0C8F790C640A3B /* SheltieUITests.swift */; };
+		913892FCBB002C9701406D12 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = 5A55C864C8042B31DFBF8B0A /* SwiftTerm */; };
+		BE7E38DDEED3C24E1A2AE1D1 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADB83BDE6DB46981EE0B32E /* KeychainStore.swift */; };
+		CBAAE4249A47EFD3D68AC155 /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D255E4FF872E67C1C39260FE /* DeviceIdentity.swift */; };
+		FA4BDE20B06AB75AE7EA590F /* InstanceProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD2EA260DCBBC01364873D26 /* InstanceProfile.swift */; };
+		FCA1E192F005A8FA1FEE5D88 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E776A6A880896B5B8150BA8 /* RootView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5AA4076C661679ED34A70C23 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D5944972B7FD7AE06353E089 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4A1F93EC22F0A1E6C561BDAF;
+			remoteInfo = Sheltie;
+		};
+		8E19283085ED84BC1AD771F8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D5944972B7FD7AE06353E089 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4A1F93EC22F0A1E6C561BDAF;
+			remoteInfo = Sheltie;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0E018312155652FBE89BF774 /* SheltieUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SheltieUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		22A6951CEF16C1BA5B8F95A0 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
+		2ADB83BDE6DB46981EE0B32E /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		2DE68CA8F2058CAA516DF82A /* protocol */ = {isa = PBXFileReference; lastKnownFileType = folder; name = protocol; path = ../protocol; sourceTree = SOURCE_ROOT; };
+		318EB1500AF85FC6DC08FEA9 /* Sheltie.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Sheltie.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4A361361AA73A2826220318D /* SheltieApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheltieApp.swift; sourceTree = "<group>"; };
+		5A9CA58EEC7872A889209724 /* BridgeClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeClient.swift; sourceTree = "<group>"; };
+		6E776A6A880896B5B8150BA8 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		7594A95E304F8FD1A4A60A1C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		814BFD0844B235A1E99C3B3B /* SheltieTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SheltieTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B24274FE9A0C8F790C640A3B /* SheltieUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheltieUITests.swift; sourceTree = "<group>"; };
+		B4FEDB4D69A35ADD7F86ACED /* AppStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreTests.swift; sourceTree = "<group>"; };
+		BEC8E71F5542FBCC46C66B87 /* InstanceRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstanceRepository.swift; sourceTree = "<group>"; };
+		D255E4FF872E67C1C39260FE /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
+		DD2EA260DCBBC01364873D26 /* InstanceProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstanceProfile.swift; sourceTree = "<group>"; };
+		E09DE6B1270DC6AA63F0F7E1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FF806E4AAB4E91C4FD2C1437 /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		6F6659A470A360D0E6FAFB78 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				50F35323671032D581CF2A37 /* SheltieProtocol in Frameworks */,
+				913892FCBB002C9701406D12 /* SwiftTerm in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FAC75E73DE2CD779D07BF57 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				47E5DFD7317CFAA9B2DB88BB /* SheltieProtocol in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		053F807248A94B5E5AD8F961 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				E09DE6B1270DC6AA63F0F7E1 /* Assets.xcassets */,
+				7594A95E304F8FD1A4A60A1C /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		07A759DFE518A7EAD1FBAB7C /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				2DE68CA8F2058CAA516DF82A /* protocol */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		1144C060F917F54AE1ACC18F /* Sheltie */ = {
+			isa = PBXGroup;
+			children = (
+				95117E145685572FB803B5A1 /* App */,
+				B6AEC0424C46B1B10E1624D3 /* Models */,
+				F0CCDC9C1FD0C2BC4F3865DA /* Networking */,
+				718342B98E4BF0473C10B99C /* Persistence */,
+				E27FEF5FCD14E53F6856106E /* Preview */,
+				053F807248A94B5E5AD8F961 /* Resources */,
+				F4208F1602A165221145D16D /* Security */,
+				8683A5B11AE6F171D790B45C /* Views */,
+			);
+			path = Sheltie;
+			sourceTree = "<group>";
+		};
+		3A05C0356F6DB0773BCFD98D /* SheltieTests */ = {
+			isa = PBXGroup;
+			children = (
+				B4FEDB4D69A35ADD7F86ACED /* AppStoreTests.swift */,
+			);
+			path = SheltieTests;
+			sourceTree = "<group>";
+		};
+		587803A0836FBE559CF52587 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				318EB1500AF85FC6DC08FEA9 /* Sheltie.app */,
+				814BFD0844B235A1E99C3B3B /* SheltieTests.xctest */,
+				0E018312155652FBE89BF774 /* SheltieUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6AFEE7834B0B202DE4675A86 = {
+			isa = PBXGroup;
+			children = (
+				07A759DFE518A7EAD1FBAB7C /* Packages */,
+				1144C060F917F54AE1ACC18F /* Sheltie */,
+				3A05C0356F6DB0773BCFD98D /* SheltieTests */,
+				98CB85BBF2DAE93DE5BE75E7 /* SheltieUITests */,
+				587803A0836FBE559CF52587 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		718342B98E4BF0473C10B99C /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				BEC8E71F5542FBCC46C66B87 /* InstanceRepository.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		8683A5B11AE6F171D790B45C /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				6E776A6A880896B5B8150BA8 /* RootView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		95117E145685572FB803B5A1 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				FF806E4AAB4E91C4FD2C1437 /* AppStore.swift */,
+				4A361361AA73A2826220318D /* SheltieApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		98CB85BBF2DAE93DE5BE75E7 /* SheltieUITests */ = {
+			isa = PBXGroup;
+			children = (
+				B24274FE9A0C8F790C640A3B /* SheltieUITests.swift */,
+			);
+			path = SheltieUITests;
+			sourceTree = "<group>";
+		};
+		B6AEC0424C46B1B10E1624D3 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				DD2EA260DCBBC01364873D26 /* InstanceProfile.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		E27FEF5FCD14E53F6856106E /* Preview */ = {
+			isa = PBXGroup;
+			children = (
+				22A6951CEF16C1BA5B8F95A0 /* DemoData.swift */,
+			);
+			path = Preview;
+			sourceTree = "<group>";
+		};
+		F0CCDC9C1FD0C2BC4F3865DA /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				5A9CA58EEC7872A889209724 /* BridgeClient.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		F4208F1602A165221145D16D /* Security */ = {
+			isa = PBXGroup;
+			children = (
+				D255E4FF872E67C1C39260FE /* DeviceIdentity.swift */,
+				2ADB83BDE6DB46981EE0B32E /* KeychainStore.swift */,
+			);
+			path = Security;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4A1F93EC22F0A1E6C561BDAF /* Sheltie */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 567A5A5A1B0CDF27CA398622 /* Build configuration list for PBXNativeTarget "Sheltie" */;
+			buildPhases = (
+				BD7C3F2165AF0415FFF0F4B9 /* Sources */,
+				0B7E86834AEEF30A3F50DB32 /* Resources */,
+				6F6659A470A360D0E6FAFB78 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Sheltie;
+			packageProductDependencies = (
+				61488497FE606435EF739AE4 /* SheltieProtocol */,
+				5A55C864C8042B31DFBF8B0A /* SwiftTerm */,
+			);
+			productName = Sheltie;
+			productReference = 318EB1500AF85FC6DC08FEA9 /* Sheltie.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A317E398CC333F3187C03781 /* SheltieUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D6E410D5E84D3F2A11A7FE82 /* Build configuration list for PBXNativeTarget "SheltieUITests" */;
+			buildPhases = (
+				EFDB9FF220518626DCBE1B77 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8F8AE8B640C17FA90C78BD79 /* PBXTargetDependency */,
+			);
+			name = SheltieUITests;
+			packageProductDependencies = (
+			);
+			productName = SheltieUITests;
+			productReference = 0E018312155652FBE89BF774 /* SheltieUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		B9447CAAC7E8EB2CEF951963 /* SheltieTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C72D972CEBFD3577D028B5A4 /* Build configuration list for PBXNativeTarget "SheltieTests" */;
+			buildPhases = (
+				3A96667FCECE2F5422CA75B5 /* Sources */,
+				9FAC75E73DE2CD779D07BF57 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4E0C348D9623AD3BC303E458 /* PBXTargetDependency */,
+			);
+			name = SheltieTests;
+			packageProductDependencies = (
+				17192AF47C360D606ABAB389 /* SheltieProtocol */,
+			);
+			productName = SheltieTests;
+			productReference = 814BFD0844B235A1E99C3B3B /* SheltieTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D5944972B7FD7AE06353E089 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					4A1F93EC22F0A1E6C561BDAF = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					A317E398CC333F3187C03781 = {
+						DevelopmentTeam = "";
+						TestTargetID = 4A1F93EC22F0A1E6C561BDAF;
+					};
+					B9447CAAC7E8EB2CEF951963 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = 70995F7F1CBED22B6BD55842 /* Build configuration list for PBXProject "Sheltie" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 6AFEE7834B0B202DE4675A86;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				CB2B2BD948B0C90F9577B602 /* XCRemoteSwiftPackageReference "SwiftTerm" */,
+				1F1379B5E0953805CCC404DC /* XCLocalSwiftPackageReference "../protocol" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 587803A0836FBE559CF52587 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4A1F93EC22F0A1E6C561BDAF /* Sheltie */,
+				B9447CAAC7E8EB2CEF951963 /* SheltieTests */,
+				A317E398CC333F3187C03781 /* SheltieUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0B7E86834AEEF30A3F50DB32 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4EA9F7D73D7770C6FC213A99 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3A96667FCECE2F5422CA75B5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				311947DB0D215A4C1F245F8B /* AppStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD7C3F2165AF0415FFF0F4B9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5D1A7EC96657D05FE1211A19 /* AppStore.swift in Sources */,
+				5C2CD5CB10CDA9CCB4735E02 /* BridgeClient.swift in Sources */,
+				365F75E58B0A2731EE9FC4D6 /* DemoData.swift in Sources */,
+				CBAAE4249A47EFD3D68AC155 /* DeviceIdentity.swift in Sources */,
+				FA4BDE20B06AB75AE7EA590F /* InstanceProfile.swift in Sources */,
+				3B205C8BA48FA1DB056F630C /* InstanceRepository.swift in Sources */,
+				BE7E38DDEED3C24E1A2AE1D1 /* KeychainStore.swift in Sources */,
+				FCA1E192F005A8FA1FEE5D88 /* RootView.swift in Sources */,
+				30D114C7AFC610F852115E04 /* SheltieApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EFDB9FF220518626DCBE1B77 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8CC74870DA0115328F7EBF42 /* SheltieUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4E0C348D9623AD3BC303E458 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4A1F93EC22F0A1E6C561BDAF /* Sheltie */;
+			targetProxy = 8E19283085ED84BC1AD771F8 /* PBXContainerItemProxy */;
+		};
+		8F8AE8B640C17FA90C78BD79 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4A1F93EC22F0A1E6C561BDAF /* Sheltie */;
+			targetProxy = 5AA4076C661679ED34A70C23 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0C14ED6CE52F16CE5162B0F3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yannickherrero.SheltieTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sheltie.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sheltie";
+			};
+			name = Release;
+		};
+		52F06CD2AE5E4FC03290C027 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yannickherrero.SheltieTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sheltie.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sheltie";
+			};
+			name = Debug;
+		};
+		55C86EF1CF2B0BC91DD795E3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+		5F02D5C1B53ADE21CD8184FF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				INFOPLIST_FILE = Sheltie/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yannickherrero.Sheltie;
+				PRODUCT_NAME = Sheltie;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A2DA50981D207CD12A4670CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yannickherrero.SheltieUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Sheltie;
+			};
+			name = Debug;
+		};
+		AA9196CAD645B01B602AA980 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Release;
+		};
+		B9DAC810BF7BD9ADF81629A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yannickherrero.SheltieUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Sheltie;
+			};
+			name = Release;
+		};
+		BA3A2F882E849CDFC8197531 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				INFOPLIST_FILE = Sheltie/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yannickherrero.Sheltie;
+				PRODUCT_NAME = Sheltie;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		567A5A5A1B0CDF27CA398622 /* Build configuration list for PBXNativeTarget "Sheltie" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F02D5C1B53ADE21CD8184FF /* Debug */,
+				BA3A2F882E849CDFC8197531 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		70995F7F1CBED22B6BD55842 /* Build configuration list for PBXProject "Sheltie" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55C86EF1CF2B0BC91DD795E3 /* Debug */,
+				AA9196CAD645B01B602AA980 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C72D972CEBFD3577D028B5A4 /* Build configuration list for PBXNativeTarget "SheltieTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				52F06CD2AE5E4FC03290C027 /* Debug */,
+				0C14ED6CE52F16CE5162B0F3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D6E410D5E84D3F2A11A7FE82 /* Build configuration list for PBXNativeTarget "SheltieUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A2DA50981D207CD12A4670CD /* Debug */,
+				B9DAC810BF7BD9ADF81629A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		1F1379B5E0953805CCC404DC /* XCLocalSwiftPackageReference "../protocol" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../protocol;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		CB2B2BD948B0C90F9577B602 /* XCRemoteSwiftPackageReference "SwiftTerm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/migueldeicaza/SwiftTerm.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.11.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		17192AF47C360D606ABAB389 /* SheltieProtocol */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SheltieProtocol;
+		};
+		5A55C864C8042B31DFBF8B0A /* SwiftTerm */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CB2B2BD948B0C90F9577B602 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
+			productName = SwiftTerm;
+		};
+		61488497FE606435EF739AE4 /* SheltieProtocol */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SheltieProtocol;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = D5944972B7FD7AE06353E089 /* Project object */;
+}

@@ -1,0 +1,91 @@
+name: Sheltie
+options:
+  bundleIdPrefix: com.yannickherrero
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "26.0"
+  createIntermediateGroups: true
+packages:
+  SheltieProtocol:
+    path: ../protocol
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm.git
+    exactVersion: 1.11.2
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "2"
+    SUPPORTS_MACCATALYST: NO
+    SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+    DEVELOPMENT_TEAM: ""
+targets:
+  Sheltie:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sheltie
+    resources:
+      - path: Sheltie/Resources
+    dependencies:
+      - package: SheltieProtocol
+      - package: SwiftTerm
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yannickherrero.Sheltie
+        PRODUCT_NAME: Sheltie
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 0.1.0
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+    info:
+      path: Sheltie/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Sheltie
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIRequiresFullScreen: false
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+  SheltieTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SheltieTests
+    dependencies:
+      - target: Sheltie
+      - package: SheltieProtocol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yannickherrero.SheltieTests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Sheltie.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sheltie"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+  SheltieUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: SheltieUITests
+    dependencies:
+      - target: Sheltie
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yannickherrero.SheltieUITests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Sheltie:
+    build:
+      targets:
+        Sheltie: all
+        SheltieTests: [test]
+        SheltieUITests: [test]
+    test:
+      gatherCoverageData: true
+      targets:
+        - name: SheltieTests
+        - name: SheltieUITests
