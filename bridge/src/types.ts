@@ -168,6 +168,7 @@ export interface ActionCommand {
   type: ActionType;
   targetID?: string | null;
   text?: string | null;
+  bytesBase64?: string | null;
   keys?: string[] | null;
   splitDirection?: SplitDirection | null;
   paneDirection?: PaneDirection | null;

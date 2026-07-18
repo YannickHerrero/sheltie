@@ -99,6 +99,7 @@ public struct ActionCommand: Codable, Equatable, Sendable {
     public let type: ActionType
     public let targetID: String?
     public let text: String?
+    public let bytesBase64: String?
     public let keys: [String]?
     public let splitDirection: SplitDirection?
     public let paneDirection: PaneDirection?
@@ -114,6 +115,7 @@ public struct ActionCommand: Codable, Equatable, Sendable {
         type: ActionType,
         targetID: String? = nil,
         text: String? = nil,
+        bytesBase64: String? = nil,
         keys: [String]? = nil,
         splitDirection: SplitDirection? = nil,
         paneDirection: PaneDirection? = nil,
@@ -128,6 +130,7 @@ public struct ActionCommand: Codable, Equatable, Sendable {
         self.type = type
         self.targetID = targetID
         self.text = text
+        self.bytesBase64 = bytesBase64
         self.keys = keys
         self.splitDirection = splitDirection
         self.paneDirection = paneDirection
