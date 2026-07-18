@@ -18,6 +18,7 @@ xcuserdata/
 .swiftpm/
 
 # Other dependency managers
+node_modules/
 Pods/
 Carthage/Build/
 

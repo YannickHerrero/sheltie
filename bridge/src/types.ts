@@ -1,0 +1,262 @@
+export const PROTOCOL_VERSION = 1;
+export const BRIDGE_VERSION = "0.1.0";
+
+export type AgentStatus = "idle" | "working" | "blocked" | "done" | "unknown";
+export type PaneKind = "agent" | "shell";
+export type SplitDirection = "horizontal" | "vertical";
+
+export interface BridgeInfo {
+  version: string;
+  protocolVersion: number;
+  capabilities: string[];
+}
+
+export interface InstanceInfo {
+  id: string;
+  name: string;
+  host: string;
+}
+
+export interface HerdrInfo {
+  version: string;
+  protocolVersion: number;
+  capabilities: string[];
+}
+
+export interface SessionSummary {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  reachable: boolean;
+}
+
+export interface WorkspaceSnapshot {
+  id: string;
+  number: number;
+  label: string;
+  path: string | null;
+  branch: string | null;
+  activeTabID: string | null;
+  paneCount: number;
+  tabCount: number;
+  status: AgentStatus;
+  focused: boolean;
+}
+
+export interface TabSnapshot {
+  id: string;
+  workspaceID: string;
+  number: number;
+  label: string;
+  paneCount: number;
+  status: AgentStatus;
+  focused: boolean;
+}
+
+export interface PaneSnapshot {
+  id: string;
+  terminalID: string;
+  workspaceID: string;
+  tabID: string;
+  title: string;
+  cwd: string;
+  kind: PaneKind;
+  agentName: string | null;
+  agentDisplayName: string | null;
+  agentStatus: AgentStatus;
+  focused: boolean;
+  revision: number;
+}
+
+export interface AgentSnapshot {
+  id: string;
+  paneID: string;
+  workspaceID: string;
+  tabID: string;
+  name: string;
+  displayName: string;
+  status: AgentStatus;
+  statusLabel: string | null;
+}
+
+export type LayoutNode =
+  | { type: "pane"; paneID: string }
+  | {
+      type: "split";
+      direction: SplitDirection;
+      ratio: number;
+      first: LayoutNode;
+      second: LayoutNode;
+    };
+
+export interface PaneLayoutSnapshot {
+  workspaceID: string;
+  tabID: string;
+  zoomed: boolean;
+  focusedPaneID: string | null;
+  root: LayoutNode;
+}
+
+export interface UsageMeter {
+  id: string;
+  provider: string;
+  label: string;
+  remainingFraction: number;
+  resetAtMillis: number | null;
+  observedAtMillis: number;
+}
+
+export interface BootstrapSnapshot {
+  protocolVersion: number;
+  bridge: BridgeInfo;
+  instance: InstanceInfo;
+  herdr: HerdrInfo;
+  sessions: SessionSummary[];
+  activeSessionID: string | null;
+  workspaces: WorkspaceSnapshot[];
+  tabs: TabSnapshot[];
+  panes: PaneSnapshot[];
+  agents: AgentSnapshot[];
+  layouts: PaneLayoutSnapshot[];
+  focus: { workspaceID: string | null; tabID: string | null; paneID: string | null };
+  usageMeters: UsageMeter[];
+  generatedAtMillis: number;
+}
+
+export interface TerminalSubscription {
+  sessionID: string;
+  paneID: string;
+  columns: number;
+  rows: number;
+  writable: boolean;
+}
+
+export interface TerminalFrame {
+  sessionID: string;
+  paneID: string;
+  sequence: number;
+  full: boolean;
+  columns: number;
+  rows: number;
+  bytesBase64: string;
+}
+
+export type ActionType =
+  | "workspace.focus"
+  | "workspace.create"
+  | "workspace.rename"
+  | "workspace.close"
+  | "tab.focus"
+  | "tab.create"
+  | "tab.rename"
+  | "tab.close"
+  | "pane.focus"
+  | "pane.split"
+  | "pane.resize"
+  | "pane.zoom"
+  | "pane.rename"
+  | "pane.close"
+  | "terminal.input"
+  | "terminal.keys"
+  | "terminal.resize"
+  | "agent.message";
+
+export interface ActionCommand {
+  requestID: string;
+  sessionID: string;
+  type: ActionType;
+  targetID?: string | null;
+  text?: string | null;
+  keys?: string[] | null;
+  direction?: SplitDirection | null;
+  ratio?: number | null;
+  label?: string | null;
+  cwd?: string | null;
+  columns?: number | null;
+  rows?: number | null;
+}
+
+export interface ActionResult {
+  requestID: string;
+  ok: boolean;
+  errorCode: string | null;
+  message: string | null;
+}
+
+export type StreamServerMessage =
+  | { type: "snapshot"; snapshot: BootstrapSnapshot }
+  | { type: "terminal.frame"; frame: TerminalFrame }
+  | { type: "terminal.closed"; terminal: { sessionID: string; paneID: string; reason: string } }
+  | { type: "action.result"; result: ActionResult }
+  | { type: "session.expiring"; expiresAtMillis: number }
+  | { type: "ping"; id: string };
+
+export type StreamClientMessage =
+  | { type: "subscribe"; subscriptions: TerminalSubscription[] }
+  | { type: "action"; action: ActionCommand }
+  | { type: "resync" }
+  | { type: "pong"; id: string };
+
+export interface RawHerdrWorkspace {
+  workspace_id: string;
+  number: number;
+  label: string;
+  focused: boolean;
+  pane_count: number;
+  tab_count: number;
+  active_tab_id?: string | null;
+  agent_status: AgentStatus;
+}
+
+export interface RawHerdrTab {
+  tab_id: string;
+  workspace_id: string;
+  number: number;
+  label: string;
+  focused: boolean;
+  pane_count: number;
+  agent_status: AgentStatus;
+}
+
+export interface RawHerdrPane {
+  pane_id: string;
+  terminal_id: string;
+  workspace_id: string;
+  tab_id: string;
+  focused: boolean;
+  cwd: string;
+  foreground_cwd?: string | null;
+  label?: string | null;
+  title?: string | null;
+  agent?: string | null;
+  display_agent?: string | null;
+  agent_status: AgentStatus;
+  custom_status?: string | null;
+  revision: number;
+}
+
+export type RawLayoutNode =
+  | { type: "pane"; pane_id?: string | null; label?: string | null; cwd?: string | null }
+  | {
+      type: "split";
+      direction: SplitDirection;
+      ratio: number;
+      first: RawLayoutNode;
+      second: RawLayoutNode;
+    };
+
+export interface RawLayoutDescription {
+  workspace_id: string;
+  tab_id: string;
+  zoomed: boolean;
+  focused_pane_id?: string | null;
+  root: RawLayoutNode;
+}
+
+export interface RawHerdrSnapshot {
+  version: string;
+  protocol: number;
+  workspaces: RawHerdrWorkspace[];
+  tabs: RawHerdrTab[];
+  panes: RawHerdrPane[];
+}
