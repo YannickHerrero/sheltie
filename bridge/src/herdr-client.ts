@@ -133,6 +133,70 @@ export class HerdrClient {
     }
   }
 
+  subscribeEvents(
+    subscriptions: Array<{ type: string; pane_id?: string }>,
+    handlers: { onEvent: (event: string) => void; onClose: (reason: string) => void },
+  ): { close(): void } {
+    const id = `sheltie-events-${++requestCounter}`;
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let socket: Bun.Socket | null = null;
+    let closed = false;
+    let acknowledged = false;
+
+    const finish = (reason: string, notify: boolean) => {
+      if (closed) return;
+      closed = true;
+      clearTimeout(timeout);
+      try { socket?.end(); } catch { /* already closed */ }
+      socket = null;
+      if (notify) handlers.onClose(reason);
+    };
+    const consume = (line: string) => {
+      let value: unknown;
+      try { value = JSON.parse(line); } catch { return finish("invalid event JSON", true); }
+      if (!value || typeof value !== "object") return;
+      const message = value as Record<string, unknown>;
+      if (message.error && typeof message.error === "object") {
+        const error = message.error as Record<string, unknown>;
+        return finish(`${String(error.code)}: ${String(error.message)}`, true);
+      }
+      if (typeof message.event === "string") {
+        handlers.onEvent(message.event);
+      } else if (message.result) {
+        acknowledged = true;
+        clearTimeout(timeout);
+      }
+    };
+    const timeout = setTimeout(() => finish("event subscription acknowledgement timed out", true), this.timeoutMilliseconds);
+
+    void Bun.connect({
+      unix: this.socketPath,
+      socket: {
+        open(opened) {
+          socket = opened;
+          opened.write(`${JSON.stringify({ id, method: "events.subscribe", params: { subscriptions } })}\n`);
+          opened.flush();
+        },
+        data(opened, data) {
+          socket = opened;
+          buffer += decoder.decode(data, { stream: true });
+          let newline = buffer.indexOf("\n");
+          while (newline >= 0 && !closed) {
+            const line = buffer.slice(0, newline).trim();
+            buffer = buffer.slice(newline + 1);
+            if (line) consume(line);
+            newline = buffer.indexOf("\n");
+          }
+        },
+        error(_socket, error) { finish(error.message, true); },
+        close() { finish(acknowledged ? "event stream closed" : "event stream closed before acknowledgement", true); },
+      },
+    }).catch((error: unknown) => finish(error instanceof Error ? error.message : String(error), true));
+
+    return { close: () => finish("closed", false) };
+  }
+
   async exportLayout(tabID: string): Promise<RawLayoutDescription> {
     const result = await this.request<{ type: "layout_export"; layout: RawLayoutDescription }>("layout.export", {
       tab_id: tabID,

@@ -43,6 +43,38 @@ describe("Herdr Unix-socket client", () => {
     expect(await client.ping()).toEqual({ version: "0.7.3", protocol: 17, capabilities: { live_handoff: true } });
   });
 
+  test("keeps event subscriptions open and decodes streamed events", async () => {
+    socketPath = join(tmpdir(), `sheltie-events-${crypto.randomUUID()}.sock`);
+    server = Bun.listen({
+      unix: socketPath,
+      socket: {
+        data(socket, bytes) {
+          const request = JSON.parse(new TextDecoder().decode(bytes).trim()) as { id: string };
+          socket.write(`${JSON.stringify({ id: request.id, result: { type: "subscription_started" } })}\n`);
+          socket.write(`${JSON.stringify({ event: "tab_created", data: { tab_id: "w1:t2" } })}\n`);
+          socket.flush();
+        },
+      },
+    });
+    const client = new HerdrClient(socketPath, 1_000);
+    const event = await new Promise<string>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("event timeout")), 1_000);
+      let subscription: { close(): void } | undefined;
+      subscription = client.subscribeEvents([{ type: "tab.created" }], {
+        onEvent(value) {
+          clearTimeout(timer);
+          subscription?.close();
+          resolve(value);
+        },
+        onClose(reason) {
+          clearTimeout(timer);
+          reject(new Error(reason));
+        },
+      });
+    });
+    expect(event).toBe("tab_created");
+  });
+
   test("falls back to list calls when session.snapshot is unavailable", async () => {
     const client = startMockHerdr((request) => {
       if (request.method === "session.snapshot") {

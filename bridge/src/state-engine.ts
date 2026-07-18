@@ -1,4 +1,4 @@
-import { adaptSnapshot } from "./adapter.ts";
+import { adaptSnapshot, compareVersions } from "./adapter.ts";
 import type { BridgeConfig } from "./config.ts";
 import { HerdrClient } from "./herdr-client.ts";
 import { discoverSessions, type HerdrSessionLocation } from "./sessions.ts";
@@ -12,6 +12,11 @@ import type {
   RawLayoutDescription,
   SessionSummary,
 } from "./types.ts";
+
+interface EventWatcher {
+  signature: string;
+  close(): void;
+}
 
 interface SessionFetch {
   location: HerdrSessionLocation;
@@ -34,7 +39,9 @@ export class BridgeStateEngine implements BridgeStateProviding {
   private readonly locations = new Map<string, HerdrSessionLocation>();
   private readonly snapshots = new Map<string, BootstrapSnapshot>();
   private readonly listeners = new Set<(snapshot: BootstrapSnapshot) => void>();
+  private readonly eventWatchers = new Map<string, EventWatcher>();
   private timer: Timer | null = null;
+  private eventRefreshTimer: Timer | null = null;
   private refreshing: Promise<void> | null = null;
 
   constructor(
@@ -53,7 +60,11 @@ export class BridgeStateEngine implements BridgeStateProviding {
 
   stop() {
     if (this.timer) clearInterval(this.timer);
+    if (this.eventRefreshTimer) clearTimeout(this.eventRefreshTimer);
     this.timer = null;
+    this.eventRefreshTimer = null;
+    for (const watcher of this.eventWatchers.values()) watcher.close();
+    this.eventWatchers.clear();
   }
 
   addSnapshotListener(listener: (snapshot: BootstrapSnapshot) => void): () => void {
@@ -197,6 +208,8 @@ export class BridgeStateEngine implements BridgeStateProviding {
         this.clients.delete(id);
         this.locations.delete(id);
         this.snapshots.delete(id);
+        this.eventWatchers.get(id)?.close();
+        this.eventWatchers.delete(id);
       }
     }
 
@@ -209,6 +222,7 @@ export class BridgeStateEngine implements BridgeStateProviding {
       }
       try {
         const raw = await client.snapshot();
+        this.ensureEventWatcher(location.id, raw, client);
         const layoutResults = await Promise.allSettled(raw.tabs.map((tab) => client.exportLayout(tab.tab_id)));
         const layouts = new Map<string, RawLayoutDescription>();
         for (const result of layoutResults) {
@@ -246,6 +260,35 @@ export class BridgeStateEngine implements BridgeStateProviding {
       if (changed) for (const listener of this.listeners) listener(snapshot);
     }
   }
+
+  private ensureEventWatcher(sessionID: string, raw: RawHerdrSnapshot, client: HerdrClient) {
+    const subscriptions = eventSubscriptions(raw);
+    const signature = JSON.stringify(subscriptions);
+    const current = this.eventWatchers.get(sessionID);
+    if (current?.signature === signature) return;
+    current?.close();
+
+    let watcher: EventWatcher;
+    const subscription = client.subscribeEvents(subscriptions, {
+      onEvent: () => this.scheduleEventRefresh(),
+      onClose: (reason) => {
+        if (this.eventWatchers.get(sessionID) === watcher) {
+          this.eventWatchers.delete(sessionID);
+          console.warn(`[events] ${sessionID}: ${reason}`);
+        }
+      },
+    });
+    watcher = { signature, close: subscription.close };
+    this.eventWatchers.set(sessionID, watcher);
+  }
+
+  private scheduleEventRefresh() {
+    if (this.eventRefreshTimer) return;
+    this.eventRefreshTimer = setTimeout(() => {
+      this.eventRefreshTimer = null;
+      void this.refresh();
+    }, 75);
+  }
 }
 
 function required<T>(value: T | null | undefined, name: string): T {
@@ -264,6 +307,21 @@ function failure(action: ActionCommand, errorCode: string, message: string): Act
 
 function snapshotFingerprint(snapshot: BootstrapSnapshot): string {
   return JSON.stringify({ ...snapshot, generatedAtMillis: 0 });
+}
+
+function eventSubscriptions(raw: RawHerdrSnapshot): Array<{ type: string; pane_id?: string }> {
+  const global: Array<{ type: string; pane_id?: string }> = [
+    "workspace.created", "workspace.updated", "workspace.renamed", "workspace.closed", "workspace.focused",
+    "worktree.created", "worktree.opened", "worktree.removed",
+    "tab.created", "tab.closed", "tab.focused", "tab.renamed",
+    "pane.created", "pane.closed", "pane.focused", "pane.moved", "pane.exited", "pane.agent_detected",
+  ].map((type) => ({ type }));
+  if (compareVersions(raw.version, "0.7.2") >= 0) global.push({ type: "layout.updated" });
+  return global.concat(
+    raw.panes
+      .filter((pane) => pane.agent)
+      .map((pane) => ({ type: "pane.agent_status_changed", pane_id: pane.pane_id })),
+  );
 }
 
 function clampedRatio(value: number): number {
