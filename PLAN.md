@@ -18,7 +18,8 @@ The app will recreate Herdr's workspace, agent, tab, and pane layout in SwiftUI.
 - Connect to a service exposed by the Mac that already runs the Herdr server.
 - Use Tailscale as the private network and ingress boundary, similarly to Collie.
 - Personal application initially, while preserving a path to public distribution.
-- Design mockups will be supplied separately and remain uncommitted until reviewed.
+- `do-not-commit/Web-Prototype.zip` is the local visual reference and must remain untracked.
+- The exported `herdr-ipad-control.html` is the visual source of truth; handoff documents and images provide supporting context only.
 
 ### Goals
 
@@ -39,6 +40,61 @@ The app will recreate Herdr's workspace, agent, tab, and pane layout in SwiftUI.
 - iPhone, macOS, visionOS, or Android support in the first milestone.
 - Background push notifications in the first interactive prototype.
 - Pixel-identical terminal rendering of Herdr's own TUI chrome; the chrome will be native SwiftUI informed by the design mockup.
+- Search, a global New Session button, and an agent inspector in the initial release. These appear only in earlier design iterations, not the final HTML source of truth.
+
+### Design source of truth
+
+The approved local design archive contains one final product screen. Implementation evidence is prioritized in this order:
+
+1. `herdr-ipad-control.html` for final structure, tokens, responsive rules, and interactions.
+2. `DESIGN-MANIFEST.json` and `DESIGN-HANDOFF.md` for fidelity and accessibility expectations.
+3. The latest exported drawing for visual comparison.
+4. Earlier drawings and the original Herdr screenshot for design history and context only.
+
+The HTML is a behavioral contract, not a request to embed a web view. Web controls must be translated to native SwiftUI/UIKit equivalents while preserving hierarchy, geometry, state, and intent.
+
+### Visual system
+
+The initial theme is the exported Tokyo Night Day-derived light palette:
+
+| Token | Source value | Intended use |
+| --- | --- | --- |
+| Background | `oklch(0.9135 0.0068 277.2)` | Terminal and workspace canvas |
+| Surface | `oklch(0.8866 0.0096 279.7)` | App bar, tabs, composers, keybar |
+| Foreground | `oklch(0.3252 0.0988 268.3)` | Primary text and decisive controls |
+| Muted | `oklch(0.5551 0.0661 275.7)` | Metadata and secondary labels |
+| Border | `oklch(0.7951 0.0315 275.5)` | Low-contrast pane boundaries |
+| Accent | `oklch(0.5999 0.1804 257.5)` | Focused tab and primary selection |
+| Success | `oklch(0.5249 0.0929 130.3)` | Connected and done |
+| Warning | `oklch(0.5527 0.0749 75.2)` | Working |
+| Danger | `oklch(0.6337 0.2326 11.6)` | Blocked and destructive actions |
+
+Convert these source colors into named sRGB asset-catalog colors and visually validate the conversion rather than scattering literal values through Swift code. Initial typography maps display text to Iowan Old Style/Charter, interface text to the system sans-serif, and operational text to JetBrains Mono with SF Mono fallback.
+
+The spacing rhythm is 8, 12, 20, and 32 points. Standard radii are 8 points, larger modal surfaces use 14 points, and interactive targets remain at least 44 points. Motion is restrained (roughly 120–220 ms) and must respect Reduce Motion.
+
+Status presentation follows the prototype exactly: working is warning/gold, blocked is danger/pink, done and connected are success/olive, and paused or unknown is muted.
+
+### Component and adaptive-layout contract
+
+The native shell consists of:
+
+- A 58-point app bar with Sheltie identity, current Mac/connection selector, and an optional provider-usage meter.
+- A 205–240-point sidebar split vertically between Spaces (approximately 42%) and grouped Agents.
+- A 46-point horizontally scrollable tab strip.
+- A Herdr-driven split-pane workspace with 38-point pane headers.
+- Separate agent-message and terminal-command composers.
+- A 50-point horizontally scrollable special-key row.
+- A registered-instance selection/pairing modal and transient toast/status feedback.
+
+Use available window width rather than device identity or orientation:
+
+- Above 820 points: keep the sidebar persistent and show the complete Herdr pane split.
+- At or below 820 points: present the sidebar as a drawer and show one pane at a time with an explicit pane switcher.
+- At or below 560 points: condense connection metadata, usage presentation, tabs, and keybar notes for narrow Split View and possible future phone support.
+- Remove the outer frame margin, radius, and shadow when the app is edge-to-edge in compact layouts.
+
+The prototype documents the connected success path. Before implementation, specify native loading, empty, pairing-required, connecting, disconnected, reconnecting, incompatible-server, revoked-device, pane-stream-error, and optional-data-unavailable states without changing the established geometry unnecessarily.
 
 ## 2. System architecture
 
@@ -72,6 +128,8 @@ The app will recreate Herdr's workspace, agent, tab, and pane layout in SwiftUI.
 └─────────────────────────────────────────────────────────────┘
 ```
 
+Each registered Mac runs its own loopback bridge and Tailscale Serve ingress. The app stores multiple paired instance profiles locally, selects exactly one active instance per window, and keeps credentials isolated by instance. Multi-instance support is therefore part of the client model even if the first integration environment uses one Mac.
+
 ### Architectural boundary
 
 The iPad app must not speak Herdr's private binary client protocol directly. The bridge will translate Herdr's local APIs into a versioned Sheltie protocol. This keeps Herdr compatibility code on the Mac and allows the app and bridge to negotiate their own stable contract.
@@ -90,33 +148,35 @@ The preferred baseline is Herdr 0.7.3 or newer. The bridge must query version an
 
 ### 3.1 Application shell
 
-The final structure will be derived from the supplied HTML mockup. The expected native regions are:
+The native application shell must follow the approved component and adaptive-layout contract above. It should use custom SwiftUI composition instead of default `NavigationSplitView`, `List`, or toolbar styling where platform defaults would materially change the mockup's geometry.
 
-- Workspace/space sidebar
-- Agent list and attention states
-- Active workspace header
-- Tab strip
-- Recursive split-pane surface
-- Focus and zoom indicators
-- Connection and session state
-- Native menus, sheets, alerts, and command palette
+Data terminology maps as follows:
 
-Landscape should preserve the complete multi-column layout. Portrait should collapse secondary navigation into overlays or drawers without changing the underlying Herdr state.
+- **Spaces** are Herdr workspaces.
+- **Tabs** in the horizontal strip are Herdr tabs, not named Herdr sessions.
+- **Terminal panes** are Herdr panes arranged by a Herdr layout snapshot.
+- **Agents** are Herdr-detected agents linked back to their workspace, tab, and pane.
+- **Instances** are paired Macs/bridge installations; named Herdr sessions live within an instance.
+
+Selecting a Space focuses its active tab and pane. Selecting an Agent focuses its linked Space, tab, and pane. The instance selector is a native modal that lists paired Macs, communicates current/connected/paused state, and launches a secure pairing flow for a new Mac.
+
+The final HTML does not contain the workspace hero header, search control, global New Session control, or right-side agent inspector shown in earlier drawings. Do not implement those surfaces unless they are deliberately reintroduced in a later design revision.
 
 ### 3.2 State model
 
 A single actor-isolated store should own:
 
-- Connection and pairing status
+- Registered instance profiles, active instance, pairing, and connection status
 - Bridge and Herdr capabilities
 - Sessions
 - Workspaces and worktrees
 - Tabs
 - Panes and agents
 - Layout snapshots and split ratios
-- Focus and zoom state
-- Terminal subscriptions
-- Pending mutations and recoverable errors
+- Focus, zoom, active composer, and keyboard-routing state
+- Terminal subscriptions and frame sequence state
+- Optional provider-usage meters and presentation metadata
+- Pending mutations, toast/status feedback, and recoverable errors
 
 Bootstrap provides a complete snapshot. WebSocket events update the cache. Any sequence gap, reconnect, or stale-state indication triggers a fresh bootstrap rather than attempting speculative repair.
 
@@ -130,6 +190,8 @@ Use a custom SwiftUI layout driven by Herdr's layout snapshot:
 - Render visible dividers with native drag targets.
 - Send split-ratio changes deliberately and debounce drag updates.
 - Support zoom without destroying the cached full layout.
+- At compact widths, retain the Herdr split model while rendering and subscribing only to the explicitly selected visible pane.
+- Keep sidebar and pane-switcher presentation state local to the app; do not mutate Herdr merely because the window crosses an adaptive threshold.
 
 ### 3.4 Terminal rendering
 
@@ -143,28 +205,29 @@ Required behavior:
 - Independent terminal dimensions for every visible pane.
 - Read-only subscriptions for background panes.
 - Writable control for the focused pane.
-- Clean teardown and restoration when switching tabs or sessions.
+- Clean teardown and restoration when switching tabs, sessions, or instances.
 
-Kitty graphics and image protocols can be deferred until text terminal fidelity is established.
+Pane headers, command composers, and the keybar are native chrome outside the terminal emulator. The terminal view must not reproduce those elements from ANSI output. Kitty graphics and image protocols can be deferred until text terminal fidelity is established.
 
 ### 3.5 Keyboard and input
 
 #### Physical keyboard
 
-- Route normal text and terminal keys to the focused pane.
+- Route normal text and terminal keys directly to the focused pane when no composer or modal owns focus.
 - Preserve key repeat and modifier state.
 - Reserve explicit app shortcuts for workspace, tab, pane, command-palette, and connection actions.
 - Provide a discoverable shortcut overlay.
-- Make app-versus-terminal shortcut precedence deterministic and testable.
+- Make modal → composer → app shortcut → terminal precedence deterministic and testable.
 
 #### Touch and software keyboard
 
-- Compose field supporting autocorrect, marked text, paste, and dictation.
-- Explicit Send action.
-- Accessory controls for Escape, Tab, Shift-Tab, arrows, Enter, and Backspace.
-- Sticky Control, Option, Shift, and Command modifiers.
-- Configurable buttons for common chords such as Control-C.
-- Tap to focus panes and native context menus for structural actions.
+- The agent composer sends semantic agent text followed by the configured submit key.
+- The terminal composer sends literal terminal text and an explicit Enter only when submitted.
+- Both composers support autocorrect, marked text, paste, and dictation as appropriate; terminal autocorrection remains off by default.
+- The special-key row always targets the focused pane rather than inserting display labels into a text field.
+- Provide Escape, Tab, Shift-Tab, arrows, Enter, Backspace, sticky modifiers, and configurable common chords such as Control-C.
+- Preserve the prototype's quick literal keys (`|`, `~`, and `/`) as configurable defaults.
+- Tap to focus panes and use native context menus for structural actions.
 - Separate terminal interaction and text-selection behavior where gestures conflict.
 
 ### 3.6 Lifecycle
@@ -187,6 +250,7 @@ The app cannot rely on a WebSocket remaining alive in the background. On foregro
 - Configure and report the Tailscale Serve ingress.
 - Discover default and named Herdr sessions.
 - Adapt Herdr snapshots, events, actions, and terminal sessions.
+- Publish optional presentation metadata and provider-usage meters only when a trusted source supplies them.
 - Multiplex terminal streams onto one authenticated WebSocket.
 - Enforce capability and protocol compatibility.
 - Pair and revoke iPad devices.
@@ -229,6 +293,7 @@ GET  /v1/health
 - Workspaces, tabs, panes, agents, and layouts
 - Focus and zoom state
 - Theme/display tokens needed by the client
+- Optional provider-usage meters with source, remaining amount, reset time, and freshness
 
 #### WebSocket
 
@@ -278,7 +343,7 @@ Sheltie is remote shell access and must be designed accordingly.
 - Record write actions in a private audit log without exposing secrets unnecessarily.
 - Apply payload, connection, subscription, and terminal-frame limits.
 
-A client-supplied device-name or device-ID header is not authentication and must never grant write access.
+A client-supplied device-name or device-ID header is not authentication and must never grant write access. The prototype's manually entered WebSocket URL and optional token are not the production security model: adding an instance must pair with a bridge, validate its HTTPS/MagicDNS identity, and store the resulting per-device credential in Keychain.
 
 ### Public-release considerations
 
@@ -295,9 +360,10 @@ Before public distribution, review:
 
 ### Phase 0 — design and contracts
 
-- Import and inspect the local HTML mockup.
-- Inventory every screen, state, interaction, and responsive rule.
-- Convert the visual design into native design tokens and component specifications.
+- Treat the final HTML export as the approved source of truth and keep the archive untracked.
+- Freeze named native color, typography, spacing, radius, status, and motion tokens from the export.
+- Inventory every visible component, interaction, adaptive rule, and missing operational state.
+- Produce a native component specification for the app bar, sidebar, tabs, panes, composers, keybar, instance modal, and toast/status feedback.
 - Define the Sheltie mobile protocol and capability negotiation.
 - Decide bridge language and packaging.
 - Produce threat model and pairing sequence diagrams.
@@ -312,16 +378,17 @@ Before public distribution, review:
 
 ### Phase 2 — read-only iPad client
 
-- Native shell matching the approved mockup.
-- Connection, pairing, and reconnect state.
-- Workspace, agent, tab, and pane layout rendering.
-- Read-only live terminals for all panes in the active tab.
+- Native shell matching the approved mockup and adaptive width thresholds.
+- Registered-instance selector, pairing, connection, and reconnect states.
+- Workspace, grouped-agent, tab, and pane layout rendering.
+- Optional usage-meter presentation with a clean absent-data state.
+- Read-only live terminals for visible panes in the active tab.
 
 ### Phase 3 — interactive terminal client
 
 - Focused terminal control.
-- Physical keyboard routing.
-- Software-keyboard composer and special-key toolbar.
+- Physical keyboard routing with explicit focus precedence.
+- Separate agent and terminal composers plus a focused-pane special-key toolbar.
 - Paste, scroll, resize, selection, and tab switching.
 - Reconnection and full-frame recovery.
 
@@ -355,8 +422,10 @@ Before public distribution, review:
 
 ### Simulator and device
 
+- Screenshot comparison against the final HTML at 1024×768, 820×1180, and representative widths above and below 820 and 560 points.
+- Exact verification of app-bar, sidebar, tab, pane-header, composer, and keybar geometry.
 - iPad portrait and landscape sizes.
-- Split View and Stage Manager resizing.
+- Split View and Stage Manager resizing across both adaptive thresholds.
 - Network interruption and Tailscale reconnection.
 - App background/foreground restoration.
 - External keyboard typing, chords, key repeat, and shortcuts.
@@ -370,6 +439,9 @@ Screenshots can verify layout, but physical-keyboard timing, gestures, dictation
 
 - Exact behavior when Herdr has multiple attached clients with different pane dimensions.
 - Whether terminal control should be held continuously or acquired only during active input.
+- Source and freshness semantics for the optional Codex/provider usage meter.
+- Secure multi-instance discovery and pairing without accepting arbitrary raw socket URLs.
+- Maintaining direct terminal keyboard focus while native composers remain readily available.
 - How split-divider dragging maps to Herdr's public layout operations.
 - Terminal component selection and support for arbitrary TUIs.
 - Theme synchronization and custom Herdr configurations.
@@ -377,6 +449,7 @@ Screenshots can verify layout, but physical-keyboard timing, gestures, dictation
 - Minimum supported iPadOS version.
 - Bridge implementation language and update mechanism.
 - Scope of the first release: terminal control only versus complete structural management.
+- Whether search, global New Session, or an agent inspector should return in a future design revision.
 - Public project license and relationship to upstream Herdr.
 
 ## 9. Proposed future repository layout
