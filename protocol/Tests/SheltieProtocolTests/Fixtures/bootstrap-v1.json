@@ -1,0 +1,152 @@
+{
+  "protocolVersion": 1,
+  "bridge": {
+    "version": "0.1.0",
+    "protocolVersion": 1,
+    "capabilities": ["snapshots", "terminal.read", "terminal.write", "pairing"]
+  },
+  "instance": {
+    "id": "studio",
+    "name": "Mac Studio",
+    "host": "studio.example.ts.net"
+  },
+  "herdr": {
+    "version": "0.7.3",
+    "protocolVersion": 17,
+    "capabilities": ["session.snapshot", "terminal.session.observe"]
+  },
+  "sessions": [
+    {"id": "default", "name": "default", "isDefault": true, "reachable": true}
+  ],
+  "activeSessionID": "default",
+  "workspaces": [
+    {
+      "id": "w1",
+      "number": 1,
+      "label": "herdr",
+      "path": "~/Projects/herdr/website",
+      "branch": "master",
+      "activeTabID": "w1:t1",
+      "paneCount": 3,
+      "tabCount": 2,
+      "status": "working",
+      "focused": true
+    },
+    {
+      "id": "w2",
+      "number": 2,
+      "label": "llm-proxy",
+      "path": "~/Projects/llm-proxy",
+      "branch": "master",
+      "activeTabID": "w2:t1",
+      "paneCount": 1,
+      "tabCount": 1,
+      "status": "blocked",
+      "focused": false
+    }
+  ],
+  "tabs": [
+    {"id": "w1:t1", "workspaceID": "w1", "number": 1, "label": "claude", "paneCount": 2, "status": "working", "focused": true},
+    {"id": "w1:t2", "workspaceID": "w1", "number": 2, "label": "bun · dev", "paneCount": 1, "status": "done", "focused": false},
+    {"id": "w2:t1", "workspaceID": "w2", "number": 1, "label": "claude", "paneCount": 1, "status": "blocked", "focused": false}
+  ],
+  "panes": [
+    {
+      "id": "w1:p1",
+      "terminalID": "term-claude",
+      "workspaceID": "w1",
+      "tabID": "w1:t1",
+      "title": "Claude Code",
+      "cwd": "~/Projects/herdr/website",
+      "kind": "agent",
+      "agentName": "claude",
+      "agentDisplayName": "Claude Code",
+      "agentStatus": "working",
+      "focused": true,
+      "revision": 42
+    },
+    {
+      "id": "w1:p2",
+      "terminalID": "term-bun",
+      "workspaceID": "w1",
+      "tabID": "w1:t1",
+      "title": "bun",
+      "cwd": "~/Projects/herdr",
+      "kind": "shell",
+      "agentStatus": "done",
+      "focused": false,
+      "revision": 17
+    },
+    {
+      "id": "w1:p3",
+      "terminalID": "term-dev",
+      "workspaceID": "w1",
+      "tabID": "w1:t2",
+      "title": "bun · dev",
+      "cwd": "~/Projects/herdr",
+      "kind": "shell",
+      "agentStatus": "done",
+      "focused": false,
+      "revision": 3
+    },
+    {
+      "id": "w2:p1",
+      "terminalID": "term-proxy",
+      "workspaceID": "w2",
+      "tabID": "w2:t1",
+      "title": "Claude Code",
+      "cwd": "~/Projects/llm-proxy",
+      "kind": "agent",
+      "agentName": "claude",
+      "agentDisplayName": "Claude Code",
+      "agentStatus": "blocked",
+      "focused": false,
+      "revision": 8
+    }
+  ],
+  "agents": [
+    {"id": "w1:p1", "paneID": "w1:p1", "workspaceID": "w1", "tabID": "w1:t1", "name": "claude", "displayName": "herdr", "status": "working", "statusLabel": "working · claude"},
+    {"id": "w2:p1", "paneID": "w2:p1", "workspaceID": "w2", "tabID": "w2:t1", "name": "claude", "displayName": "llm-proxy", "status": "blocked", "statusLabel": "blocked · claude"}
+  ],
+  "layouts": [
+    {
+      "workspaceID": "w1",
+      "tabID": "w1:t1",
+      "zoomed": false,
+      "focusedPaneID": "w1:p1",
+      "root": {
+        "type": "split",
+        "direction": "horizontal",
+        "ratio": 0.54,
+        "first": {"type": "pane", "paneID": "w1:p1"},
+        "second": {"type": "pane", "paneID": "w1:p2"}
+      }
+    },
+    {
+      "workspaceID": "w1",
+      "tabID": "w1:t2",
+      "zoomed": false,
+      "focusedPaneID": "w1:p3",
+      "root": {"type": "pane", "paneID": "w1:p3"}
+    },
+    {
+      "workspaceID": "w2",
+      "tabID": "w2:t1",
+      "zoomed": false,
+      "focusedPaneID": "w2:p1",
+      "root": {"type": "pane", "paneID": "w2:p1"}
+    }
+  ],
+  "focus": {"workspaceID": "w1", "tabID": "w1:t1", "paneID": "w1:p1"},
+  "usageMeters": [
+    {
+      "id": "codex-weekly",
+      "provider": "openai",
+      "label": "Codex · OpenAI weekly",
+      "remainingFraction": 0.68,
+      "resetAtMillis": 1784646000000,
+      "observedAtMillis": 1784400000000
+    }
+  ],
+  "generatedAtMillis": 1784400000000
+}

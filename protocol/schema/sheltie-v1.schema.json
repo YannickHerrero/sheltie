@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheltie.local/schema/sheltie-v1.schema.json",
+  "title": "Sheltie bootstrap protocol v1",
+  "type": "object",
+  "required": [
+    "protocolVersion", "bridge", "instance", "herdr", "sessions", "workspaces",
+    "tabs", "panes", "agents", "layouts", "focus", "usageMeters", "generatedAtMillis"
+  ],
+  "properties": {
+    "protocolVersion": {"const": 1},
+    "bridge": {"$ref": "#/$defs/bridge"},
+    "instance": {"$ref": "#/$defs/instance"},
+    "herdr": {"$ref": "#/$defs/herdr"},
+    "sessions": {"type": "array", "items": {"$ref": "#/$defs/session"}},
+    "activeSessionID": {"type": ["string", "null"]},
+    "workspaces": {"type": "array", "items": {"$ref": "#/$defs/workspace"}},
+    "tabs": {"type": "array", "items": {"$ref": "#/$defs/tab"}},
+    "panes": {"type": "array", "items": {"$ref": "#/$defs/pane"}},
+    "agents": {"type": "array", "items": {"$ref": "#/$defs/agent"}},
+    "layouts": {"type": "array", "items": {"$ref": "#/$defs/layout"}},
+    "focus": {"$ref": "#/$defs/focus"},
+    "usageMeters": {"type": "array", "items": {"$ref": "#/$defs/usage"}},
+    "generatedAtMillis": {"type": "integer"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "status": {"enum": ["idle", "working", "blocked", "done", "unknown"]},
+    "bridge": {
+      "type": "object",
+      "required": ["version", "protocolVersion", "capabilities"],
+      "properties": {
+        "version": {"type": "string"},
+        "protocolVersion": {"type": "integer"},
+        "capabilities": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "instance": {
+      "type": "object",
+      "required": ["id", "name", "host"],
+      "properties": {"id": {"type": "string"}, "name": {"type": "string"}, "host": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "herdr": {
+      "type": "object",
+      "required": ["version", "protocolVersion", "capabilities"],
+      "properties": {
+        "version": {"type": "string"},
+        "protocolVersion": {"type": "integer"},
+        "capabilities": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "session": {
+      "type": "object",
+      "required": ["id", "name", "isDefault", "reachable"],
+      "properties": {
+        "id": {"type": "string"}, "name": {"type": "string"},
+        "isDefault": {"type": "boolean"}, "reachable": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "workspace": {
+      "type": "object",
+      "required": ["id", "number", "label", "paneCount", "tabCount", "status", "focused"],
+      "properties": {
+        "id": {"type": "string"}, "number": {"type": "integer"}, "label": {"type": "string"},
+        "path": {"type": ["string", "null"]}, "branch": {"type": ["string", "null"]},
+        "activeTabID": {"type": ["string", "null"]}, "paneCount": {"type": "integer"},
+        "tabCount": {"type": "integer"}, "status": {"$ref": "#/$defs/status"}, "focused": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "tab": {
+      "type": "object",
+      "required": ["id", "workspaceID", "number", "label", "paneCount", "status", "focused"],
+      "properties": {
+        "id": {"type": "string"}, "workspaceID": {"type": "string"}, "number": {"type": "integer"},
+        "label": {"type": "string"}, "paneCount": {"type": "integer"},
+        "status": {"$ref": "#/$defs/status"}, "focused": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "pane": {
+      "type": "object",
+      "required": ["id", "terminalID", "workspaceID", "tabID", "title", "cwd", "kind", "agentStatus", "focused", "revision"],
+      "properties": {
+        "id": {"type": "string"}, "terminalID": {"type": "string"}, "workspaceID": {"type": "string"},
+        "tabID": {"type": "string"}, "title": {"type": "string"}, "cwd": {"type": "string"},
+        "kind": {"enum": ["agent", "shell"]}, "agentName": {"type": ["string", "null"]},
+        "agentDisplayName": {"type": ["string", "null"]}, "agentStatus": {"$ref": "#/$defs/status"},
+        "focused": {"type": "boolean"}, "revision": {"type": "integer"}
+      },
+      "additionalProperties": false
+    },
+    "agent": {
+      "type": "object",
+      "required": ["id", "paneID", "workspaceID", "tabID", "name", "displayName", "status"],
+      "properties": {
+        "id": {"type": "string"}, "paneID": {"type": "string"}, "workspaceID": {"type": "string"},
+        "tabID": {"type": "string"}, "name": {"type": "string"}, "displayName": {"type": "string"},
+        "status": {"$ref": "#/$defs/status"}, "statusLabel": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "node": {
+      "oneOf": [
+        {
+          "type": "object", "required": ["type", "paneID"],
+          "properties": {"type": {"const": "pane"}, "paneID": {"type": "string"}}, "additionalProperties": false
+        },
+        {
+          "type": "object", "required": ["type", "direction", "ratio", "first", "second"],
+          "properties": {
+            "type": {"const": "split"}, "direction": {"enum": ["horizontal", "vertical"]},
+            "ratio": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1},
+            "first": {"$ref": "#/$defs/node"}, "second": {"$ref": "#/$defs/node"}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "layout": {
+      "type": "object",
+      "required": ["workspaceID", "tabID", "zoomed", "root"],
+      "properties": {
+        "workspaceID": {"type": "string"}, "tabID": {"type": "string"}, "zoomed": {"type": "boolean"},
+        "focusedPaneID": {"type": ["string", "null"]}, "root": {"$ref": "#/$defs/node"}
+      },
+      "additionalProperties": false
+    },
+    "focus": {
+      "type": "object", "required": ["workspaceID", "tabID", "paneID"],
+      "properties": {
+        "workspaceID": {"type": ["string", "null"]}, "tabID": {"type": ["string", "null"]},
+        "paneID": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "usage": {
+      "type": "object",
+      "required": ["id", "provider", "label", "remainingFraction", "observedAtMillis"],
+      "properties": {
+        "id": {"type": "string"}, "provider": {"type": "string"}, "label": {"type": "string"},
+        "remainingFraction": {"type": "number", "minimum": 0, "maximum": 1},
+        "resetAtMillis": {"type": ["integer", "null"]}, "observedAtMillis": {"type": "integer"}
+      },
+      "additionalProperties": false
+    }
+  }
+}
