@@ -12,6 +12,9 @@ build/
 xcuserdata/
 *.xccheckout
 *.xcscmblueprint
+/ios/fastlane/README.md
+/ios/fastlane/report.xml
+/ios/fastlane/test_output/
 
 # Swift Package Manager
 .build/

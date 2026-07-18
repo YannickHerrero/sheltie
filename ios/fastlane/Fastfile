@@ -15,7 +15,7 @@ platform :ios do
     )
   end
 
-  private_lane :ensure_app_record do
+  private_lane :ensure_bundle_id do
     Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
       key_id: ENV.fetch("ASC_KEY_ID"),
       issuer_id: ENV.fetch("ASC_ISSUER_ID"),
@@ -31,18 +31,22 @@ platform :ios do
         platform: "IOS"
       )
     end
+  end
 
+  private_lane :require_app_record do
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      filepath: File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV.fetch('ASC_KEY_ID')}.p8")
+    )
     next unless Spaceship::ConnectAPI::App.find(APP_IDENTIFIER).nil?
 
-    UI.message("Creating the Sheltie App Store Connect record")
-    Spaceship::ConnectAPI::App.create(
-      name: "Sheltie",
-      version_string: "0.1.0",
-      sku: "sheltie-ipad",
-      primary_locale: "en-US",
-      bundle_id: bundle.id,
-      platforms: ["IOS"]
-    )
+    UI.user_error!(<<~MESSAGE)
+      No App Store Connect app record exists for #{APP_IDENTIFIER}.
+      Create it once at https://appstoreconnect.apple.com/apps:
+      New App → iOS → name Sheltie → primary language English (U.S.) →
+      bundle ID #{APP_IDENTIFIER} → SKU sheltie-ipad.
+    MESSAGE
   end
 
   def export_auth_xcargs
@@ -57,16 +61,17 @@ platform :ios do
     Time.now.utc.strftime("%Y%m%d%H%M")
   end
 
-  desc "Register the bundle ID and App Store Connect record if needed"
+  desc "Register the bundle ID and verify the App Store Connect record"
   lane :bootstrap do
     connect_api_key
-    ensure_app_record
+    ensure_bundle_id
+    require_app_record
   end
 
   desc "Create a signed App Store IPA without uploading"
   lane :build do
     connect_api_key
-    ensure_app_record
+    ensure_bundle_id
     sh("cd .. && xcodegen generate")
     build_app(
       project: PROJECT,
@@ -86,7 +91,8 @@ platform :ios do
   desc "Build, upload, and wait for the new TestFlight build to process"
   lane :beta do
     api_key = connect_api_key
-    ensure_app_record
+    ensure_bundle_id
+    require_app_record
     build
     upload_to_testflight(
       api_key: api_key,
