@@ -98,7 +98,7 @@ platform :ios do
       api_key: api_key,
       app_identifier: APP_IDENTIFIER,
       ipa: "build/Sheltie.ipa",
-      changelog: "Initial native iPad build with secure Herdr pairing, adaptive terminal workspaces, and the new Liquid Glass app icon.",
+      changelog: ENV.fetch("TESTFLIGHT_CHANGELOG", "Edge-to-edge iPad workspace with reliable Herdr terminal focusing."),
       skip_submission: true,
       skip_waiting_for_build_processing: false,
       distribute_external: false
