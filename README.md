@@ -5,6 +5,8 @@ Sheltie is a native iPad client for [Herdr](https://herdr.dev). It recreates Her
 > [!WARNING]
 > This is an initial personal-use implementation, not a security-audited release. Keep the bridge tailnet-only, never enable Tailscale Funnel, and review the configuration before allowing terminal writes.
 
+![Sheltie running its native edge-to-edge iPad workspace](docs/images/sheltie-ipad.png)
+
 ## Implemented
 
 - Native adaptive iPad shell based on the approved local prototype
