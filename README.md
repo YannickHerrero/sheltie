@@ -1,53 +1,134 @@
 # Sheltie
 
-Sheltie is a planned native iPad client for [Herdr](https://herdr.dev). It will reproduce Herdr's workspace, agent, tab, and split-pane experience with native Swift interfaces while connecting to the existing Herdr server through a secure companion bridge on the Mac.
+Sheltie is a native iPad client for [Herdr](https://herdr.dev). It recreates Herdr’s spaces, agents, tabs, split panes, and terminal controls with SwiftUI and UIKit while a loopback-only companion bridge talks to the existing Herdr server on the Mac.
 
-> [!IMPORTANT]
-> Sheltie is currently in the design and architecture phase. There is no runnable application or bridge yet.
+> [!WARNING]
+> This is an initial personal-use implementation, not a security-audited release. Keep the bridge tailnet-only, never enable Tailscale Funnel, and review the configuration before allowing terminal writes.
 
-## Vision
+## Implemented
 
-- Native SwiftUI interface inspired by Herdr's layout and interaction model
-- Full terminal panes rather than simplified agent transcripts
-- Physical-keyboard-first operation with complete touch and software-keyboard controls
-- No SSH and no embedded web application
-- Tailnet-only communication through Tailscale Serve
-- Personal use initially, with an architecture suitable for a possible public release
+- Native adaptive iPad shell based on the approved local prototype
+- SwiftTerm-backed ANSI terminal panes with physical and software keyboard input
+- Touch composers, special keys, sticky modifiers, context menus, and keyboard commands
+- Spaces, grouped agents, tabs, recursive split layouts, focus, zoom, resize, move, rename, create, and close actions
+- Multiple paired Macs and multiple Herdr sessions
+- HTTPS bootstrap plus authenticated WebSocket snapshots, actions, and terminal frames
+- Herdr 0.7.3 live observer streams with a read-only `pane.read` fallback for older Herdr versions
+- P-256 device pairing, Keychain/Secure Enclave identity, short-lived sessions, revocation, limits, and private audit records
+- Optional trusted local provider-usage meters
+- Demo data for deterministic simulator and UI verification
 
-## Proposed architecture
+See [PLAN.md](PLAN.md) for product scope and remaining public-release decisions.
 
-```text
-iPad app (SwiftUI + native terminal views)
-        │ HTTPS / WebSocket over Tailscale
-        ▼
-Sheltie bridge on the Mac
-        │ local Herdr sockets and terminal sessions
-        ▼
-Herdr server and its existing panes
-```
-
-The bridge will expose a versioned mobile protocol, synchronize Herdr's semantic state, multiplex live terminal streams, authenticate paired devices, and audit remote input.
-
-See [PLAN.md](PLAN.md) for the current product and technical plan.
-
-## Design mockups
-
-Local mockups and exported design files belong in:
+## Architecture
 
 ```text
-do-not-commit/
+iPad app (SwiftUI + SwiftTerm)
+        │ HTTPS / WebSocket over the tailnet
+        ▼
+Tailscale Serve (TLS + identity headers)
+        │ loopback HTTP
+        ▼
+Sheltie bridge (Bun/TypeScript)
+        │ Herdr Unix sockets + terminal observer processes
+        ▼
+Herdr server and its existing PTYs
 ```
 
-That directory is intentionally ignored by Git. Design files may be used as local implementation references but must not be committed without an explicit review of their contents and licensing.
+The iPad app never talks to Herdr’s private protocol directly and does not use SSH or `WKWebView`.
 
-## Security
+## Requirements
 
-Sheltie will provide remote terminal control with the privileges of the user running Herdr. The bridge must remain loopback-only behind a tailnet-only authenticated ingress. Public Tailscale Funnel exposure is not supported.
+- Xcode 26 or a compatible current Xcode with an iPad simulator
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen)
+- [Bun](https://bun.sh/) 1.3+
+- Herdr 0.7.3+ recommended; 0.7.1 works through the polling fallback
+- Tailscale Serve for device use
+
+## Run the bridge locally
+
+```bash
+cd bridge
+bun install
+SHELTIE_DEV_MODE=1 bun run start
+```
+
+Development mode binds only to `127.0.0.1:9847` and accepts `Authorization: Bearer development`. Never expose development mode through Tailscale Serve.
+
+Bridge tests:
+
+```bash
+cd bridge
+bun run typecheck
+bun test
+```
+
+See [bridge/README.md](bridge/README.md) for production configuration, pairing, optional usage data, and device revocation.
+
+## Run the iPad app
+
+The generated Xcode project is committed, while `project.yml` remains authoritative:
+
+```bash
+cd ios
+xcodegen generate
+open Sheltie.xcodeproj
+```
+
+Run the `Sheltie` scheme on an iPad simulator. Add the launch argument below for the deterministic design/demo workspace:
+
+```text
+--demo
+```
+
+Without demo mode, open the instance selector, enter the Tailscale Serve base URL, and enter the six-digit pairing code printed by the Mac bridge.
+
+App and protocol tests:
+
+```bash
+swift test --package-path protocol
+
+cd ios
+xcodebuild -project Sheltie.xcodeproj \
+  -scheme Sheltie \
+  -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M4),OS=latest' \
+  test
+```
+
+## Tailnet deployment
+
+Configure the production variables in `bridge/.env.example`, run the bridge with a local service manager, and expose it under a path so it can coexist with Collie:
+
+```bash
+tailscale serve --bg --https=443 --set-path=/sheltie http://127.0.0.1:9847
+```
+
+Pair the app with:
+
+```text
+https://<mac-magicdns-name>/sheltie
+```
+
+Do not use a raw Herdr socket URL, public ingress, or Tailscale Funnel.
+
+## Repository layout
+
+```text
+bridge/      Mac bridge, authentication, Herdr adapter, and tests
+ios/         Native iPad application and Xcode project
+protocol/    Versioned Codable models, JSON schema, and fixtures
+docs/        Design, protocol, and security documentation
+do-not-commit/  Local ignored design references
+```
+
+## Design references
+
+Local mockups and exports remain in `do-not-commit/`. That directory is ignored and must not be committed without an explicit content and licensing review.
 
 ## Relationship to Herdr
 
-Sheltie is an independent client project and is not currently an official Herdr application.
+Sheltie is an independent client project and is not an official Herdr application.
 
 ## License
 
-No license has been selected yet. Public visibility does not grant permission to copy, modify, or redistribute the project until a license is added.
+No project license has been selected yet. Public visibility does not grant permission to copy, modify, or redistribute Sheltie until a license is added. Third-party dependencies retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

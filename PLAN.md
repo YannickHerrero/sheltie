@@ -1,6 +1,14 @@
 # Sheltie product and architecture plan
 
-_Last updated: 2026-07-18_
+_Last updated: 2026-07-19_
+
+## Implementation status
+
+- Phases 0–4 have an initial implementation across `protocol/`, `bridge/`, and `ios/`.
+- The bridge and protocol are covered by automated unit and live local Herdr integration checks.
+- The iPad app builds and its model, security, networking, and demo UI paths are covered by simulator tests.
+- Phase 5 remains in progress: independent security review, physical-device interaction testing, performance/energy profiling, licensing, TestFlight, and public release automation are not complete.
+- The local integration Mac still runs Herdr 0.7.1, so live verification uses the polling fallback; Herdr 0.7.3 observer support is implemented and unit-tested but still needs live verification after the server is upgraded.
 
 ## 1. Product definition
 
