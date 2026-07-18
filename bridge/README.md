@@ -45,6 +45,15 @@ A client must then complete two gates:
 
 Pairing creates a revocable device credential. The app exchanges that credential for a 15-minute session token; API and WebSocket access use only the short-lived token. Sensitive actions are appended to `~/.config/sheltie/audit.jsonl` without terminal text or keys.
 
+List and revoke paired devices locally:
+
+```bash
+bun run admin devices
+bun run admin revoke <device-id>
+```
+
+Restart the bridge after revocation to evict any in-memory short-lived session immediately.
+
 Expose the bridge under a path so it can coexist with Collie:
 
 ```bash
@@ -59,4 +68,5 @@ Use `https://<mac-magicdns-name>/sheltie` as the app's instance URL. Never use T
 bun run typecheck
 bun test
 bun run start
+bun run admin devices
 ```

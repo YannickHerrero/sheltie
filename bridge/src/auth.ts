@@ -121,12 +121,15 @@ export class AuthStore {
     let publicKey: KeyObject;
     try {
       publicKey = createPublicKey({ key: Buffer.from(publicKeyDERBase64, "base64"), format: "der", type: "spki" });
-      if (publicKey.asymmetricKeyType !== "ec") throw new Error("not an EC key");
+      if (publicKey.asymmetricKeyType !== "ec" || publicKey.asymmetricKeyDetails?.namedCurve !== "prime256v1") {
+        throw new Error("not a P-256 key");
+      }
     } catch {
       throw new AuthenticationError("invalid_pairing", "device public key is invalid");
     }
 
     this.prune();
+    if (this.pending.size >= 20) throw new AuthenticationError("invalid_pairing", "too many pending pairing requests");
     const id = crypto.randomUUID();
     const challenge = randomBytes(32);
     const code = `${randomInt(0, 1_000_000)}`.padStart(6, "0");
