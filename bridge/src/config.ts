@@ -16,6 +16,7 @@ export interface BridgeConfig {
   herdrBinary: string;
   snapshotPollMilliseconds: number;
   terminalPollMilliseconds: number;
+  usageFile?: string;
 }
 
 function positiveInteger(name: string, fallback: number): number {
@@ -58,6 +59,7 @@ export function loadConfig(): BridgeConfig {
     herdrBinary: process.env.HERDR_BINARY ?? "herdr",
     snapshotPollMilliseconds: positiveInteger("SHELTIE_SNAPSHOT_POLL_MS", 2_000),
     terminalPollMilliseconds: positiveInteger("SHELTIE_TERMINAL_POLL_MS", 350),
+    ...(process.env.SHELTIE_USAGE_FILE ? { usageFile: process.env.SHELTIE_USAGE_FILE } : {}),
   };
 
   if (config.bindHost !== "127.0.0.1" && config.bindHost !== "::1") {

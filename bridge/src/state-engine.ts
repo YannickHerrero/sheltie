@@ -2,6 +2,7 @@ import { adaptSnapshot } from "./adapter.ts";
 import type { BridgeConfig } from "./config.ts";
 import { HerdrClient } from "./herdr-client.ts";
 import { discoverSessions, type HerdrSessionLocation } from "./sessions.ts";
+import { loadUsageMeters } from "./usage.ts";
 import type {
   ActionCommand,
   ActionResult,
@@ -234,6 +235,7 @@ export class BridgeStateEngine implements BridgeStateProviding {
         activeSessionID: location.id,
         sessions: summaries,
         exportedLayouts: layouts,
+        usageMeters: loadUsageMeters(this.config.usageFile),
       });
       const previous = this.snapshots.get(location.id);
       const changed = !previous || snapshotFingerprint(previous) !== snapshotFingerprint(snapshot);

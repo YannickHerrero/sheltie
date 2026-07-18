@@ -45,6 +45,8 @@ A client must then complete two gates:
 
 Pairing creates a revocable device credential. The app exchanges that credential for a 15-minute session token; API and WebSocket access use only the short-lived token. Sensitive actions are appended to `~/.config/sheltie/audit.jsonl` without terminal text or keys.
 
+Provider quota is optional. A trusted local collector may write the file named by `SHELTIE_USAGE_FILE` as a JSON array with `id`, `provider`, `label`, `remainingFraction`, `resetAtMillis`, and `observedAtMillis`. Invalid or stale-source files do not block Herdr access; the app simply hides the meter.
+
 List and revoke paired devices locally:
 
 ```bash
