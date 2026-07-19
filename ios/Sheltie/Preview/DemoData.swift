@@ -10,17 +10,17 @@ enum DemoData {
             WorkspaceSnapshot(id: "w3", number: 3, label: "qmp", path: "autoresearch/qmp-panel", activeTabID: "w3:t1", paneCount: 1, tabCount: 1, status: .done, focused: false),
         ]
         let tabs = [
-            TabSnapshot(id: "w1:t1", workspaceID: "w1", number: 1, label: "claude", paneCount: 2, status: .working, focused: true),
-            TabSnapshot(id: "w1:t2", workspaceID: "w1", number: 2, label: "bun · dev", paneCount: 1, status: .done, focused: false),
-            TabSnapshot(id: "w2:t1", workspaceID: "w2", number: 1, label: "claude", paneCount: 1, status: .blocked, focused: false),
-            TabSnapshot(id: "w3:t1", workspaceID: "w3", number: 1, label: "codex", paneCount: 1, status: .done, focused: false),
+            TabSnapshot(id: "w1:t1", workspaceID: "w1", number: 1, label: "website", paneCount: 2, status: .working, focused: true),
+            TabSnapshot(id: "w1:t2", workspaceID: "w1", number: 2, label: "docs preview", paneCount: 1, status: .done, focused: false),
+            TabSnapshot(id: "w2:t1", workspaceID: "w2", number: 1, label: "proxy triage", paneCount: 1, status: .blocked, focused: false),
+            TabSnapshot(id: "w3:t1", workspaceID: "w3", number: 1, label: "research", paneCount: 1, status: .done, focused: false),
         ]
         let panes = [
-            PaneSnapshot(id: "w1:p1", terminalID: "term-claude", workspaceID: "w1", tabID: "w1:t1", title: "Claude Code", cwd: "~/Projects/herdr/website", kind: .agent, agentName: "claude", agentDisplayName: "Claude Code", agentStatus: .working, focused: true, revision: 42),
-            PaneSnapshot(id: "w1:p2", terminalID: "term-bun", workspaceID: "w1", tabID: "w1:t1", title: "bun", cwd: "~/Projects/herdr", kind: .shell, agentStatus: .done, focused: false, revision: 17),
-            PaneSnapshot(id: "w1:p3", terminalID: "term-dev", workspaceID: "w1", tabID: "w1:t2", title: "bun · dev", cwd: "~/Projects/herdr", kind: .shell, agentStatus: .done, focused: false, revision: 3),
-            PaneSnapshot(id: "w2:p1", terminalID: "term-proxy", workspaceID: "w2", tabID: "w2:t1", title: "Claude Code", cwd: "~/Projects/llm-proxy", kind: .agent, agentName: "claude", agentDisplayName: "Claude Code", agentStatus: .blocked, focused: false, revision: 8),
-            PaneSnapshot(id: "w3:p1", terminalID: "term-qmp", workspaceID: "w3", tabID: "w3:t1", title: "Codex", cwd: "~/Projects/qmp", kind: .agent, agentName: "codex", agentDisplayName: "Codex", agentStatus: .done, focused: false, revision: 9),
+            PaneSnapshot(id: "w1:p1", terminalID: "term-claude", workspaceID: "w1", tabID: "w1:t1", title: "Implementation Agent", cwd: "~/Projects/herdr/website", kind: .agent, agentName: "claude", agentDisplayName: "Implementation Agent", agentStatus: .working, focused: true, revision: 42),
+            PaneSnapshot(id: "w1:p2", terminalID: "term-bun", workspaceID: "w1", tabID: "w1:t1", title: "Astro Preview", cwd: "~/Projects/herdr", kind: .shell, agentStatus: .done, focused: false, revision: 17),
+            PaneSnapshot(id: "w1:p3", terminalID: "term-dev", workspaceID: "w1", tabID: "w1:t2", title: "Docs Watcher", cwd: "~/Projects/herdr", kind: .shell, agentStatus: .done, focused: false, revision: 3),
+            PaneSnapshot(id: "w2:p1", terminalID: "term-proxy", workspaceID: "w2", tabID: "w2:t1", title: "Proxy Agent", cwd: "~/Projects/llm-proxy", kind: .agent, agentName: "claude", agentDisplayName: "Proxy Agent", agentStatus: .blocked, focused: false, revision: 8),
+            PaneSnapshot(id: "w3:p1", terminalID: "term-qmp", workspaceID: "w3", tabID: "w3:t1", title: "Research Agent", cwd: "~/Projects/qmp", kind: .agent, agentName: "codex", agentDisplayName: "Research Agent", agentStatus: .done, focused: false, revision: 9),
         ]
         let agents = [
             AgentSnapshot(id: "w1:p1", paneID: "w1:p1", workspaceID: "w1", tabID: "w1:t1", name: "claude", displayName: "herdr", status: .working, statusLabel: "working · claude"),
