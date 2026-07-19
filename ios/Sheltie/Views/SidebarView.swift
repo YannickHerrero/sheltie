@@ -49,6 +49,7 @@ struct SidebarView: View {
     @State private var renameText = ""
     @State private var workspaceToClose: WorkspaceSnapshot?
     @State private var workspaceForTodo: WorkspaceSnapshot?
+    @State private var workspaceForFiles: WorkspaceSnapshot?
     @State private var dragStartRatio: Double?
     @AppStorage("sheltie.sidebarSplitRatio") private var splitRatio = SidebarSplitLayout.defaultRatio
 
@@ -69,6 +70,9 @@ struct SidebarView: View {
         .background(SheltieTheme.surface.opacity(0.58))
         .sheet(item: $workspaceForTodo) { workspace in
             WorkspaceTodoView(store: store, workspace: workspace)
+        }
+        .fullScreenCover(item: $workspaceForFiles) { workspace in
+            WorkspaceFilesView(store: store, workspace: workspace)
         }
         .alert("Rename Space", isPresented: renameAlertBinding) {
             TextField("Name", text: $renameText)
@@ -229,6 +233,9 @@ struct SidebarView: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
+            Button("Files", systemImage: "folder") {
+                workspaceForFiles = workspace
+            }
             Button("Todo List", systemImage: "checklist") {
                 workspaceForTodo = workspace
             }

@@ -112,6 +112,36 @@ final class SheltieUITests: XCTestCase {
         app.terminate()
     }
 
+    func testWorkspaceFileBrowserEditsAndSavesOnTheMac() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments.append("--demo")
+        app.launch()
+
+        let workspace = app.buttons["workspace.w1"]
+        XCTAssertTrue(workspace.waitForExistence(timeout: 5))
+        workspace.press(forDuration: 0.8)
+        app.buttons["Files"].tap()
+
+        let readme = app.descendants(matching: .any)["workspace.file.README.md"]
+        XCTAssertTrue(readme.waitForExistence(timeout: 5))
+        readme.tap()
+
+        let editor = app.textViews["workspace.file.editor"]
+        XCTAssertTrue(editor.waitForExistence(timeout: 5))
+        editor.tap()
+        editor.typeText("Edited on iPad\n")
+        let save = app.buttons["workspace.file.save"]
+        XCTAssertTrue(save.isEnabled)
+        save.tap()
+        XCTAssertTrue(app.staticTexts["Saved on the Mac"].waitForExistence(timeout: 5))
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Workspace file editor saved"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        app.terminate()
+    }
+
     func testTerminalHistoryScrollsAndReturnsToLatest() throws {
         XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
