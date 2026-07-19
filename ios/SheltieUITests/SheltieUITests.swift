@@ -56,6 +56,24 @@ final class SheltieUITests: XCTestCase {
         app.terminate()
     }
 
+    func testAgentComposerKeepsFocusAfterSubmitting() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments += ["--demo", "--phone-workspace"]
+        app.launch()
+
+        let composer = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == %@", "Agent message composer")
+        ).firstMatch
+        XCTAssertTrue(composer.waitForExistence(timeout: 5))
+        composer.tap()
+        composer.typeText("First message")
+        app.buttons["Send message"].tap()
+        composer.typeText("Second message")
+        XCTAssertEqual(composer.value as? String, "Second message")
+        app.terminate()
+    }
+
     func testSettingsShowsIndependentNotificationControls() throws {
         let app = XCUIApplication()
         app.launchArguments.append("--demo")

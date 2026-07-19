@@ -61,7 +61,7 @@ Window width—not orientation—controls iPad Split View and Stage Manager adap
 - The Spaces/Agents separator updates only a persisted local preference, clamps both sections to useful minimum heights, and resets to 42/58 on double-tap.
 - Context menus expose rename, move, split, zoom, and destructive close operations.
 - Destructive operations require a confirmation dialog.
-- The agent composer sends semantic agent text plus submit.
+- The agent composer sends semantic agent text plus submit and retains keyboard focus for consecutive messages.
 - The shell composer sends text and Enter atomically.
 - SwiftTerm sends direct hardware/software keyboard bytes to the focused pane.
 - A vertical terminal swipe or the pane menu opens a stable, read-only snapshot of recent Herdr scrollback; live output continues underneath and a Latest control returns to it.

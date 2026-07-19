@@ -149,6 +149,7 @@ private struct TerminalPaneView: View {
     @State private var isShowingHistory = false
     @State private var historyIsAwayFromLatest = false
     @State private var historyOpenedAtSequence: Int64?
+    @FocusState private var isComposerFocused: Bool
 
     private var selected: Bool { pane.id == store.selectedPaneID }
 
@@ -363,8 +364,10 @@ private struct TerminalPaneView: View {
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled(pane.kind == .shell)
                 .submitLabel(.send)
+                .focused($isComposerFocused)
                 .onSubmit(sendComposer)
                 .accessibilityIdentifier("composer.\(pane.id)")
+                .accessibilityLabel(pane.kind == .agent ? "Agent message composer" : "Shell command composer")
             Button(action: sendComposer) {
                 Image(systemName: pane.kind == .agent ? "paperplane" : "chevron.right")
                     .font(.system(size: 13, weight: .semibold))
@@ -386,11 +389,19 @@ private struct TerminalPaneView: View {
     private func sendComposer() {
         let text = composerText
         guard !text.isEmpty else { return }
+        let shouldRestoreFocus = isComposerFocused
         composerText = ""
         if pane.kind == .agent {
             store.sendAgentMessage(text, to: pane.id)
         } else {
             store.sendTerminalCommand(text, to: pane.id)
+        }
+        if shouldRestoreFocus {
+            isComposerFocused = false
+            Task { @MainActor in
+                await Task.yield()
+                isComposerFocused = true
+            }
         }
     }
 }
