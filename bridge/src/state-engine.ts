@@ -171,7 +171,7 @@ export class BridgeStateEngine implements BridgeStateProviding {
         if (keys.length === 0 || keys.length > 32 || keys.some((key) => key.length === 0 || key.length > 32)) {
           throw new Error("terminal keys are invalid");
         }
-        return await client.perform("pane.send_keys", { pane_id: target(), keys });
+        return await sendHerdrTerminalKeys(client, target(), keys);
       }
       case "terminal.resize":
         return;
@@ -328,6 +328,49 @@ function eventSubscriptions(raw: RawHerdrSnapshot): Array<{ type: string; pane_i
 function clampedRatio(value: number): number {
   if (!Number.isFinite(value)) throw new Error("ratio must be finite");
   return Math.max(0.1, Math.min(0.9, value));
+}
+
+function terminalPageSequence(key: string): string | null {
+  const parts = key.toLowerCase().split("+");
+  const page = parts.pop();
+  const number = page === "pageup" ? 5 : page === "pagedown" ? 6 : null;
+  if (number === null) return null;
+
+  const modifiers = new Set(parts);
+  if (modifiers.size !== parts.length || parts.some((part) => !["ctrl", "alt", "shift"].includes(part))) {
+    return null;
+  }
+
+  const modifier = 1
+    + (modifiers.has("shift") ? 1 : 0)
+    + (modifiers.has("alt") ? 2 : 0)
+    + (modifiers.has("ctrl") ? 4 : 0);
+  return `\u001b[${number}${modifier === 1 ? "" : `;${modifier}`}~`;
+}
+
+export async function sendHerdrTerminalKeys(
+  client: Pick<HerdrClient, "perform">,
+  paneID: string,
+  keys: string[],
+): Promise<void> {
+  let pendingKeys: string[] = [];
+  const flushPendingKeys = async () => {
+    if (pendingKeys.length === 0) return;
+    const keysToSend = pendingKeys;
+    pendingKeys = [];
+    await client.perform("pane.send_keys", { pane_id: paneID, keys: keysToSend });
+  };
+
+  for (const key of keys) {
+    const sequence = terminalPageSequence(key);
+    if (sequence === null) {
+      pendingKeys.push(key);
+      continue;
+    }
+    await flushPendingKeys();
+    await client.perform("pane.send_text", { pane_id: paneID, text: sequence });
+  }
+  await flushPendingKeys();
 }
 
 export function herdrWorkspaceCreateParameters(
