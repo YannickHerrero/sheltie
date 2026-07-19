@@ -35,7 +35,7 @@ enum DemoData {
             PaneLayoutSnapshot(workspaceID: "w3", tabID: "w3:t1", zoomed: false, focusedPaneID: "w3:p1", root: .pane(paneID: "w3:p1")),
         ]
         return BootstrapSnapshot(
-            bridge: BridgeInfo(version: "0.1.0", protocolVersion: 1, capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "workspace.todo", "usage.codex", "notifications.apns"]),
+            bridge: BridgeInfo(version: "0.1.0", protocolVersion: 1, capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "workspace.todo", "workspace.files", "usage.codex", "notifications.apns"]),
             instance: InstanceInfo(id: "studio", name: "Mac Studio", host: "studio.example.ts.net"),
             herdr: HerdrInfo(version: "0.7.3", protocolVersion: 17, capabilities: ["session.snapshot", "terminal.session.observe"]),
             sessions: [SessionSummary(id: "default", name: "default", isDefault: true, reachable: true)],
@@ -107,6 +107,80 @@ enum DemoData {
             """,
             revision: "demo-todo-v1",
             modifiedAtMillis: Int64(Date().timeIntervalSince1970 * 1_000)
+        )
+    }
+
+    static func workspaceDirectory(
+        workspaceID: String,
+        relativePath: String,
+        requestID: String
+    ) -> WorkspaceDirectoryListing {
+        let now = Int64(Date().timeIntervalSince1970 * 1_000)
+        let entries: [WorkspaceFileEntry]
+        switch relativePath {
+        case "":
+            entries = [
+                .init(name: "Sources", relativePath: "Sources", kind: .directory, modifiedAtMillis: now),
+                .init(name: "README.md", relativePath: "README.md", kind: .file, size: 220, modifiedAtMillis: now),
+            ]
+        case "Sources":
+            entries = [
+                .init(
+                    name: "App.swift",
+                    relativePath: "Sources/App.swift",
+                    kind: .file,
+                    size: 92,
+                    modifiedAtMillis: now
+                ),
+            ]
+        default:
+            entries = []
+        }
+        return WorkspaceDirectoryListing(
+            requestID: requestID,
+            sessionID: "default",
+            workspaceID: workspaceID,
+            relativePath: relativePath,
+            entries: entries
+        )
+    }
+
+    static func workspaceFile(
+        workspaceID: String,
+        relativePath: String,
+        requestID: String
+    ) -> WorkspaceFileDocument {
+        let content: String
+        switch relativePath {
+        case "README.md":
+            content = """
+            # Sheltie demo project
+
+            This file is being edited natively on iPad and saved on the paired Mac.
+            """
+        case "Sources/App.swift":
+            content = """
+            import SwiftUI
+
+            @main
+            struct DemoApp: App {
+                var body: some Scene { WindowGroup { Text("Hello") } }
+            }
+            """
+        default:
+            content = ""
+        }
+        return WorkspaceFileDocument(
+            requestID: requestID,
+            sessionID: "default",
+            workspaceID: workspaceID,
+            documentID: "demo:\(workspaceID):\(relativePath)",
+            relativePath: relativePath,
+            exists: !content.isEmpty,
+            contentBase64: Data(content.utf8).base64EncodedString(),
+            revision: content.isEmpty ? nil : "demo-file-v1",
+            modifiedAtMillis: Int64(Date().timeIntervalSince1970 * 1_000),
+            mode: 0o644
         )
     }
 

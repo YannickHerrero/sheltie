@@ -42,6 +42,15 @@ private final class MemoryInstanceRepository: InstancePersisting {
     )
     #expect(store.workspaceTodos["w1"]?.requestID == saveID)
     #expect(store.workspaceTodos["w1"]?.content == "- [ ] Test todo.md\n")
+
+    store.requestWorkspaceDirectory(workspaceID: "w1", relativePath: "")
+    #expect(store.workspaceDirectory(workspaceID: "w1", relativePath: "")?.entries.first?.name == "Sources")
+    store.requestWorkspaceFile(workspaceID: "w1", relativePath: "Sources/App.swift")
+    let file = try! #require(store.workspaceFile(workspaceID: "w1", relativePath: "Sources/App.swift"))
+    #expect(file.bytes.flatMap { String(data: $0, encoding: .utf8) }?.contains("DemoApp") == true)
+    let fileSaveID = store.saveWorkspaceFile(file, content: "let savedFromIPad = true\n")
+    #expect(store.workspaceFile(workspaceID: "w1", relativePath: "Sources/App.swift")?.requestID == fileSaveID)
+    #expect(store.workspaceFile(workspaceID: "w1", relativePath: "Sources/App.swift")?.bytes == Data("let savedFromIPad = true\n".utf8))
 }
 
 @MainActor

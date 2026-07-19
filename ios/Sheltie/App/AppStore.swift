@@ -4,6 +4,11 @@ import SheltieProtocol
 import UIKit
 import UserNotifications
 
+struct WorkspaceFileLocation: Hashable {
+    let workspaceID: String
+    let relativePath: String
+}
+
 @MainActor
 final class AppStore: ObservableObject {
     @Published private(set) var phase: ConnectionPhase = .noInstances
@@ -17,6 +22,11 @@ final class AppStore: ObservableObject {
     @Published private(set) var workspaceTodos: [String: WorkspaceTodoDocument] = [:]
     @Published private(set) var workspaceTodoLoadingIDs = Set<String>()
     @Published private(set) var workspaceTodoSavingIDs = Set<String>()
+    @Published private(set) var workspaceDirectories: [WorkspaceFileLocation: WorkspaceDirectoryListing] = [:]
+    @Published private(set) var workspaceFiles: [WorkspaceFileLocation: WorkspaceFileDocument] = [:]
+    @Published private(set) var workspaceDirectoryLoadingLocations = Set<WorkspaceFileLocation>()
+    @Published private(set) var workspaceFileLoadingLocations = Set<WorkspaceFileLocation>()
+    @Published private(set) var workspaceFileSavingLocations = Set<WorkspaceFileLocation>()
     @Published private(set) var notificationAuthorizationStatus: UNAuthorizationStatus = .notDetermined
     @Published private(set) var notificationProviderConfigured = false
     @Published private(set) var notificationErrorMessage: String?
@@ -39,6 +49,8 @@ final class AppStore: ObservableObject {
     private var terminalHistoryRequestIDs: [String: String] = [:]
     private var terminalHistoryCacheOrder: [String] = []
     private var workspaceTodoRequestIDs: [String: String] = [:]
+    private var workspaceDirectoryRequestIDs: [WorkspaceFileLocation: String] = [:]
+    private var workspaceFileRequestIDs: [WorkspaceFileLocation: String] = [:]
     private var notificationRequestID: String?
     private var notificationDeviceToken = UserDefaults.standard.string(forKey: "notifications.deviceToken")
     private var notificationObservers: [NSObjectProtocol] = []
@@ -339,6 +351,170 @@ final class AppStore: ObservableObject {
         return requestID
     }
 
+    func workspaceDirectory(workspaceID: String, relativePath: String) -> WorkspaceDirectoryListing? {
+        workspaceDirectories[.init(workspaceID: workspaceID, relativePath: relativePath)]
+    }
+
+    func workspaceFile(workspaceID: String, relativePath: String) -> WorkspaceFileDocument? {
+        workspaceFiles[.init(workspaceID: workspaceID, relativePath: relativePath)]
+    }
+
+    @discardableResult
+    func requestWorkspaceDirectory(workspaceID: String, relativePath: String) -> String? {
+        guard snapshot?.workspaces.contains(where: { $0.id == workspaceID }) == true else { return nil }
+        guard snapshot?.bridge.capabilities.contains("workspace.files") == true else {
+            toast = ToastMessage(text: "Update the Sheltie bridge to browse files.", isError: true)
+            return nil
+        }
+        let location = WorkspaceFileLocation(workspaceID: workspaceID, relativePath: relativePath)
+        let requestID = UUID().uuidString
+        workspaceDirectoryRequestIDs[location] = requestID
+        workspaceDirectoryLoadingLocations.insert(location)
+        if isDemo {
+            workspaceDirectories[location] = DemoData.workspaceDirectory(
+                workspaceID: workspaceID,
+                relativePath: relativePath,
+                requestID: requestID
+            )
+            workspaceDirectoryLoadingLocations.remove(location)
+            workspaceDirectoryRequestIDs[location] = nil
+            return requestID
+        }
+        guard let client = activeClient, phase.isConnected else {
+            workspaceDirectoryLoadingLocations.remove(location)
+            workspaceDirectoryRequestIDs[location] = nil
+            toast = ToastMessage(text: "The Mac is not connected.", isError: true)
+            return nil
+        }
+        let request = WorkspaceDirectoryListRequest(
+            requestID: requestID,
+            sessionID: activeSessionID,
+            workspaceID: workspaceID,
+            relativePath: relativePath
+        )
+        Task {
+            do {
+                try await client.sendStreamMessage(.workspaceDirectoryList(request))
+            } catch {
+                guard workspaceDirectoryRequestIDs[location] == requestID else { return }
+                workspaceDirectoryLoadingLocations.remove(location)
+                workspaceDirectoryRequestIDs[location] = nil
+                toast = ToastMessage(text: "The directory is unavailable.", isError: true)
+            }
+        }
+        return requestID
+    }
+
+    @discardableResult
+    func requestWorkspaceFile(workspaceID: String, relativePath: String) -> String? {
+        guard snapshot?.workspaces.contains(where: { $0.id == workspaceID }) == true else { return nil }
+        guard snapshot?.bridge.capabilities.contains("workspace.files") == true else {
+            toast = ToastMessage(text: "Update the Sheltie bridge to edit files.", isError: true)
+            return nil
+        }
+        let location = WorkspaceFileLocation(workspaceID: workspaceID, relativePath: relativePath)
+        let requestID = UUID().uuidString
+        workspaceFileRequestIDs[location] = requestID
+        workspaceFileLoadingLocations.insert(location)
+        if isDemo {
+            workspaceFiles[location] = DemoData.workspaceFile(
+                workspaceID: workspaceID,
+                relativePath: relativePath,
+                requestID: requestID
+            )
+            workspaceFileLoadingLocations.remove(location)
+            workspaceFileRequestIDs[location] = nil
+            return requestID
+        }
+        guard let client = activeClient, phase.isConnected else {
+            workspaceFileLoadingLocations.remove(location)
+            workspaceFileRequestIDs[location] = nil
+            toast = ToastMessage(text: "The Mac is not connected.", isError: true)
+            return nil
+        }
+        let request = WorkspaceFileReadRequest(
+            requestID: requestID,
+            sessionID: activeSessionID,
+            workspaceID: workspaceID,
+            relativePath: relativePath
+        )
+        Task {
+            do {
+                try await client.sendStreamMessage(.workspaceFileRead(request))
+            } catch {
+                guard workspaceFileRequestIDs[location] == requestID else { return }
+                workspaceFileLoadingLocations.remove(location)
+                workspaceFileRequestIDs[location] = nil
+                toast = ToastMessage(text: "The file is unavailable.", isError: true)
+            }
+        }
+        return requestID
+    }
+
+    @discardableResult
+    func saveWorkspaceFile(
+        _ document: WorkspaceFileDocument,
+        content: String,
+        force: Bool = false
+    ) -> String? {
+        guard snapshot?.bridge.capabilities.contains("workspace.files") == true,
+              let documentID = document.documentID else { return nil }
+        let bytes = Data(content.utf8)
+        guard bytes.count <= 1024 * 1024 else {
+            toast = ToastMessage(text: "The file exceeds the 1 MiB editing limit.", isError: true)
+            return nil
+        }
+        let location = WorkspaceFileLocation(
+            workspaceID: document.workspaceID,
+            relativePath: document.relativePath
+        )
+        let requestID = UUID().uuidString
+        workspaceFileRequestIDs[location] = requestID
+        workspaceFileSavingLocations.insert(location)
+        if isDemo {
+            workspaceFiles[location] = WorkspaceFileDocument(
+                requestID: requestID,
+                sessionID: activeSessionID,
+                workspaceID: document.workspaceID,
+                documentID: documentID,
+                relativePath: document.relativePath,
+                exists: true,
+                contentBase64: bytes.base64EncodedString(),
+                revision: UUID().uuidString,
+                modifiedAtMillis: Int64(Date().timeIntervalSince1970 * 1_000),
+                mode: document.mode
+            )
+            workspaceFileSavingLocations.remove(location)
+            workspaceFileRequestIDs[location] = nil
+            return requestID
+        }
+        guard let client = activeClient, phase.isConnected else {
+            workspaceFileSavingLocations.remove(location)
+            workspaceFileRequestIDs[location] = nil
+            toast = ToastMessage(text: "The Mac is not connected.", isError: true)
+            return nil
+        }
+        let request = WorkspaceFileSaveRequest(
+            requestID: requestID,
+            sessionID: activeSessionID,
+            documentID: documentID,
+            contentBase64: bytes.base64EncodedString(),
+            expectedRevision: document.revision,
+            force: force
+        )
+        Task {
+            do {
+                try await client.sendStreamMessage(.workspaceFileSave(request))
+            } catch {
+                guard workspaceFileRequestIDs[location] == requestID else { return }
+                workspaceFileSavingLocations.remove(location)
+                workspaceFileRequestIDs[location] = nil
+                toast = ToastMessage(text: "The file could not be saved.", isError: true)
+            }
+        }
+        return requestID
+    }
+
     func requestTerminalHistory(for paneID: String) {
         guard snapshot?.panes.contains(where: { $0.id == paneID }) == true else { return }
         guard snapshot?.bridge.capabilities.contains("terminal.history") == true else {
@@ -628,6 +804,27 @@ final class AppStore: ObservableObject {
             workspaceTodoSavingIDs.remove(document.workspaceID)
             workspaceTodoRequestIDs[document.workspaceID] = nil
             workspaceTodos[document.workspaceID] = document
+        case let .workspaceDirectory(document):
+            let location = WorkspaceFileLocation(
+                workspaceID: document.workspaceID,
+                relativePath: document.relativePath
+            )
+            guard workspaceDirectoryRequestIDs[location] == document.requestID,
+                  document.sessionID == activeSessionID else { return }
+            workspaceDirectoryLoadingLocations.remove(location)
+            workspaceDirectoryRequestIDs[location] = nil
+            workspaceDirectories[location] = document
+        case let .workspaceFile(document):
+            let location = WorkspaceFileLocation(
+                workspaceID: document.workspaceID,
+                relativePath: document.relativePath
+            )
+            guard workspaceFileRequestIDs[location] == document.requestID,
+                  document.sessionID == activeSessionID else { return }
+            workspaceFileLoadingLocations.remove(location)
+            workspaceFileSavingLocations.remove(location)
+            workspaceFileRequestIDs[location] = nil
+            workspaceFiles[location] = document
         case let .terminalHistory(history):
             guard terminalHistoryRequestIDs[history.paneID] == history.requestID,
                   history.sessionID == activeSessionID else { return }
@@ -677,6 +874,13 @@ final class AppStore: ObservableObject {
         workspaceTodoLoadingIDs = []
         workspaceTodoSavingIDs = []
         workspaceTodoRequestIDs = [:]
+        workspaceDirectories = [:]
+        workspaceFiles = [:]
+        workspaceDirectoryLoadingLocations = []
+        workspaceFileLoadingLocations = []
+        workspaceFileSavingLocations = []
+        workspaceDirectoryRequestIDs = [:]
+        workspaceFileRequestIDs = [:]
     }
 
     private var storeSessions: [SessionSummary] {
