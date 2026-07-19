@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import SheltieProtocol
 import Testing
 @testable import Sheltie
 
@@ -57,6 +58,32 @@ private final class MemoryInstanceRepository: InstancePersisting {
 #if DEBUG
     #expect(try AppStore.validatedBaseURL("http://127.0.0.1:9847").host == "127.0.0.1")
 #endif
+}
+
+@Test func compactWorkspacePathsUseTheMinimumDisambiguatingParents() {
+    func workspace(_ id: String, _ path: String?) -> WorkspaceSnapshot {
+        WorkspaceSnapshot(
+            id: id,
+            number: 1,
+            label: id,
+            path: path,
+            paneCount: 1,
+            tabCount: 1,
+            status: .idle,
+            focused: false
+        )
+    }
+    let labels = WorkspacePathLabels.make(for: [
+        workspace("one", "/Users/example/dev/project"),
+        workspace("two", "/Users/example/other/project"),
+        workspace("three", "/Users/example/unique"),
+        workspace("missing", nil),
+    ])
+
+    #expect(labels["one"] == "/dev/project")
+    #expect(labels["two"] == "/other/project")
+    #expect(labels["three"] == "/unique")
+    #expect(labels["missing"] == nil)
 }
 
 @Test func sidebarSplitRatioPreservesUsefulSectionHeights() {

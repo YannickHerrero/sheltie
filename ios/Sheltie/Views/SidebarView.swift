@@ -1,6 +1,34 @@
 import SheltieProtocol
 import SwiftUI
 
+enum WorkspacePathLabels {
+    static func make(for workspaces: [WorkspaceSnapshot]) -> [String: String] {
+        let candidates = workspaces.compactMap { workspace -> (String, [String])? in
+            guard let path = workspace.path?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else { return nil }
+            let components = path.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
+            guard !components.isEmpty else { return nil }
+            return (workspace.id, components)
+        }
+
+        return Dictionary(uniqueKeysWithValues: candidates.map { id, components in
+            for depth in 1 ... components.count {
+                let suffix = compactSuffix(components, depth: depth)
+                let collides = candidates.contains { otherID, otherComponents in
+                    guard otherID != id else { return false }
+                    return compactSuffix(otherComponents, depth: min(depth, otherComponents.count))
+                        .localizedCaseInsensitiveCompare(suffix) == .orderedSame
+                }
+                if !collides { return (id, suffix) }
+            }
+            return (id, compactSuffix(components, depth: components.count))
+        })
+    }
+
+    private static func compactSuffix(_ components: [String], depth: Int) -> String {
+        "/" + components.suffix(depth).joined(separator: "/")
+    }
+}
+
 enum SidebarSplitLayout {
     static let defaultRatio = 0.42
     static let dividerHeight: CGFloat = 18
@@ -250,8 +278,12 @@ struct SidebarView: View {
     }
 
     private func workspaceMetadata(_ workspace: WorkspaceSnapshot) -> String {
-        let leading = workspace.branch ?? workspace.path ?? "workspace"
+        let leading = workspacePathLabels[workspace.id] ?? workspace.branch ?? "workspace"
         return workspace.tabCount == 1 ? leading : "\(leading)  ·  \(workspace.tabCount) sessions"
+    }
+
+    private var workspacePathLabels: [String: String] {
+        WorkspacePathLabels.make(for: store.snapshot?.workspaces ?? [])
     }
 
     private var renameAlertBinding: Binding<Bool> {
