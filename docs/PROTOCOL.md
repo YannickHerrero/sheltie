@@ -75,7 +75,7 @@ Terminal bytes are base64-encoded ANSI data. Each frame carries session ID, pane
 - Herdr 0.7.3+ frames come from `herdr terminal session observe`.
 - Older Herdr versions use bounded ANSI `pane.read` snapshots transformed into full frames.
 
-Input uses explicit actions. Raw SwiftTerm bytes are base64-encoded; composed shell text plus Enter uses Herdr `pane.send_input` atomically. Agent messages use `agent.send` followed by the submit key.
+Input uses explicit actions. Raw SwiftTerm bytes are base64-encoded; composed shell text plus Enter uses Herdr `pane.send_input` atomically. Herdr rejects semantic `PageUp` and `PageDown` key names, so the bridge translates those terminal-key actions (including Ctrl/Alt/Shift variants) to canonical xterm `CSI 5~` and `CSI 6~` input sequences. Agent messages use `agent.send` followed by the submit key.
 
 ## Terminal history
 
