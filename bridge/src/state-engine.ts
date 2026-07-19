@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import { adaptSnapshot, compareVersions } from "./adapter.ts";
 import type { BridgeConfig } from "./config.ts";
 import { HerdrClient } from "./herdr-client.ts";
@@ -105,11 +106,7 @@ export class BridgeStateEngine implements BridgeStateProviding {
       case "workspace.focus":
         return await client.perform("workspace.focus", { workspace_id: target() });
       case "workspace.create":
-        return await client.perform("workspace.create", {
-          cwd: required(action.cwd, "cwd"),
-          ...(action.label ? { label: action.label } : {}),
-          focus: true,
-        });
+        return await client.perform("workspace.create", herdrWorkspaceCreateParameters(action));
       case "workspace.rename":
         return await client.perform("workspace.rename", { workspace_id: target(), label: required(action.label, "label") });
       case "workspace.close":
@@ -331,6 +328,19 @@ function eventSubscriptions(raw: RawHerdrSnapshot): Array<{ type: string; pane_i
 function clampedRatio(value: number): number {
   if (!Number.isFinite(value)) throw new Error("ratio must be finite");
   return Math.max(0.1, Math.min(0.9, value));
+}
+
+export function herdrWorkspaceCreateParameters(
+  action: Pick<ActionCommand, "cwd" | "label">,
+  defaultCwd = homedir(),
+): Record<string, unknown> {
+  const cwd = action.cwd?.trim() || defaultCwd;
+  const label = action.label?.trim();
+  return {
+    cwd,
+    ...(label ? { label } : {}),
+    focus: true,
+  };
 }
 
 export function herdrSplitDirection(direction: SplitDirection): "right" | "down" {
