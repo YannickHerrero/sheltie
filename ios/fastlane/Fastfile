@@ -98,7 +98,7 @@ platform :ios do
       api_key: api_key,
       app_identifier: APP_IDENTIFIER,
       ipa: "build/Sheltie.ipa",
-      changelog: ENV.fetch("TESTFLIGHT_CHANGELOG", "Universal iPhone and iPad support with adaptive terminal workspaces."),
+      changelog: ENV.fetch("TESTFLIGHT_CHANGELOG", "Navigation-first iPhone experience with full-screen spaces, agents, and terminal workspaces."),
       skip_submission: true,
       skip_waiting_for_build_processing: false,
       distribute_external: false
