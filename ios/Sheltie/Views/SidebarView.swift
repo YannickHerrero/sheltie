@@ -49,6 +49,7 @@ struct SidebarView: View {
     @State private var workspaceToRename: WorkspaceSnapshot?
     @State private var renameText = ""
     @State private var workspaceToClose: WorkspaceSnapshot?
+    @State private var workspaceForTodo: WorkspaceSnapshot?
     @State private var dragStartRatio: Double?
     @AppStorage("sheltie.sidebarSplitRatio") private var splitRatio = SidebarSplitLayout.defaultRatio
 
@@ -69,6 +70,9 @@ struct SidebarView: View {
         .background(SheltieTheme.surface.opacity(0.58))
         .sheet(isPresented: $isCreatingWorkspace) {
             WorkspaceCreationView(store: store)
+        }
+        .sheet(item: $workspaceForTodo) { workspace in
+            WorkspaceTodoView(store: store, workspace: workspace)
         }
         .alert("Rename Space", isPresented: renameAlertBinding) {
             TextField("Name", text: $renameText)
@@ -229,6 +233,9 @@ struct SidebarView: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
+            Button("Todo List", systemImage: "checklist") {
+                workspaceForTodo = workspace
+            }
             Button("Rename", systemImage: "pencil") {
                 renameText = workspace.label
                 workspaceToRename = workspace
@@ -298,6 +305,181 @@ struct SidebarView: View {
             get: { workspaceToClose != nil },
             set: { if !$0 { workspaceToClose = nil } }
         )
+    }
+}
+
+private struct WorkspaceTodoView: View {
+    private enum Mode: String, CaseIterable, Identifiable {
+        case edit = "Edit"
+        case preview = "Preview"
+        var id: Self { self }
+    }
+
+    @ObservedObject var store: AppStore
+    let workspace: WorkspaceSnapshot
+    @Environment(\.dismiss) private var dismiss
+    @State private var mode: Mode = .edit
+    @State private var draft = ""
+    @State private var original = ""
+    @State private var revision: String?
+    @State private var pendingReadID: String?
+    @State private var pendingSaveID: String?
+    @State private var conflict: WorkspaceTodoDocument?
+    @State private var errorMessage: String?
+    @State private var hasLoaded = false
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                Picker("Todo view", selection: $mode) {
+                    ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+
+                if !hasLoaded, store.workspaceTodoLoadingIDs.contains(workspace.id) {
+                    ProgressView("Loading todo.md…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if mode == .edit {
+                    TextEditor(text: $draft)
+                        .font(SheltieTheme.mono(13))
+                        .foregroundStyle(SheltieTheme.foreground)
+                        .scrollContentBackground(.hidden)
+                        .padding(.horizontal, 12)
+                        .background(SheltieTheme.background)
+                        .accessibilityIdentifier("workspace.todo.editor")
+                } else {
+                    ScrollView {
+                        Text(markdownPreview)
+                            .font(SheltieTheme.body(14))
+                            .foregroundStyle(SheltieTheme.foreground)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .textSelection(.enabled)
+                            .padding(18)
+                    }
+                    .background(SheltieTheme.background)
+                    .accessibilityIdentifier("workspace.todo.preview")
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    if let errorMessage {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(SheltieTheme.danger)
+                    } else {
+                        Text("Markdown is saved as todo.md in the Space project root.")
+                            .foregroundStyle(SheltieTheme.muted)
+                    }
+                    Text("\(draft.utf8.count) / \(256 * 1024) bytes")
+                        .foregroundStyle(draft.utf8.count > 256 * 1024 ? SheltieTheme.danger : SheltieTheme.muted)
+                }
+                .font(SheltieTheme.mono(9))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 9)
+                .background(SheltieTheme.surface)
+            }
+            .navigationTitle("\(workspace.label) Todo")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if store.workspaceTodoSavingIDs.contains(workspace.id) {
+                        ProgressView()
+                    } else {
+                        Button("Save", action: save)
+                            .disabled(!hasLoaded || draft == original || draft.utf8.count > 256 * 1024)
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .onAppear(perform: load)
+        .onChange(of: store.workspaceTodos[workspace.id]) { _, document in
+            if let document { handle(document) }
+        }
+        .alert("todo.md changed on the Mac", isPresented: conflictBinding) {
+            Button("Cancel", role: .cancel) {}
+            Button("Reload Mac Version") { reloadConflict() }
+            Button("Overwrite", role: .destructive) { overwriteConflict() }
+        } message: {
+            Text("Reload to preserve the external edit, or explicitly overwrite it with this draft.")
+        }
+    }
+
+    private var markdownPreview: AttributedString {
+        (try? AttributedString(markdown: draft)) ?? AttributedString(draft)
+    }
+
+    private var conflictBinding: Binding<Bool> {
+        Binding(
+            get: { conflict != nil },
+            set: { if !$0 { conflict = nil } }
+        )
+    }
+
+    private func load() {
+        pendingReadID = store.requestWorkspaceTodo(for: workspace.id)
+        if let document = store.workspaceTodos[workspace.id] { handle(document) }
+    }
+
+    private func save() {
+        errorMessage = nil
+        pendingSaveID = store.saveWorkspaceTodo(
+            workspaceID: workspace.id,
+            content: draft,
+            expectedRevision: revision
+        )
+        if let document = store.workspaceTodos[workspace.id] { handle(document) }
+    }
+
+    private func handle(_ document: WorkspaceTodoDocument) {
+        if document.requestID == pendingReadID {
+            pendingReadID = nil
+            guard document.errorCode == nil else {
+                errorMessage = document.message ?? "todo.md is unavailable."
+                return
+            }
+            draft = document.content ?? ""
+            original = draft
+            revision = document.revision
+            hasLoaded = true
+        } else if document.requestID == pendingSaveID {
+            pendingSaveID = nil
+            if document.errorCode == "conflict" {
+                conflict = document
+            } else if document.errorCode != nil {
+                errorMessage = document.message ?? "todo.md could not be saved."
+            } else {
+                original = document.content ?? draft
+                revision = document.revision
+                dismiss()
+            }
+        }
+    }
+
+    private func reloadConflict() {
+        guard let conflict else { return }
+        draft = conflict.content ?? ""
+        original = draft
+        revision = conflict.revision
+        errorMessage = nil
+        self.conflict = nil
+    }
+
+    private func overwriteConflict() {
+        guard let conflict else { return }
+        self.conflict = nil
+        pendingSaveID = store.saveWorkspaceTodo(
+            workspaceID: workspace.id,
+            content: draft,
+            expectedRevision: conflict.revision,
+            force: true
+        )
+        if let document = store.workspaceTodos[workspace.id] { handle(document) }
     }
 }
 

@@ -43,6 +43,26 @@ final class SheltieUITests: XCTestCase {
         app.terminate()
     }
 
+    func testWorkspaceTodoOpensFromSpaceContextMenu() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments.append("--demo")
+        app.launch()
+
+        guard app.windows.firstMatch.frame.width <= 430 else { return }
+        let workspace = app.buttons["workspace.w1"]
+        XCTAssertTrue(workspace.waitForExistence(timeout: 5))
+        workspace.press(forDuration: 0.8)
+        app.buttons["Todo List"].tap()
+        let editor = app.textViews["workspace.todo.editor"]
+        XCTAssertTrue(editor.waitForExistence(timeout: 5))
+        XCTAssertTrue(editor.value != nil)
+        app.buttons["Preview"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["workspace.todo.preview"].waitForExistence(timeout: 5))
+        app.buttons["Cancel"].tap()
+        app.terminate()
+    }
+
     func testTerminalHistoryScrollsAndReturnsToLatest() throws {
         XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
