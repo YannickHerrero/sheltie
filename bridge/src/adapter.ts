@@ -130,7 +130,7 @@ export function adaptSnapshot(raw: RawHerdrSnapshot, context: AdaptSnapshotConte
     capabilities.push("session.snapshot", "terminal.session.observe");
   }
 
-  const bridgeCapabilities = ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "workspace.todo", "usage.codex", "multi-session"];
+  const bridgeCapabilities = ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "workspace.todo", "workspace.files", "usage.codex", "multi-session"];
   if (context.notificationDeliveryAvailable) bridgeCapabilities.push("notifications.apns");
 
   return {

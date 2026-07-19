@@ -97,6 +97,7 @@ describe("Herdr snapshot adapter", () => {
     expect(snapshot.bridge.capabilities).toContain("terminal.history");
     expect(snapshot.bridge.capabilities).toContain("usage.codex");
     expect(snapshot.bridge.capabilities).toContain("workspace.todo");
+    expect(snapshot.bridge.capabilities).toContain("workspace.files");
     expect(snapshot.bridge.capabilities).toContain("notifications.apns");
     expect(snapshot.herdr.capabilities).toContain("terminal.session.observe");
   });

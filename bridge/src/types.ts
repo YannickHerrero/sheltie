@@ -169,6 +169,56 @@ export interface WorkspaceTodoDocument extends WorkspaceTodoReadRequest {
   message: string | null;
 }
 
+export type WorkspaceFileKind = "directory" | "file";
+
+export interface WorkspaceFileEntry {
+  name: string;
+  relativePath: string;
+  kind: WorkspaceFileKind;
+  size: number | null;
+  modifiedAtMillis: number;
+}
+
+export interface WorkspaceDirectoryListRequest {
+  requestID: string;
+  sessionID: string;
+  workspaceID: string;
+  relativePath: string;
+}
+
+export interface WorkspaceDirectoryListing extends WorkspaceDirectoryListRequest {
+  entries: WorkspaceFileEntry[];
+  truncated: boolean;
+  errorCode: string | null;
+  message: string | null;
+}
+
+export interface WorkspaceFileReadRequest extends WorkspaceDirectoryListRequest {}
+
+export interface WorkspaceFileSaveRequest {
+  requestID: string;
+  sessionID: string;
+  documentID: string;
+  contentBase64: string;
+  expectedRevision: string | null;
+  force: boolean;
+}
+
+export interface WorkspaceFileDocument {
+  requestID: string;
+  sessionID: string;
+  workspaceID: string;
+  documentID: string | null;
+  relativePath: string;
+  exists: boolean;
+  contentBase64: string | null;
+  revision: string | null;
+  modifiedAtMillis: number | null;
+  mode: number | null;
+  errorCode: string | null;
+  message: string | null;
+}
+
 export interface NotificationRegistrationRequest {
   requestID: string;
   deviceToken: string | null;
@@ -252,6 +302,8 @@ export type StreamServerMessage =
   | { type: "terminal.frame"; frame: TerminalFrame }
   | { type: "terminal.history"; history: TerminalHistory }
   | { type: "workspace.todo"; document: WorkspaceTodoDocument }
+  | { type: "workspace.directory"; document: WorkspaceDirectoryListing }
+  | { type: "workspace.file"; document: WorkspaceFileDocument }
   | { type: "notifications.configuration"; configuration: NotificationConfiguration }
   | { type: "terminal.closed"; terminal: { sessionID: string; paneID: string; reason: string } }
   | { type: "action.result"; result: ActionResult }
@@ -263,6 +315,9 @@ export type StreamClientMessage =
   | { type: "terminal.history.request"; request: TerminalHistoryRequest }
   | { type: "workspace.todo.read"; request: WorkspaceTodoReadRequest }
   | { type: "workspace.todo.save"; request: WorkspaceTodoSaveRequest }
+  | { type: "workspace.directory.list"; request: WorkspaceDirectoryListRequest }
+  | { type: "workspace.file.read"; request: WorkspaceFileReadRequest }
+  | { type: "workspace.file.save"; request: WorkspaceFileSaveRequest }
   | { type: "notifications.configure"; request: NotificationRegistrationRequest }
   | { type: "action"; action: ActionCommand }
   | { type: "resync" }

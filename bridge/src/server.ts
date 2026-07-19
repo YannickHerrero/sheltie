@@ -4,6 +4,11 @@ import { AuthenticationError, AuthStore, validateIngress } from "./auth.ts";
 import type { BridgeConfig } from "./config.ts";
 import type { BridgeStateProviding } from "./state-engine.ts";
 import { TerminalFeed } from "./terminal-feed.ts";
+import {
+  WorkspaceFileError,
+  WorkspaceFileStore,
+  type StoredWorkspaceFile,
+} from "./workspace-files.ts";
 import { WorkspaceTodoError, WorkspaceTodoStore, todoDocument, todoErrorDocument } from "./workspace-todos.ts";
 import type {
   ActionCommand,
@@ -12,16 +17,28 @@ import type {
   NotificationRegistrationRequest,
   TerminalHistoryRequest,
   TerminalSubscription,
+  WorkspaceDirectoryListRequest,
+  WorkspaceFileDocument,
+  WorkspaceFileReadRequest,
+  WorkspaceFileSaveRequest,
   WorkspaceTodoReadRequest,
   WorkspaceTodoSaveRequest,
 } from "./types.ts";
 import { BRIDGE_VERSION, PROTOCOL_VERSION } from "./types.ts";
+
+interface OpenWorkspaceDocument {
+  sessionID: string;
+  workspaceID: string;
+  rootPath: string;
+  relativePath: string;
+}
 
 interface WebSocketData {
   deviceID: string;
   expiresAtMillis: number;
   sessionID: string;
   feeds: Map<string, TerminalFeed>;
+  documents: Map<string, OpenWorkspaceDocument>;
 }
 
 const MAX_TERMINAL_HISTORY_LINES = 1_000;
@@ -53,6 +70,7 @@ export function createBridgeServer(
   auth: AuthStore,
   audit = new AuditLog(config.dataDirectory),
   todos = new WorkspaceTodoStore(),
+  files = new WorkspaceFileStore(),
 ): BridgeServer {
   const sockets = new Set<ServerWebSocket<WebSocketData>>();
 
@@ -140,6 +158,7 @@ export function createBridgeServer(
               expiresAtMillis: session.expiresAtMillis,
               sessionID,
               feeds: new Map(),
+              documents: new Map(),
             },
           });
           return upgraded ? undefined : json({ error: "websocket_upgrade_failed" }, 500);
@@ -168,7 +187,8 @@ export function createBridgeServer(
   });
 
   async function handleWebSocketMessage(socket: ServerWebSocket<WebSocketData>, raw: string | Buffer) {
-    if (Buffer.byteLength(raw) > 512 * 1024) {
+    const messageBytes = Buffer.byteLength(raw);
+    if (messageBytes > 2 * 1024 * 1024) {
       socket.close(1009, "message too large");
       return;
     }
@@ -182,6 +202,11 @@ export function createBridgeServer(
       message = JSON.parse(typeof raw === "string" ? raw : raw.toString("utf8")) as StreamClientMessage;
     } catch {
       socket.close(1007, "invalid JSON");
+      return;
+    }
+
+    if (messageBytes > 512 * 1024 && message.type !== "workspace.file.save") {
+      socket.close(1009, "message too large");
       return;
     }
 
@@ -277,6 +302,104 @@ export function createBridgeServer(
           send(socket, { type: "workspace.todo", document });
           break;
         }
+        case "workspace.directory.list": {
+          const request = normalizeDirectoryRequest(message.request);
+          try {
+            const workspace = await workspaceFor(state, request.sessionID, request.workspaceID);
+            const listing = files.list(workspace.path, request.relativePath);
+            send(socket, {
+              type: "workspace.directory",
+              document: {
+                ...request,
+                ...listing,
+                errorCode: null,
+                message: null,
+              },
+            });
+          } catch (error) {
+            const known = workspaceFileError(error, "The directory is unavailable");
+            send(socket, {
+              type: "workspace.directory",
+              document: {
+                ...request,
+                entries: [],
+                truncated: false,
+                errorCode: known.code,
+                message: known.message,
+              },
+            });
+          }
+          break;
+        }
+        case "workspace.file.read": {
+          const request = normalizeFileReadRequest(message.request);
+          try {
+            const workspace = await workspaceFor(state, request.sessionID, request.workspaceID);
+            const stored = files.read(workspace.path, request.relativePath);
+            const documentID = crypto.randomUUID();
+            while (socket.data.documents.size >= 16) {
+              const oldest = socket.data.documents.keys().next().value;
+              if (typeof oldest !== "string") break;
+              socket.data.documents.delete(oldest);
+            }
+            socket.data.documents.set(documentID, {
+              sessionID: request.sessionID,
+              workspaceID: request.workspaceID,
+              rootPath: workspace.path,
+              relativePath: request.relativePath,
+            });
+            send(socket, {
+              type: "workspace.file",
+              document: workspaceFileDocument(request, documentID, stored),
+            });
+          } catch (error) {
+            send(socket, {
+              type: "workspace.file",
+              document: workspaceFileErrorDocument(request, null, error),
+            });
+          }
+          break;
+        }
+        case "workspace.file.save": {
+          const request = normalizeFileSaveRequest(message.request);
+          const open = socket.data.documents.get(request.documentID);
+          if (!open || open.sessionID !== request.sessionID) throw new Error("The file is no longer open");
+          let document: WorkspaceFileDocument;
+          try {
+            const workspace = await workspaceFor(state, open.sessionID, open.workspaceID);
+            if (workspace.path !== open.rootPath) {
+              throw new WorkspaceFileError("conflict", "The workspace root changed on the Mac");
+            }
+            const stored = files.save(
+              workspace.path,
+              open.relativePath,
+              decodeBase64(request.contentBase64),
+              request.expectedRevision,
+              request.force,
+            );
+            document = workspaceFileDocument(
+              { ...open, requestID: request.requestID },
+              request.documentID,
+              stored,
+            );
+          } catch (error) {
+            document = workspaceFileErrorDocument(
+              { ...open, requestID: request.requestID },
+              request.documentID,
+              error,
+            );
+          }
+          audit.recordOperation(socket.data.deviceID, {
+            requestID: request.requestID,
+            sessionID: request.sessionID,
+            type: "workspace.file.save",
+            targetID: `${open.workspaceID}:${open.relativePath}`,
+            ok: document.errorCode === null,
+            errorCode: document.errorCode,
+          });
+          send(socket, { type: "workspace.file", document });
+          break;
+        }
         case "action": {
           const action = parseAction(message.action as unknown as Record<string, unknown>);
           const result = await state.performAction(action);
@@ -331,6 +454,91 @@ export function createBridgeServer(
 function stopFeeds(socket: ServerWebSocket<WebSocketData>) {
   for (const feed of socket.data.feeds.values()) feed.stop();
   socket.data.feeds.clear();
+}
+
+function normalizeDirectoryRequest(value: WorkspaceDirectoryListRequest): WorkspaceDirectoryListRequest {
+  if (!value || typeof value !== "object") throw new Error("workspace directory request is invalid");
+  return {
+    requestID: requiredString(value.requestID),
+    sessionID: requiredString(value.sessionID),
+    workspaceID: requiredString(value.workspaceID),
+    relativePath: requiredRelativePath(value.relativePath, true),
+  };
+}
+
+function normalizeFileReadRequest(value: WorkspaceFileReadRequest): WorkspaceFileReadRequest {
+  const request = normalizeDirectoryRequest(value);
+  if (!request.relativePath) throw new Error("workspace file path is required");
+  return request;
+}
+
+function normalizeFileSaveRequest(value: WorkspaceFileSaveRequest): WorkspaceFileSaveRequest {
+  if (!value || typeof value !== "object") throw new Error("workspace file save request is invalid");
+  if (value.expectedRevision !== null && typeof value.expectedRevision !== "string") {
+    throw new Error("workspace file revision is invalid");
+  }
+  return {
+    requestID: requiredString(value.requestID),
+    sessionID: requiredString(value.sessionID),
+    documentID: requiredString(value.documentID),
+    contentBase64: requiredBase64(value.contentBase64),
+    expectedRevision: value.expectedRevision,
+    force: value.force === true,
+  };
+}
+
+async function workspaceFor(state: BridgeStateProviding, sessionID: string, workspaceID: string): Promise<{ path: string }> {
+  const snapshot = await state.getSnapshot(sessionID);
+  const workspace = snapshot.workspaces.find((candidate) => candidate.id === workspaceID);
+  if (!workspace?.path) throw new WorkspaceFileError("invalid_workspace_path", "The workspace root is unavailable");
+  return { path: workspace.path };
+}
+
+function workspaceFileDocument(
+  request: { requestID: string; sessionID: string; workspaceID: string; relativePath: string },
+  documentID: string,
+  stored: StoredWorkspaceFile,
+): WorkspaceFileDocument {
+  return {
+    requestID: request.requestID,
+    sessionID: request.sessionID,
+    workspaceID: request.workspaceID,
+    documentID,
+    relativePath: request.relativePath,
+    exists: stored.exists,
+    contentBase64: stored.bytes.toString("base64"),
+    revision: stored.revision,
+    modifiedAtMillis: stored.modifiedAtMillis,
+    mode: stored.mode,
+    errorCode: null,
+    message: null,
+  };
+}
+
+function workspaceFileErrorDocument(
+  request: { requestID: string; sessionID: string; workspaceID: string; relativePath: string },
+  documentID: string | null,
+  error: unknown,
+): WorkspaceFileDocument {
+  const known = workspaceFileError(error, "The file is unavailable");
+  return {
+    requestID: request.requestID,
+    sessionID: request.sessionID,
+    workspaceID: request.workspaceID,
+    documentID,
+    relativePath: request.relativePath,
+    exists: known.latest?.exists ?? false,
+    contentBase64: known.latest ? known.latest.bytes.toString("base64") : null,
+    revision: known.latest?.revision ?? null,
+    modifiedAtMillis: known.latest?.modifiedAtMillis ?? null,
+    mode: known.latest?.mode ?? null,
+    errorCode: known.code,
+    message: known.message,
+  };
+}
+
+function workspaceFileError(error: unknown, fallback: string): WorkspaceFileError {
+  return error instanceof WorkspaceFileError ? error : new WorkspaceFileError("io_error", fallback);
 }
 
 function normalizeNotificationRequest(value: NotificationRegistrationRequest): NotificationRegistrationRequest {
@@ -409,6 +617,22 @@ async function readJSON(request: Request): Promise<Record<string, unknown>> {
 function requiredString(value: unknown): string {
   if (typeof value !== "string" || !value.trim()) throw new Error("required string is missing");
   return value;
+}
+
+function requiredRelativePath(value: unknown, allowEmpty: boolean): string {
+  if (typeof value !== "string" || (!allowEmpty && !value)) throw new Error("relative path is missing");
+  return value;
+}
+
+function requiredBase64(value: unknown): string {
+  if (typeof value !== "string") throw new Error("base64 content is missing");
+  const bytes = Buffer.from(value, "base64");
+  if (bytes.toString("base64") !== value) throw new Error("base64 content is invalid");
+  return value;
+}
+
+function decodeBase64(value: string): Buffer {
+  return Buffer.from(requiredBase64(value), "base64");
 }
 
 function clampInteger(value: unknown, minimum: number, maximum: number, fallback: number): number {

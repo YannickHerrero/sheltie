@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { AuthStore } from "../src/auth.ts";
@@ -224,6 +224,73 @@ describe("bridge HTTP service", () => {
     const audit = readFileSync(join(config.dataDirectory, "audit.jsonl"), "utf8");
     expect(audit).toContain('"type":"workspace.todo.save"');
     expect(audit).not.toContain("private task text");
+  });
+
+  test("lists, reads, and saves workspace files by an opaque document ID", async () => {
+    const config = developmentConfig();
+    mkdirSync(join(config.configRoot, "Sources"));
+    writeFileSync(join(config.configRoot, "Sources", "App.swift"), "let value = 1\n");
+    const state = new FakeState();
+    state.snapshot.workspaces[0]!.path = config.configRoot;
+    const auth = new AuthStore(config, { id: "studio", name: "Mac Studio", host: config.publicHost }, () => {});
+    bridge = createBridgeServer(config, state, auth);
+    const base = `http://127.0.0.1:${bridge.server.port}`;
+    const refresh = await fetch(`${base}/v1/session/refresh`, {
+      method: "POST",
+      headers: { authorization: "Bearer development" },
+    });
+    const { sessionToken } = await refresh.json() as { sessionToken: string };
+
+    const saved = await new Promise<Record<string, unknown>>((resolve, reject) => {
+      const AuthenticatedWebSocket = WebSocket as unknown as new (
+        url: string,
+        options: { headers: Record<string, string> },
+      ) => WebSocket;
+      const socket = new AuthenticatedWebSocket(
+        `${base.replace("http", "ws")}/v1/stream?session=default`,
+        { headers: { authorization: `Bearer ${sessionToken}` } },
+      );
+      const timeout = setTimeout(() => reject(new Error("workspace file timeout")), 2_000);
+      socket.onmessage = (event) => {
+        const message = JSON.parse(String(event.data)) as { type: string; document?: Record<string, unknown> };
+        if (message.type === "snapshot") {
+          socket.send(JSON.stringify({
+            type: "workspace.directory.list",
+            request: { requestID: "directory", sessionID: "default", workspaceID: "w1", relativePath: "Sources" },
+          }));
+        } else if (message.type === "workspace.directory") {
+          expect(message.document?.entries).toEqual([expect.objectContaining({ name: "App.swift", kind: "file" })]);
+          socket.send(JSON.stringify({
+            type: "workspace.file.read",
+            request: { requestID: "read", sessionID: "default", workspaceID: "w1", relativePath: "Sources/App.swift" },
+          }));
+        } else if (message.type === "workspace.file" && message.document?.requestID === "read") {
+          expect(Buffer.from(String(message.document.contentBase64), "base64").toString("utf8")).toBe("let value = 1\n");
+          socket.send(JSON.stringify({
+            type: "workspace.file.save",
+            request: {
+              requestID: "save",
+              sessionID: "default",
+              documentID: message.document.documentID,
+              contentBase64: Buffer.from("let privateValue = 2\n").toString("base64"),
+              expectedRevision: message.document.revision,
+              force: false,
+            },
+          }));
+        } else if (message.type === "workspace.file" && message.document?.requestID === "save") {
+          clearTimeout(timeout);
+          socket.close();
+          resolve(message.document);
+        }
+      };
+      socket.onerror = () => reject(new Error("workspace file websocket failed"));
+    });
+
+    expect(saved).toMatchObject({ relativePath: "Sources/App.swift", errorCode: null });
+    expect(readFileSync(join(config.configRoot, "Sources", "App.swift"), "utf8")).toBe("let privateValue = 2\n");
+    const audit = readFileSync(join(config.dataDirectory, "audit.jsonl"), "utf8");
+    expect(audit).toContain('"type":"workspace.file.save"');
+    expect(audit).not.toContain("privateValue");
   });
 
   test("rejects missing credentials and unknown actions", async () => {
