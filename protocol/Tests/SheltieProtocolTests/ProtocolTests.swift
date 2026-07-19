@@ -57,10 +57,36 @@ import Testing
         content: "- [ ] Test\n",
         revision: "abc"
     )
+    let fileBytes = Data("let value = 1\n".utf8)
+    let directory = WorkspaceDirectoryListing(
+        requestID: "directory-1",
+        sessionID: "default",
+        workspaceID: "w1",
+        relativePath: "Sources",
+        entries: [.init(
+            name: "App.swift",
+            relativePath: "Sources/App.swift",
+            kind: .file,
+            size: Int64(fileBytes.count),
+            modifiedAtMillis: 1_700_000_000_000
+        )]
+    )
+    let file = WorkspaceFileDocument(
+        requestID: "file-1",
+        sessionID: "default",
+        workspaceID: "w1",
+        documentID: "document-1",
+        relativePath: "Sources/App.swift",
+        exists: true,
+        contentBase64: fileBytes.base64EncodedString(),
+        revision: "def"
+    )
     let messages: [StreamServerMessage] = [
         .terminalFrame(frame),
         .terminalHistory(history),
         .workspaceTodo(todo),
+        .workspaceDirectory(directory),
+        .workspaceFile(file),
         .notificationConfiguration(.init(
             requestID: "notifications-1",
             doneEnabled: true,
@@ -81,6 +107,7 @@ import Testing
     }
     #expect(frame.bytes == Data("hello".utf8))
     #expect(history.bytes == Data("older output".utf8))
+    #expect(file.bytes == fileBytes)
 }
 
 @Test func clientActionsAndSubscriptionsRoundTrip() throws {
@@ -108,6 +135,25 @@ import Testing
             workspaceID: "w1",
             content: "- [ ] Ship\n",
             expectedRevision: "abc"
+        )),
+        .workspaceDirectoryList(.init(
+            requestID: "directory-list",
+            sessionID: "default",
+            workspaceID: "w1",
+            relativePath: "Sources"
+        )),
+        .workspaceFileRead(.init(
+            requestID: "file-read",
+            sessionID: "default",
+            workspaceID: "w1",
+            relativePath: "Sources/App.swift"
+        )),
+        .workspaceFileSave(.init(
+            requestID: "file-save",
+            sessionID: "default",
+            documentID: "document-1",
+            contentBase64: Data("updated\n".utf8).base64EncodedString(),
+            expectedRevision: "def"
         )),
         .configureNotifications(.init(
             requestID: "notifications-2",

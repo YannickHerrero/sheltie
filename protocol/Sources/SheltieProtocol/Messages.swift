@@ -145,6 +145,167 @@ public struct WorkspaceTodoDocument: Codable, Equatable, Sendable {
     }
 }
 
+public enum WorkspaceFileKind: String, Codable, Sendable {
+    case directory
+    case file
+}
+
+public struct WorkspaceFileEntry: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { relativePath }
+
+    public let name: String
+    public let relativePath: String
+    public let kind: WorkspaceFileKind
+    public let size: Int64?
+    public let modifiedAtMillis: Int64
+
+    public init(
+        name: String,
+        relativePath: String,
+        kind: WorkspaceFileKind,
+        size: Int64? = nil,
+        modifiedAtMillis: Int64
+    ) {
+        self.name = name
+        self.relativePath = relativePath
+        self.kind = kind
+        self.size = size
+        self.modifiedAtMillis = modifiedAtMillis
+    }
+}
+
+public struct WorkspaceDirectoryListRequest: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let sessionID: String
+    public let workspaceID: String
+    public let relativePath: String
+
+    public init(requestID: String, sessionID: String, workspaceID: String, relativePath: String) {
+        self.requestID = requestID
+        self.sessionID = sessionID
+        self.workspaceID = workspaceID
+        self.relativePath = relativePath
+    }
+}
+
+public struct WorkspaceDirectoryListing: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let sessionID: String
+    public let workspaceID: String
+    public let relativePath: String
+    public let entries: [WorkspaceFileEntry]
+    public let truncated: Bool
+    public let errorCode: String?
+    public let message: String?
+
+    public init(
+        requestID: String,
+        sessionID: String,
+        workspaceID: String,
+        relativePath: String,
+        entries: [WorkspaceFileEntry],
+        truncated: Bool = false,
+        errorCode: String? = nil,
+        message: String? = nil
+    ) {
+        self.requestID = requestID
+        self.sessionID = sessionID
+        self.workspaceID = workspaceID
+        self.relativePath = relativePath
+        self.entries = entries
+        self.truncated = truncated
+        self.errorCode = errorCode
+        self.message = message
+    }
+}
+
+public struct WorkspaceFileReadRequest: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let sessionID: String
+    public let workspaceID: String
+    public let relativePath: String
+
+    public init(requestID: String, sessionID: String, workspaceID: String, relativePath: String) {
+        self.requestID = requestID
+        self.sessionID = sessionID
+        self.workspaceID = workspaceID
+        self.relativePath = relativePath
+    }
+}
+
+public struct WorkspaceFileSaveRequest: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let sessionID: String
+    public let documentID: String
+    public let contentBase64: String
+    public let expectedRevision: String?
+    public let force: Bool
+
+    public init(
+        requestID: String,
+        sessionID: String,
+        documentID: String,
+        contentBase64: String,
+        expectedRevision: String?,
+        force: Bool = false
+    ) {
+        self.requestID = requestID
+        self.sessionID = sessionID
+        self.documentID = documentID
+        self.contentBase64 = contentBase64
+        self.expectedRevision = expectedRevision
+        self.force = force
+    }
+}
+
+public struct WorkspaceFileDocument: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let sessionID: String
+    public let workspaceID: String
+    public let documentID: String?
+    public let relativePath: String
+    public let exists: Bool
+    public let contentBase64: String?
+    public let revision: String?
+    public let modifiedAtMillis: Int64?
+    public let mode: Int?
+    public let errorCode: String?
+    public let message: String?
+
+    public init(
+        requestID: String,
+        sessionID: String,
+        workspaceID: String,
+        documentID: String? = nil,
+        relativePath: String,
+        exists: Bool,
+        contentBase64: String? = nil,
+        revision: String? = nil,
+        modifiedAtMillis: Int64? = nil,
+        mode: Int? = nil,
+        errorCode: String? = nil,
+        message: String? = nil
+    ) {
+        self.requestID = requestID
+        self.sessionID = sessionID
+        self.workspaceID = workspaceID
+        self.documentID = documentID
+        self.relativePath = relativePath
+        self.exists = exists
+        self.contentBase64 = contentBase64
+        self.revision = revision
+        self.modifiedAtMillis = modifiedAtMillis
+        self.mode = mode
+        self.errorCode = errorCode
+        self.message = message
+    }
+
+    public var bytes: Data? {
+        guard let contentBase64 else { return nil }
+        return Data(base64Encoded: contentBase64)
+    }
+}
+
 public struct NotificationRegistrationRequest: Codable, Equatable, Sendable {
     public let requestID: String
     public let deviceToken: String?
@@ -428,6 +589,8 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
     case terminalFrame(TerminalFrame)
     case terminalHistory(TerminalHistory)
     case workspaceTodo(WorkspaceTodoDocument)
+    case workspaceDirectory(WorkspaceDirectoryListing)
+    case workspaceFile(WorkspaceFileDocument)
     case notificationConfiguration(NotificationConfiguration)
     case terminalClosed(TerminalClosed)
     case actionResult(ActionResult)
@@ -452,6 +615,8 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
         case terminalFrame = "terminal.frame"
         case terminalHistory = "terminal.history"
         case workspaceTodo = "workspace.todo"
+        case workspaceDirectory = "workspace.directory"
+        case workspaceFile = "workspace.file"
         case notificationConfiguration = "notifications.configuration"
         case terminalClosed = "terminal.closed"
         case actionResult = "action.result"
@@ -470,6 +635,10 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
             self = .terminalHistory(try container.decode(TerminalHistory.self, forKey: .history))
         case .workspaceTodo:
             self = .workspaceTodo(try container.decode(WorkspaceTodoDocument.self, forKey: .document))
+        case .workspaceDirectory:
+            self = .workspaceDirectory(try container.decode(WorkspaceDirectoryListing.self, forKey: .document))
+        case .workspaceFile:
+            self = .workspaceFile(try container.decode(WorkspaceFileDocument.self, forKey: .document))
         case .notificationConfiguration:
             self = .notificationConfiguration(try container.decode(NotificationConfiguration.self, forKey: .configuration))
         case .terminalClosed:
@@ -498,6 +667,12 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
         case let .workspaceTodo(document):
             try container.encode(MessageType.workspaceTodo, forKey: .type)
             try container.encode(document, forKey: .document)
+        case let .workspaceDirectory(document):
+            try container.encode(MessageType.workspaceDirectory, forKey: .type)
+            try container.encode(document, forKey: .document)
+        case let .workspaceFile(document):
+            try container.encode(MessageType.workspaceFile, forKey: .type)
+            try container.encode(document, forKey: .document)
         case let .notificationConfiguration(configuration):
             try container.encode(MessageType.notificationConfiguration, forKey: .type)
             try container.encode(configuration, forKey: .configuration)
@@ -522,6 +697,9 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
     case terminalHistoryRequest(TerminalHistoryRequest)
     case workspaceTodoRead(WorkspaceTodoReadRequest)
     case workspaceTodoSave(WorkspaceTodoSaveRequest)
+    case workspaceDirectoryList(WorkspaceDirectoryListRequest)
+    case workspaceFileRead(WorkspaceFileReadRequest)
+    case workspaceFileSave(WorkspaceFileSaveRequest)
     case configureNotifications(NotificationRegistrationRequest)
     case action(ActionCommand)
     case resync
@@ -540,6 +718,9 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
         case terminalHistoryRequest = "terminal.history.request"
         case workspaceTodoRead = "workspace.todo.read"
         case workspaceTodoSave = "workspace.todo.save"
+        case workspaceDirectoryList = "workspace.directory.list"
+        case workspaceFileRead = "workspace.file.read"
+        case workspaceFileSave = "workspace.file.save"
         case configureNotifications = "notifications.configure"
         case action
         case resync
@@ -557,6 +738,12 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
             self = .workspaceTodoRead(try container.decode(WorkspaceTodoReadRequest.self, forKey: .request))
         case .workspaceTodoSave:
             self = .workspaceTodoSave(try container.decode(WorkspaceTodoSaveRequest.self, forKey: .request))
+        case .workspaceDirectoryList:
+            self = .workspaceDirectoryList(try container.decode(WorkspaceDirectoryListRequest.self, forKey: .request))
+        case .workspaceFileRead:
+            self = .workspaceFileRead(try container.decode(WorkspaceFileReadRequest.self, forKey: .request))
+        case .workspaceFileSave:
+            self = .workspaceFileSave(try container.decode(WorkspaceFileSaveRequest.self, forKey: .request))
         case .configureNotifications:
             self = .configureNotifications(try container.decode(NotificationRegistrationRequest.self, forKey: .request))
         case .action:
@@ -582,6 +769,15 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
             try container.encode(request, forKey: .request)
         case let .workspaceTodoSave(request):
             try container.encode(MessageType.workspaceTodoSave, forKey: .type)
+            try container.encode(request, forKey: .request)
+        case let .workspaceDirectoryList(request):
+            try container.encode(MessageType.workspaceDirectoryList, forKey: .type)
+            try container.encode(request, forKey: .request)
+        case let .workspaceFileRead(request):
+            try container.encode(MessageType.workspaceFileRead, forKey: .type)
+            try container.encode(request, forKey: .request)
+        case let .workspaceFileSave(request):
+            try container.encode(MessageType.workspaceFileSave, forKey: .type)
             try container.encode(request, forKey: .request)
         case let .configureNotifications(request):
             try container.encode(MessageType.configureNotifications, forKey: .type)
