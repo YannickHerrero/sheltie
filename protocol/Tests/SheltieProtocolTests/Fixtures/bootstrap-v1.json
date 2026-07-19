@@ -3,7 +3,7 @@
   "bridge": {
     "version": "0.1.0",
     "protocolVersion": 1,
-    "capabilities": ["snapshots", "terminal.read", "terminal.write", "terminal.history", "pairing"]
+    "capabilities": ["snapshots", "terminal.read", "terminal.write", "terminal.history", "usage.codex", "pairing"]
   },
   "instance": {
     "id": "studio",

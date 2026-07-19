@@ -16,6 +16,8 @@ export interface BridgeConfig {
   herdrBinary: string;
   snapshotPollMilliseconds: number;
   terminalPollMilliseconds: number;
+  usageRefreshMilliseconds: number;
+  codexBinary: string;
   usageFile?: string;
 }
 
@@ -59,6 +61,8 @@ export function loadConfig(): BridgeConfig {
     herdrBinary: process.env.HERDR_BINARY ?? "herdr",
     snapshotPollMilliseconds: positiveInteger("SHELTIE_SNAPSHOT_POLL_MS", 2_000),
     terminalPollMilliseconds: positiveInteger("SHELTIE_TERMINAL_POLL_MS", 350),
+    usageRefreshMilliseconds: positiveInteger("SHELTIE_USAGE_REFRESH_MS", 60_000),
+    codexBinary: process.env.SHELTIE_CODEX_BINARY ?? "codex",
     ...(process.env.SHELTIE_USAGE_FILE ? { usageFile: process.env.SHELTIE_USAGE_FILE } : {}),
   };
 

@@ -33,6 +33,8 @@ function config(binary: string, terminalPollMilliseconds = 10): BridgeConfig {
     herdrBinary: binary,
     snapshotPollMilliseconds: 2_000,
     terminalPollMilliseconds,
+    usageRefreshMilliseconds: 60_000,
+    codexBinary: "codex",
   };
 }
 

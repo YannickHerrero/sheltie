@@ -134,7 +134,7 @@ export function adaptSnapshot(raw: RawHerdrSnapshot, context: AdaptSnapshotConte
     bridge: {
       version: BRIDGE_VERSION,
       protocolVersion: PROTOCOL_VERSION,
-      capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "multi-session"],
+      capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "usage.codex", "multi-session"],
     },
     instance: context.instance,
     herdr: {

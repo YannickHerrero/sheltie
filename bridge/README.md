@@ -11,6 +11,8 @@ The bridge is the only Sheltie component that talks to Herdr's local Unix socket
 
 Herdr 0.7.1 remains usable during development through a `pane.read` polling fallback, but it does not provide the preferred live terminal stream. Authenticated clients can request a bounded, read-only ANSI history snapshot from Herdr's `recent` pane buffer on every supported Herdr version.
 
+The bridge collects the Codex weekly rate-limit meter from the trusted local `codex app-server` API, caches it for one minute, and retains the last good reading across transient collector failures. Set `SHELTIE_CODEX_BINARY` when Codex is not on the LaunchAgent `PATH`; `SHELTIE_USAGE_FILE` remains an explicit local-file override.
+
 ## Development
 
 ```bash

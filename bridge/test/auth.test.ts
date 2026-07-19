@@ -29,6 +29,8 @@ function config(overrides: Partial<BridgeConfig> = {}): BridgeConfig {
     herdrBinary: "herdr",
     snapshotPollMilliseconds: 2_000,
     terminalPollMilliseconds: 350,
+    usageRefreshMilliseconds: 60_000,
+    codexBinary: "codex",
     ...overrides,
   };
 }

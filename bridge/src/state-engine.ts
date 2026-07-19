@@ -2,7 +2,7 @@ import { adaptSnapshot, compareVersions } from "./adapter.ts";
 import type { BridgeConfig } from "./config.ts";
 import { HerdrClient } from "./herdr-client.ts";
 import { discoverSessions, type HerdrSessionLocation } from "./sessions.ts";
-import { loadUsageMeters } from "./usage.ts";
+import { UsageProvider, type UsageLoading } from "./usage.ts";
 import type {
   ActionCommand,
   ActionResult,
@@ -48,6 +48,7 @@ export class BridgeStateEngine implements BridgeStateProviding {
   constructor(
     private readonly config: BridgeConfig,
     private readonly instance: InstanceInfo,
+    private readonly usage: UsageLoading = new UsageProvider(config),
   ) {}
 
   get hasReachableSession(): boolean {
@@ -243,6 +244,7 @@ export class BridgeStateEngine implements BridgeStateProviding {
       reachable: raw !== null,
     }));
 
+    const usageMeters = await this.usage.load();
     for (const { location, raw, layouts } of fetched) {
       if (!raw) {
         this.snapshots.delete(location.id);
@@ -253,7 +255,7 @@ export class BridgeStateEngine implements BridgeStateProviding {
         activeSessionID: location.id,
         sessions: summaries,
         exportedLayouts: layouts,
-        usageMeters: loadUsageMeters(this.config.usageFile),
+        usageMeters,
       });
       const previous = this.snapshots.get(location.id);
       const changed = !previous || snapshotFingerprint(previous) !== snapshotFingerprint(snapshot);

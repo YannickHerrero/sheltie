@@ -94,6 +94,7 @@ describe("Herdr snapshot adapter", () => {
       second: { type: "pane", paneID: "w1:p2" },
     });
     expect(snapshot.bridge.capabilities).toContain("terminal.history");
+    expect(snapshot.bridge.capabilities).toContain("usage.codex");
     expect(snapshot.herdr.capabilities).toContain("terminal.session.observe");
   });
 

@@ -23,7 +23,13 @@ struct AppBar: View {
             Rectangle().fill(SheltieTheme.border).frame(width: 1)
             instanceButton
             if let usage = store.snapshot?.usageMeters.first {
-                usageMeter(usage)
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    usageMeter(usage, now: context.date)
+                }
+                .frame(width: isNarrow ? 142 : 236)
+                .padding(.trailing, 10)
+            } else if store.snapshot?.bridge.capabilities.contains("usage.codex") == true {
+                unavailableUsageMeter
                     .frame(width: isNarrow ? 142 : 236)
                     .padding(.trailing, 10)
             }
@@ -137,17 +143,18 @@ struct AppBar: View {
         return "\(session)  ·  \(host)"
     }
 
-    private func usageMeter(_ usage: UsageMeter) -> some View {
-        VStack(spacing: 7) {
+    private func usageMeter(_ usage: UsageMeter, now: Date) -> some View {
+        let isStale = now.timeIntervalSince1970 * 1_000 - Double(usage.observedAtMillis) > 5 * 60_000
+        return VStack(spacing: 7) {
             HStack {
                 Text(isNarrow ? usage.provider.uppercased() : usage.label.uppercased())
                     .font(SheltieTheme.mono(9, weight: .medium))
                     .foregroundStyle(SheltieTheme.muted)
                     .lineLimit(1)
                 Spacer(minLength: 4)
-                Text("\(Int((usage.remainingFraction * 100).rounded()))% left")
+                Text(isStale ? "STALE" : "\(Int((usage.remainingFraction * 100).rounded()))% left")
                     .font(SheltieTheme.mono(11, weight: .bold))
-                    .foregroundStyle(SheltieTheme.foreground)
+                    .foregroundStyle(isStale ? SheltieTheme.warning : SheltieTheme.foreground)
             }
             HStack(spacing: 8) {
                 GeometryReader { proxy in
@@ -171,7 +178,24 @@ struct AppBar: View {
         .background(RoundedRectangle(cornerRadius: 8).fill(SheltieTheme.background.opacity(0.34)))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(SheltieTheme.border, lineWidth: 1))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(usage.label), \(Int(usage.remainingFraction * 100)) percent remaining")
+        .accessibilityLabel(isStale
+            ? "\(usage.label), usage information is stale"
+            : "\(usage.label), \(Int(usage.remainingFraction * 100)) percent remaining")
+    }
+
+    private var unavailableUsageMeter: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "gauge.with.dots.needle.0percent")
+            Text(isNarrow ? "CODEX —" : "CODEX USAGE UNAVAILABLE")
+                .lineLimit(1)
+        }
+        .font(SheltieTheme.mono(9, weight: .semibold))
+        .foregroundStyle(SheltieTheme.muted)
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 8).fill(SheltieTheme.background.opacity(0.34)))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(SheltieTheme.border, lineWidth: 1))
+        .accessibilityLabel("Codex usage unavailable")
     }
 }
 
