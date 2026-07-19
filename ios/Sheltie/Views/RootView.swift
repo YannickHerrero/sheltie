@@ -1,24 +1,42 @@
 import SwiftUI
+import UIKit
+
+private enum PhoneDestination: Hashable {
+    case workspace
+}
 
 struct RootView: View {
     @ObservedObject var store: AppStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isShowingInstances = false
+    @State private var phonePath: [PhoneDestination]
+
+    init(store: AppStore) {
+        self.store = store
+        let arguments = ProcessInfo.processInfo.arguments
+        let startsInDemoWorkspace = arguments.contains("--demo") && arguments.contains("--phone-workspace")
+        _phonePath = State(initialValue: startsInDemoWorkspace ? [.workspace] : [])
+    }
 
     var body: some View {
         GeometryReader { proxy in
-            let isCompact = proxy.size.width <= 820
+            let isPhone = UIDevice.current.userInterfaceIdiom == .phone
+            let isCompact = isPhone || proxy.size.width <= 820
             let isNarrow = proxy.size.width <= 560
             let sidebarWidth = max(205, min(240, proxy.size.width * 0.21))
 
             ZStack(alignment: .topLeading) {
-                appFrame(
-                    sidebarWidth: sidebarWidth,
-                    isCompact: isCompact,
-                    isNarrow: isNarrow
-                )
+                if isPhone {
+                    phoneNavigation(sidebarWidth: sidebarWidth, isNarrow: isNarrow)
+                } else {
+                    appFrame(
+                        sidebarWidth: sidebarWidth,
+                        isCompact: isCompact,
+                        isNarrow: isNarrow
+                    )
+                }
 
-                if isCompact, store.isSidebarPresented {
+                if !isPhone, isCompact, store.isSidebarPresented {
                     Color.black.opacity(0.18)
                         .ignoresSafeArea()
                         .onTapGesture { store.isSidebarPresented = false }
@@ -53,6 +71,46 @@ struct RootView: View {
         .background(SheltieTheme.background.ignoresSafeArea())
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("sheltie.root")
+    }
+
+    @ViewBuilder
+    private func phoneNavigation(sidebarWidth: CGFloat, isNarrow: Bool) -> some View {
+        if phonePath.isEmpty {
+            VStack(spacing: 0) {
+                AppBar(
+                    store: store,
+                    sidebarWidth: sidebarWidth,
+                    isCompact: true,
+                    isNarrow: isNarrow,
+                    isShowingInstances: $isShowingInstances,
+                    navigationStyle: .phoneRoot
+                )
+                SidebarView(store: store) {
+                    phonePath = [.workspace]
+                }
+            }
+            .background(SheltieTheme.background)
+            .accessibilityIdentifier("phone.navigation")
+        } else {
+            phoneWorkspace(sidebarWidth: sidebarWidth, isNarrow: isNarrow)
+        }
+    }
+
+    private func phoneWorkspace(sidebarWidth: CGFloat, isNarrow: Bool) -> some View {
+        VStack(spacing: 0) {
+            AppBar(
+                store: store,
+                sidebarWidth: sidebarWidth,
+                isCompact: true,
+                isNarrow: isNarrow,
+                isShowingInstances: $isShowingInstances,
+                navigationStyle: .phoneWorkspace,
+                onBack: { phonePath.removeAll() }
+            )
+            workspace(isCompact: true, isNarrow: isNarrow)
+        }
+        .background(SheltieTheme.background)
+        .accessibilityIdentifier("phone.workspace")
     }
 
     private func appFrame(sidebarWidth: CGFloat, isCompact: Bool, isNarrow: Bool) -> some View {

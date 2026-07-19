@@ -35,20 +35,23 @@ Boundaries are low-contrast one-point rules. The selected pane receives a restra
 
 ## Adaptive behavior
 
-The adaptive breakpoint is based directly on the app window’s available width. The prototype’s outer presentation frame is a mockup device, not part of the native application.
+The phone idiom selects a navigation-first presentation; iPad adaptation is then based directly on available window width. The prototype’s outer presentation frame is a mockup device, not part of the native application.
 
-- Wide: persistent sidebar and complete recursive pane split.
-- Compact: app-bar menu button, drawer sidebar, one pane at a time, explicit pane switcher.
+- iPhone root: the complete Spaces/Agents hierarchy fills the screen.
+- iPhone workspace: selecting a space or agent opens one terminal page full-screen with a back control, tabs, pane switcher, composer, and keybar.
+- iPad wide: persistent sidebar and complete recursive pane split.
+- iPad compact: app-bar menu button, drawer sidebar, one pane at a time, explicit pane switcher.
 - Narrow (560 points or less): condensed connection and usage metadata and no keybar note.
-- Wide and compact layouts both fill the window edge to edge without an outer margin, rounded container, or drop shadow.
+- Every presentation fills the window edge to edge without an outer margin, rounded container, or drop shadow.
 - Internal surfaces retain their own borders and hierarchy; only the enclosing presentation card is removed.
 
-Window width—not orientation or device model—controls adaptation so Split View and Stage Manager behave consistently.
+Window width—not orientation—controls iPad Split View and Stage Manager adaptation.
 
 ## Interaction mapping
 
-- Space selection focuses its active Herdr tab and pane.
-- Agent selection focuses its linked space, tab, and pane.
+- Space selection focuses its active Herdr tab and pane, then opens the full-screen workspace on iPhone.
+- Agent selection focuses its linked space, tab, and pane, then opens the full-screen workspace on iPhone.
+- The iPhone workspace back control returns to the full-screen Spaces/Agents hierarchy without changing Herdr focus.
 - Tab selection focuses the Herdr tab.
 - Pane focus determines hardware-keyboard, composer, and keybar routing.
 - Divider drags update local geometry continuously and send one split-ratio action on release.

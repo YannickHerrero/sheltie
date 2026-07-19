@@ -1,12 +1,20 @@
 import SheltieProtocol
 import SwiftUI
 
+enum AppBarNavigationStyle {
+    case standard
+    case phoneRoot
+    case phoneWorkspace
+}
+
 struct AppBar: View {
     @ObservedObject var store: AppStore
     let sidebarWidth: CGFloat
     let isCompact: Bool
     let isNarrow: Bool
     @Binding var isShowingInstances: Bool
+    var navigationStyle: AppBarNavigationStyle = .standard
+    var onBack: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 0) {
@@ -27,15 +35,31 @@ struct AppBar: View {
 
     private var brand: some View {
         HStack(spacing: 10) {
-            if isCompact {
-                Button(action: store.toggleSidebar) {
-                    LogoMark()
+            switch navigationStyle {
+            case .phoneRoot:
+                LogoMark()
+                    .frame(width: 44, height: 44)
+            case .phoneWorkspace:
+                Button(action: onBack) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(SheltieTheme.foreground)
+                        .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
-                .frame(width: 44, height: 44)
-                .accessibilityLabel(store.isSidebarPresented ? "Hide spaces and agents" : "Show spaces and agents")
-            } else {
-                LogoMark()
+                .accessibilityIdentifier("phone.navigation.back")
+                .accessibilityLabel("Back to spaces and agents")
+            case .standard:
+                if isCompact {
+                    Button(action: store.toggleSidebar) {
+                        LogoMark()
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: 44, height: 44)
+                    .accessibilityLabel(store.isSidebarPresented ? "Hide spaces and agents" : "Show spaces and agents")
+                } else {
+                    LogoMark()
+                }
             }
             if !isNarrow {
                 Text("Sheltie")

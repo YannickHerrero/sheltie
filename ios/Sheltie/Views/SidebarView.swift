@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SidebarView: View {
     @ObservedObject var store: AppStore
+    var onSelection: (() -> Void)? = nil
     @State private var isCreatingWorkspace = false
     @State private var workspaceToRename: WorkspaceSnapshot?
     @State private var renameText = ""
@@ -107,6 +108,7 @@ struct SidebarView: View {
         let selected = workspace.id == store.selectedWorkspaceID
         return Button {
             store.selectWorkspace(workspace.id)
+            onSelection?()
         } label: {
             HStack(spacing: 11) {
                 StatusDot(status: workspace.status)
@@ -151,6 +153,7 @@ struct SidebarView: View {
         let selected = agent.paneID == store.selectedPaneID
         return Button {
             store.selectAgent(agent)
+            onSelection?()
         } label: {
             HStack(spacing: 11) {
                 StatusDot(status: agent.status)

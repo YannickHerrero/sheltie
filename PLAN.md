@@ -95,11 +95,12 @@ The native shell consists of:
 - A 50-point horizontally scrollable special-key row.
 - A registered-instance selection/pairing modal and transient toast/status feedback.
 
-Use available window width rather than device identity or orientation:
+Use the phone idiom only to select the navigation model, then use available window width for layout adaptation:
 
-- Above 820 points: keep the sidebar persistent and show the complete Herdr pane split.
-- At or below 820 points: present the sidebar as a drawer and show one pane at a time with an explicit pane switcher.
-- At or below 560 points: condense connection metadata, usage presentation, tabs, and keybar notes for narrow Split View and possible future phone support.
+- On iPhone: make the complete Spaces/Agents sidebar the full-screen root and open a selected workspace or agent as a full-screen terminal page with an explicit back control.
+- On iPad above 820 points: keep the sidebar persistent and show the complete Herdr pane split.
+- On iPad at or below 820 points: present the sidebar as a drawer and show one pane at a time with an explicit pane switcher.
+- At or below 560 points: condense connection metadata, usage presentation, tabs, and keybar notes.
 - Fill the app window edge to edge at every width; the prototype’s outer presentation frame is not application chrome.
 
 The prototype documents the connected success path. Before implementation, specify native loading, empty, pairing-required, connecting, disconnected, reconnecting, incompatible-server, revoked-device, pane-stream-error, and optional-data-unavailable states without changing the established geometry unnecessarily.
