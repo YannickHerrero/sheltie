@@ -204,13 +204,17 @@ export class HerdrClient {
     return result.layout;
   }
 
-  async readPane(paneID: string, lines = 200): Promise<{ text: string; revision: number; truncated: boolean }> {
+  async readPane(
+    paneID: string,
+    lines = 200,
+    source: "visible" | "recent" | "recent-unwrapped" = "visible",
+  ): Promise<{ text: string; revision: number; truncated: boolean }> {
     const result = await this.request<{
       type: "pane_read";
       read: { text: string; revision: number; truncated: boolean };
     }>("pane.read", {
       pane_id: paneID,
-      source: "visible",
+      source,
       lines,
       format: "ansi",
       strip_ansi: false,

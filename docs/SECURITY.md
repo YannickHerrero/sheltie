@@ -60,7 +60,7 @@ Restart the bridge after revocation to discard any already-issued in-memory sess
 
 ## Audit and sensitive data
 
-Write and structural actions are appended to `audit.jsonl` with device, request, session, action type, target, result, and time. Terminal text, key values, access tokens, pairing codes, and terminal frames are intentionally omitted.
+Write and structural actions are appended to `audit.jsonl` with device, request, session, action type, target, result, and time. Terminal text, key values, access tokens, pairing codes, live terminal frames, and terminal-history snapshots are intentionally omitted.
 
 Do not place secrets in diagnostics, screenshots, usage-meter files, or committed configuration. The ignored design directory is not a secret store.
 

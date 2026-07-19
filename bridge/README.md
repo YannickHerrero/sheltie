@@ -9,7 +9,7 @@ The bridge is the only Sheltie component that talks to Herdr's local Unix socket
 - [Bun](https://bun.sh/) 1.3 or newer
 - Tailscale Serve
 
-Herdr 0.7.1 remains usable during development through a `pane.read` polling fallback, but it does not provide the preferred live terminal stream.
+Herdr 0.7.1 remains usable during development through a `pane.read` polling fallback, but it does not provide the preferred live terminal stream. Authenticated clients can request a bounded, read-only ANSI history snapshot from Herdr's `recent` pane buffer on every supported Herdr version.
 
 ## Development
 

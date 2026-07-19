@@ -39,6 +39,7 @@ Server messages:
 
 - `snapshot`
 - `terminal.frame`
+- `terminal.history`
 - `terminal.closed`
 - `action.result`
 - `session.expiring`
@@ -47,6 +48,7 @@ Server messages:
 Client messages:
 
 - `subscribe`
+- `terminal.history.request`
 - `action`
 - `resync`
 - `pong`
@@ -64,6 +66,10 @@ Terminal bytes are base64-encoded ANSI data. Each frame carries session ID, pane
 - Older Herdr versions use bounded ANSI `pane.read` snapshots transformed into full frames.
 
 Input uses explicit actions. Raw SwiftTerm bytes are base64-encoded; composed shell text plus Enter uses Herdr `pane.send_input` atomically. Agent messages use `agent.send` followed by the submit key.
+
+## Terminal history
+
+Live terminal frames describe the current viewport and cannot reconstruct canonical scrollback. A client may therefore request recent history for one pane. The bridge reads Herdr's ANSI `pane.read` `recent` source and returns a base64-encoded, read-only snapshot. Requests are clamped to Herdr's 1,000-line limit and a bridge byte ceiling. The iOS client presents the stable snapshot over the still-updating live terminal, then dismisses it to return immediately to current output. History remains memory-only and is never audited or logged.
 
 ## Structural actions
 

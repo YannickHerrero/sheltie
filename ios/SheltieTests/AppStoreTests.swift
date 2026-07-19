@@ -26,6 +26,10 @@ private final class MemoryInstanceRepository: InstancePersisting {
     #expect(store.selectedTabID == "w1:t1")
     #expect(store.selectedPaneID == "w1:p1")
     #expect(store.terminalFrames["w1:p1"]?.full == true)
+
+    store.requestTerminalHistory(for: "w1:p1")
+    #expect(store.terminalHistories["w1:p1"]?.bytes != nil)
+    #expect(store.terminalHistoryLoadingPaneIDs.contains("w1:p1") == false)
 }
 
 @MainActor

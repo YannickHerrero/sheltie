@@ -42,8 +42,16 @@ import Testing
         rows: 40,
         bytesBase64: Data("hello".utf8).base64EncodedString()
     )
+    let history = TerminalHistory(
+        requestID: "history-1",
+        sessionID: "default",
+        paneID: "w1:p1",
+        requestedLines: 1_000,
+        bytesBase64: Data("older output".utf8).base64EncodedString()
+    )
     let messages: [StreamServerMessage] = [
         .terminalFrame(frame),
+        .terminalHistory(history),
         .terminalClosed(.init(sessionID: "default", paneID: "w1:p1", reason: "done")),
         .actionResult(.init(requestID: "request-1", ok: true)),
         .sessionExpiring(expiresAtMillis: 1_800_000_000_000),
@@ -57,6 +65,7 @@ import Testing
         #expect(decoded == message)
     }
     #expect(frame.bytes == Data("hello".utf8))
+    #expect(history.bytes == Data("older output".utf8))
 }
 
 @Test func clientActionsAndSubscriptionsRoundTrip() throws {
@@ -76,6 +85,7 @@ import Testing
     )
     let messages: [StreamClientMessage] = [
         .subscribe([.init(sessionID: "default", paneID: "w1:p1", columns: 100, rows: 32, writable: true)]),
+        .terminalHistoryRequest(.init(requestID: "history-2", sessionID: "default", paneID: "w1:p1", lines: 1_000)),
         .action(action),
         .action(move),
         .resync,

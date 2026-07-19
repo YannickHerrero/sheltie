@@ -30,6 +30,50 @@ public struct TerminalSubscription: Codable, Equatable, Sendable {
     }
 }
 
+public struct TerminalHistoryRequest: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let sessionID: String
+    public let paneID: String
+    public let lines: Int
+
+    public init(requestID: String, sessionID: String, paneID: String, lines: Int = 1_000) {
+        self.requestID = requestID
+        self.sessionID = sessionID
+        self.paneID = paneID
+        self.lines = lines
+    }
+}
+
+public struct TerminalHistory: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let sessionID: String
+    public let paneID: String
+    public let requestedLines: Int
+    public let bytesBase64: String?
+    public let errorMessage: String?
+
+    public init(
+        requestID: String,
+        sessionID: String,
+        paneID: String,
+        requestedLines: Int,
+        bytesBase64: String? = nil,
+        errorMessage: String? = nil
+    ) {
+        self.requestID = requestID
+        self.sessionID = sessionID
+        self.paneID = paneID
+        self.requestedLines = requestedLines
+        self.bytesBase64 = bytesBase64
+        self.errorMessage = errorMessage
+    }
+
+    public var bytes: Data? {
+        guard let bytesBase64 else { return nil }
+        return Data(base64Encoded: bytesBase64)
+    }
+}
+
 public struct TerminalFrame: Codable, Equatable, Sendable {
     public let sessionID: String
     public let paneID: String
@@ -270,6 +314,7 @@ public struct PairCompleteResponse: Codable, Equatable, Sendable {
 public enum StreamServerMessage: Codable, Equatable, Sendable {
     case snapshot(BootstrapSnapshot)
     case terminalFrame(TerminalFrame)
+    case terminalHistory(TerminalHistory)
     case terminalClosed(TerminalClosed)
     case actionResult(ActionResult)
     case sessionExpiring(expiresAtMillis: Int64)
@@ -279,6 +324,7 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
         case type
         case snapshot
         case frame
+        case history
         case terminal
         case result
         case expiresAtMillis
@@ -288,6 +334,7 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
     private enum MessageType: String, Codable {
         case snapshot
         case terminalFrame = "terminal.frame"
+        case terminalHistory = "terminal.history"
         case terminalClosed = "terminal.closed"
         case actionResult = "action.result"
         case sessionExpiring = "session.expiring"
@@ -301,6 +348,8 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
             self = .snapshot(try container.decode(BootstrapSnapshot.self, forKey: .snapshot))
         case .terminalFrame:
             self = .terminalFrame(try container.decode(TerminalFrame.self, forKey: .frame))
+        case .terminalHistory:
+            self = .terminalHistory(try container.decode(TerminalHistory.self, forKey: .history))
         case .terminalClosed:
             self = .terminalClosed(try container.decode(TerminalClosed.self, forKey: .terminal))
         case .actionResult:
@@ -321,6 +370,9 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
         case let .terminalFrame(frame):
             try container.encode(MessageType.terminalFrame, forKey: .type)
             try container.encode(frame, forKey: .frame)
+        case let .terminalHistory(history):
+            try container.encode(MessageType.terminalHistory, forKey: .type)
+            try container.encode(history, forKey: .history)
         case let .terminalClosed(terminal):
             try container.encode(MessageType.terminalClosed, forKey: .type)
             try container.encode(terminal, forKey: .terminal)
@@ -339,6 +391,7 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
 
 public enum StreamClientMessage: Codable, Equatable, Sendable {
     case subscribe([TerminalSubscription])
+    case terminalHistoryRequest(TerminalHistoryRequest)
     case action(ActionCommand)
     case resync
     case pong(id: String)
@@ -346,12 +399,14 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case type
         case subscriptions
+        case request
         case action
         case id
     }
 
     private enum MessageType: String, Codable {
         case subscribe
+        case terminalHistoryRequest = "terminal.history.request"
         case action
         case resync
         case pong
@@ -362,6 +417,8 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
         switch try container.decode(MessageType.self, forKey: .type) {
         case .subscribe:
             self = .subscribe(try container.decode([TerminalSubscription].self, forKey: .subscriptions))
+        case .terminalHistoryRequest:
+            self = .terminalHistoryRequest(try container.decode(TerminalHistoryRequest.self, forKey: .request))
         case .action:
             self = .action(try container.decode(ActionCommand.self, forKey: .action))
         case .resync:
@@ -377,6 +434,9 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
         case let .subscribe(subscriptions):
             try container.encode(MessageType.subscribe, forKey: .type)
             try container.encode(subscriptions, forKey: .subscriptions)
+        case let .terminalHistoryRequest(request):
+            try container.encode(MessageType.terminalHistoryRequest, forKey: .type)
+            try container.encode(request, forKey: .request)
         case let .action(action):
             try container.encode(MessageType.action, forKey: .type)
             try container.encode(action, forKey: .action)

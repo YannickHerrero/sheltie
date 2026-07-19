@@ -74,6 +74,23 @@ describe("Herdr Unix-socket client", () => {
     expect(methods).toEqual(["agent.focus", "pane.get", "tab.focus", "pane.current"]);
   });
 
+  test("requests canonical recent scrollback for terminal history", async () => {
+    let received: { method: string; params: Record<string, unknown> } | null = null;
+    const client = startMockHerdr((request) => {
+      received = request;
+      return {
+        id: request.id,
+        result: { type: "pane_read", read: { text: "older output\r\n", revision: 0, truncated: false } },
+      };
+    });
+
+    expect(await client.readPane("w1:p1", 1_000, "recent")).toMatchObject({ text: "older output\r\n" });
+    expect(received).toMatchObject({
+      method: "pane.read",
+      params: { pane_id: "w1:p1", source: "recent", lines: 1_000, format: "ansi", strip_ansi: false },
+    });
+  });
+
   test("keeps event subscriptions open and decodes streamed events", async () => {
     socketPath = join(tmpdir(), `sheltie-events-${crypto.randomUUID()}.sock`);
     server = Bun.listen({

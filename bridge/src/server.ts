@@ -8,6 +8,7 @@ import type {
   ActionCommand,
   StreamClientMessage,
   StreamServerMessage,
+  TerminalHistoryRequest,
   TerminalSubscription,
 } from "./types.ts";
 import { BRIDGE_VERSION, PROTOCOL_VERSION } from "./types.ts";
@@ -18,6 +19,9 @@ interface WebSocketData {
   sessionID: string;
   feeds: Map<string, TerminalFeed>;
 }
+
+const MAX_TERMINAL_HISTORY_LINES = 1_000;
+const MAX_TERMINAL_HISTORY_BYTES = 2 * 1024 * 1024;
 
 const ACTION_TYPES = new Set([
   "workspace.focus", "workspace.create", "workspace.rename", "workspace.close",
@@ -177,6 +181,42 @@ export function createBridgeServer(
         case "subscribe":
           await updateSubscriptions(socket, message.subscriptions);
           break;
+        case "terminal.history.request": {
+          const request = normalizeHistoryRequest(message.request);
+          try {
+            const client = state.clientFor(request.sessionID);
+            if (!client) throw new Error("Herdr session is unavailable");
+            const snapshot = await state.getSnapshot(request.sessionID);
+            if (!snapshot.panes.some((pane) => pane.id === request.paneID)) throw new Error("Pane is unavailable");
+            const read = await client.readPane(request.paneID, request.lines, "recent");
+            const bytes = Buffer.from(read.text, "utf8");
+            if (bytes.byteLength > MAX_TERMINAL_HISTORY_BYTES) throw new Error("Terminal history exceeds the bridge limit");
+            send(socket, {
+              type: "terminal.history",
+              history: {
+                requestID: request.requestID,
+                sessionID: request.sessionID,
+                paneID: request.paneID,
+                requestedLines: request.lines,
+                bytesBase64: bytes.toString("base64"),
+                errorMessage: null,
+              },
+            });
+          } catch (error) {
+            send(socket, {
+              type: "terminal.history",
+              history: {
+                requestID: request.requestID,
+                sessionID: request.sessionID,
+                paneID: request.paneID,
+                requestedLines: request.lines,
+                bytesBase64: null,
+                errorMessage: error instanceof Error ? error.message.slice(0, 160) : "Terminal history is unavailable",
+              },
+            });
+          }
+          break;
+        }
         case "action": {
           const action = parseAction(message.action as unknown as Record<string, unknown>);
           const result = await state.performAction(action);
@@ -231,6 +271,16 @@ export function createBridgeServer(
 function stopFeeds(socket: ServerWebSocket<WebSocketData>) {
   for (const feed of socket.data.feeds.values()) feed.stop();
   socket.data.feeds.clear();
+}
+
+function normalizeHistoryRequest(value: TerminalHistoryRequest): TerminalHistoryRequest {
+  if (!value || typeof value !== "object") throw new Error("terminal history request is invalid");
+  return {
+    requestID: requiredString(value.requestID),
+    sessionID: requiredString(value.sessionID),
+    paneID: requiredString(value.paneID),
+    lines: clampInteger(value.lines, 50, MAX_TERMINAL_HISTORY_LINES, MAX_TERMINAL_HISTORY_LINES),
+  };
 }
 
 function normalizeSubscription(value: TerminalSubscription): TerminalSubscription {

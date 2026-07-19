@@ -35,7 +35,7 @@ enum DemoData {
             PaneLayoutSnapshot(workspaceID: "w3", tabID: "w3:t1", zoomed: false, focusedPaneID: "w3:p1", root: .pane(paneID: "w3:p1")),
         ]
         return BootstrapSnapshot(
-            bridge: BridgeInfo(version: "0.1.0", protocolVersion: 1, capabilities: ["pairing", "snapshots", "actions", "terminal.stream"]),
+            bridge: BridgeInfo(version: "0.1.0", protocolVersion: 1, capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history"]),
             instance: InstanceInfo(id: "studio", name: "Mac Studio", host: "studio.example.ts.net"),
             herdr: HerdrInfo(version: "0.7.3", protocolVersion: 17, capabilities: ["session.snapshot", "terminal.session.observe"]),
             sessions: [SessionSummary(id: "default", name: "default", isDefault: true, reachable: true)],
@@ -91,6 +91,23 @@ enum DemoData {
             """
         ),
     ]
+
+    static func terminalHistory(paneID: String, requestID: String) -> TerminalHistory {
+        let olderLines = (1 ... 180).map { line in
+            String(format: "\u{001B}[2m%03d\u{001B}[0m  Earlier terminal output retained by Herdr", line)
+        }
+        let liveTail = terminalFrames[paneID]?.bytes
+            .flatMap { String(data: $0, encoding: .utf8) }
+            ?? "Latest terminal output"
+        let text = (olderLines.joined(separator: "\r\n") + "\r\n" + liveTail)
+        return TerminalHistory(
+            requestID: requestID,
+            sessionID: "default",
+            paneID: paneID,
+            requestedLines: 1_000,
+            bytesBase64: Data(text.utf8).base64EncodedString()
+        )
+    }
 
     private static func frame(paneID: String, sequence: Int64, text: String) -> TerminalFrame {
         TerminalFrame(

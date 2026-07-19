@@ -11,6 +11,8 @@ final class AppStore: ObservableObject {
     @Published var selectedSessionID: String?
     @Published private(set) var snapshot: BootstrapSnapshot?
     @Published private(set) var terminalFrames: [String: TerminalFrame] = [:]
+    @Published private(set) var terminalHistories: [String: TerminalHistory] = [:]
+    @Published private(set) var terminalHistoryLoadingPaneIDs = Set<String>()
     @Published private(set) var toast: ToastMessage?
     @Published var selectedWorkspaceID: String?
     @Published var selectedTabID: String?
@@ -25,6 +27,8 @@ final class AppStore: ObservableObject {
     private var activeSessionToken: String?
     private var visiblePaneIDs = Set<String>()
     private var terminalViewports: [String: TerminalViewport] = [:]
+    private var terminalHistoryRequestIDs: [String: String] = [:]
+    private var terminalHistoryCacheOrder: [String] = []
 
     init(
         repository: any InstancePersisting = InstanceRepository(),
@@ -91,6 +95,7 @@ final class AppStore: ObservableObject {
         let client = activeClient
         activeClient = nil
         activeSessionToken = nil
+        resetTerminalHistory()
         Task { await client?.disconnect() }
         phase = profiles.isEmpty ? .noInstances : .disconnected
     }
@@ -101,6 +106,7 @@ final class AppStore: ObservableObject {
         selectedSessionID = id
         snapshot = nil
         terminalFrames = [:]
+        resetTerminalHistory()
         connectSelectedInstance()
     }
 
@@ -111,6 +117,7 @@ final class AppStore: ObservableObject {
         repository.saveSelectedID(id)
         snapshot = nil
         terminalFrames = [:]
+        resetTerminalHistory()
         connectSelectedInstance()
     }
 
@@ -124,6 +131,7 @@ final class AppStore: ObservableObject {
             repository.saveSelectedID(selectedProfileID)
             snapshot = nil
             terminalFrames = [:]
+            resetTerminalHistory()
             connectionTask?.cancel()
             profiles.isEmpty ? (phase = .noInstances) : connectSelectedInstance()
         }
@@ -222,6 +230,46 @@ final class AppStore: ObservableObject {
         guard terminalViewports[paneID] != viewport else { return }
         terminalViewports[paneID] = viewport
         if visiblePaneIDs.contains(paneID) { sendSubscriptions() }
+    }
+
+    func requestTerminalHistory(for paneID: String) {
+        guard snapshot?.panes.contains(where: { $0.id == paneID }) == true else { return }
+        guard snapshot?.bridge.capabilities.contains("terminal.history") == true else {
+            toast = ToastMessage(text: "Update the Sheltie bridge to view terminal history.", isError: true)
+            return
+        }
+        let requestID = UUID().uuidString
+        terminalHistoryRequestIDs[paneID] = requestID
+        terminalHistoryLoadingPaneIDs.insert(paneID)
+
+        if isDemo {
+            cacheTerminalHistory(DemoData.terminalHistory(paneID: paneID, requestID: requestID))
+            terminalHistoryLoadingPaneIDs.remove(paneID)
+            terminalHistoryRequestIDs[paneID] = nil
+            return
+        }
+        guard let client = activeClient, phase.isConnected else {
+            terminalHistoryLoadingPaneIDs.remove(paneID)
+            terminalHistoryRequestIDs[paneID] = nil
+            toast = ToastMessage(text: "The Mac is not connected.", isError: true)
+            return
+        }
+        let request = TerminalHistoryRequest(
+            requestID: requestID,
+            sessionID: activeSessionID,
+            paneID: paneID,
+            lines: 1_000
+        )
+        Task {
+            do {
+                try await client.sendStreamMessage(.terminalHistoryRequest(request))
+            } catch {
+                guard terminalHistoryRequestIDs[paneID] == requestID else { return }
+                terminalHistoryLoadingPaneIDs.remove(paneID)
+                terminalHistoryRequestIDs[paneID] = nil
+                toast = ToastMessage(text: "Terminal history is unavailable.", isError: true)
+            }
+        }
     }
 
     func sendTerminalData(_ data: Data, to paneID: String) {
@@ -434,8 +482,22 @@ final class AppStore: ObservableObject {
             } else {
                 terminalFrames[frame.paneID] = frame
             }
+        case let .terminalHistory(history):
+            guard terminalHistoryRequestIDs[history.paneID] == history.requestID,
+                  history.sessionID == activeSessionID else { return }
+            terminalHistoryLoadingPaneIDs.remove(history.paneID)
+            terminalHistoryRequestIDs[history.paneID] = nil
+            if history.bytes != nil {
+                cacheTerminalHistory(history)
+            } else {
+                toast = ToastMessage(text: history.errorMessage ?? "Terminal history is unavailable.", isError: true)
+            }
         case let .terminalClosed(terminal):
             terminalFrames[terminal.paneID] = nil
+            terminalHistories[terminal.paneID] = nil
+            terminalHistoryLoadingPaneIDs.remove(terminal.paneID)
+            terminalHistoryRequestIDs[terminal.paneID] = nil
+            terminalHistoryCacheOrder.removeAll { $0 == terminal.paneID }
             toast = ToastMessage(text: terminal.reason, isError: true)
         case let .actionResult(result):
             if !result.ok {
@@ -446,6 +508,22 @@ final class AppStore: ObservableObject {
         case let .ping(id):
             try await client.sendStreamMessage(.pong(id: id))
         }
+    }
+
+    private func cacheTerminalHistory(_ history: TerminalHistory) {
+        terminalHistories[history.paneID] = history
+        terminalHistoryCacheOrder.removeAll { $0 == history.paneID }
+        terminalHistoryCacheOrder.append(history.paneID)
+        while terminalHistoryCacheOrder.count > 8 {
+            terminalHistories[terminalHistoryCacheOrder.removeFirst()] = nil
+        }
+    }
+
+    private func resetTerminalHistory() {
+        terminalHistories = [:]
+        terminalHistoryLoadingPaneIDs = []
+        terminalHistoryRequestIDs = [:]
+        terminalHistoryCacheOrder = []
     }
 
     private var storeSessions: [SessionSummary] {

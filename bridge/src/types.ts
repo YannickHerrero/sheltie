@@ -132,6 +132,22 @@ export interface TerminalSubscription {
   writable: boolean;
 }
 
+export interface TerminalHistoryRequest {
+  requestID: string;
+  sessionID: string;
+  paneID: string;
+  lines: number;
+}
+
+export interface TerminalHistory {
+  requestID: string;
+  sessionID: string;
+  paneID: string;
+  requestedLines: number;
+  bytesBase64: string | null;
+  errorMessage: string | null;
+}
+
 export interface TerminalFrame {
   sessionID: string;
   paneID: string;
@@ -198,6 +214,7 @@ export interface ActionResult {
 export type StreamServerMessage =
   | { type: "snapshot"; snapshot: BootstrapSnapshot }
   | { type: "terminal.frame"; frame: TerminalFrame }
+  | { type: "terminal.history"; history: TerminalHistory }
   | { type: "terminal.closed"; terminal: { sessionID: string; paneID: string; reason: string } }
   | { type: "action.result"; result: ActionResult }
   | { type: "session.expiring"; expiresAtMillis: number }
@@ -205,6 +222,7 @@ export type StreamServerMessage =
 
 export type StreamClientMessage =
   | { type: "subscribe"; subscriptions: TerminalSubscription[] }
+  | { type: "terminal.history.request"; request: TerminalHistoryRequest }
   | { type: "action"; action: ActionCommand }
   | { type: "resync" }
   | { type: "pong"; id: string };

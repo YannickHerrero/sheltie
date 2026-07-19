@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { AuthStore } from "../src/auth.ts";
 import type { BridgeConfig } from "../src/config.ts";
 import { createBridgeServer, type BridgeServer } from "../src/server.ts";
+import type { HerdrClient } from "../src/herdr-client.ts";
 import type { BridgeStateProviding } from "../src/state-engine.ts";
 import type { ActionCommand, ActionResult, BootstrapSnapshot } from "../src/types.ts";
 
@@ -44,6 +45,7 @@ function fixture(): BootstrapSnapshot {
 
 class FakeState implements BridgeStateProviding {
   readonly actions: ActionCommand[] = [];
+  readonly historyReads: Array<{ paneID: string; lines: number; source: string }> = [];
   readonly snapshot = fixture();
   get hasReachableSession() { return true; }
   async start() {}
@@ -53,7 +55,14 @@ class FakeState implements BridgeStateProviding {
     this.actions.push(action);
     return { requestID: action.requestID, ok: true, errorCode: null, message: null };
   }
-  clientFor() { return null; }
+  clientFor() {
+    return {
+      readPane: async (paneID: string, lines: number, source: string) => {
+        this.historyReads.push({ paneID, lines, source });
+        return { text: "older output\r\nlatest output\r\n", revision: 0, truncated: false };
+      },
+    } as unknown as HerdrClient;
+  }
   addSnapshotListener() { return () => {}; }
 }
 
@@ -102,6 +111,58 @@ describe("bridge HTTP service", () => {
     const audit = readFileSync(join(config.dataDirectory, "audit.jsonl"), "utf8");
     expect(audit).toContain('"type":"terminal.keys"');
     expect(audit).not.toContain("ctrl+c");
+  });
+
+  test("serves bounded terminal history over an authenticated stream", async () => {
+    const config = developmentConfig();
+    const state = new FakeState();
+    const auth = new AuthStore(config, { id: "studio", name: "Mac Studio", host: config.publicHost }, () => {});
+    bridge = createBridgeServer(config, state, auth);
+    const base = `http://127.0.0.1:${bridge.server.port}`;
+    const refresh = await fetch(`${base}/v1/session/refresh`, {
+      method: "POST",
+      headers: { authorization: "Bearer development" },
+    });
+    const { sessionToken } = await refresh.json() as { sessionToken: string };
+
+    const history = await new Promise<Record<string, unknown>>((resolve, reject) => {
+      const AuthenticatedWebSocket = WebSocket as unknown as new (
+        url: string,
+        options: { headers: Record<string, string> },
+      ) => WebSocket;
+      const socket = new AuthenticatedWebSocket(
+        `${base.replace("http", "ws")}/v1/stream?session=default`,
+        { headers: { authorization: `Bearer ${sessionToken}` } },
+      );
+      const timeout = setTimeout(() => reject(new Error("terminal history timeout")), 2_000);
+      socket.onmessage = (event) => {
+        const message = JSON.parse(String(event.data)) as { type: string; history?: Record<string, unknown> };
+        if (message.type === "snapshot") {
+          socket.send(JSON.stringify({
+            type: "terminal.history.request",
+            request: { requestID: "history-1", sessionID: "default", paneID: "w1:p1", lines: 5_000 },
+          }));
+        } else if (message.type === "terminal.history" && message.history) {
+          clearTimeout(timeout);
+          socket.close();
+          resolve(message.history);
+        }
+      };
+      socket.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error("terminal history websocket failed"));
+      };
+    });
+
+    expect(history).toMatchObject({
+      requestID: "history-1",
+      sessionID: "default",
+      paneID: "w1:p1",
+      requestedLines: 1_000,
+      errorMessage: null,
+    });
+    expect(Buffer.from(String(history.bytesBase64), "base64").toString("utf8")).toContain("older output");
+    expect(state.historyReads).toEqual([{ paneID: "w1:p1", lines: 1_000, source: "recent" }]);
   });
 
   test("rejects missing credentials and unknown actions", async () => {
