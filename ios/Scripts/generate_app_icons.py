@@ -41,9 +41,9 @@ def add_glow(image: Image.Image, center: tuple[int, int], radius: int, fill: str
     image.alpha_composite(layer)
 
 
-def add_glass_panel(image: Image.Image, dark: bool) -> None:
-    box = (120, 112, 904, 912)
-    mask = rounded_mask(box, 216)
+def add_glass_panel(image: Image.Image, dark: bool, tinted: bool) -> None:
+    box = (132, 132, 892, 892)
+    mask = rounded_mask(box, 188)
 
     shadow = Image.new("RGBA", image.size)
     shadow_mask = mask.filter(ImageFilter.GaussianBlur(42 * SCALE))
@@ -61,8 +61,13 @@ def add_glass_panel(image: Image.Image, dark: bool) -> None:
     outline = Image.new("RGBA", image.size)
     draw = ImageDraw.Draw(outline)
     scaled = tuple(value * SCALE for value in box)
-    draw.rounded_rectangle(scaled, radius=216 * SCALE, outline=(255, 255, 255, 172), width=5 * SCALE)
-    draw.arc(scaled, 198, 330, fill=(255, 255, 255, 220), width=8 * SCALE)
+    if tinted:
+        stroke = (*color("#4F596A"), 190)
+    elif dark:
+        stroke = (*color("#A7BCE9"), 210)
+    else:
+        stroke = (*color("#68709A"), 190)
+    draw.rounded_rectangle(scaled, radius=188 * SCALE, outline=stroke, width=6 * SCALE)
     image.alpha_composite(outline)
 
 
@@ -124,26 +129,26 @@ def render(default: bool = True, tinted: bool = False) -> Image.Image:
         add_glow(base, (850, 790), 390, "#2E7DE9", 130)
         add_glow(base, (760, 160), 260, "#F52A65", 58)
 
-    add_glass_panel(base, dark=dark)
+    add_glass_panel(base, dark=dark, tinted=tinted)
 
     if tinted:
-        side_top, side_bottom, center_top, center_bottom = "#4F596A", "#172033", "#FFFFFF", "#8892A4"
-        side_opacity, center_opacity = 216, 230
+        mark_top, mark_bottom, accent_top, accent_bottom = "#4F596A", "#172033", "#FFFFFF", "#8892A4"
+        mark_opacity, accent_opacity = 216, 230
     elif dark:
-        side_top, side_bottom, center_top, center_bottom = "#A7C7FF", "#3559BC", "#E8F7FF", "#4BA9FF"
-        side_opacity, center_opacity = 202, 235
+        mark_top, mark_bottom, accent_top, accent_bottom = "#A7C7FF", "#3559BC", "#E8F7FF", "#4BA9FF"
+        mark_opacity, accent_opacity = 202, 235
     else:
-        side_top, side_bottom, center_top, center_bottom = "#536CA8", "#172A67", "#9BE8FF", "#2E7DE9"
-        side_opacity, center_opacity = 220, 244
+        mark_top, mark_bottom, accent_top, accent_bottom = "#536CA8", "#172A67", "#9BE8FF", "#2E7DE9"
+        mark_opacity, accent_opacity = 220, 244
 
-    # The six pieces retain Sheltie's original abstract sheepdog face: ears/eyes,
-    # a bright blaze, broad cheeks, and a centered muzzle.
-    add_glass_piece(base, (258, 272, 424, 500), 55, side_top, side_bottom, side_opacity)
-    add_glass_piece(base, (600, 272, 766, 500), 55, side_top, side_bottom, side_opacity)
-    add_glass_piece(base, (442, 232, 582, 586), 62, center_top, center_bottom, center_opacity, 220)
-    add_glass_piece(base, (258, 540, 390, 742), 49, side_top, side_bottom, side_opacity)
-    add_glass_piece(base, (634, 540, 766, 742), 49, side_top, side_bottom, side_opacity)
-    add_glass_piece(base, (414, 628, 610, 792), 58, side_top, side_bottom, side_opacity)
+    # Match the in-app LogoMark: six narrow vertical bars in a 3×2 grid,
+    # with taller center bars and one blue upper-center accent.
+    add_glass_piece(base, (270, 288, 382, 448), 34, mark_top, mark_bottom, mark_opacity)
+    add_glass_piece(base, (456, 258, 568, 478), 38, accent_top, accent_bottom, accent_opacity, 220)
+    add_glass_piece(base, (642, 288, 754, 448), 34, mark_top, mark_bottom, mark_opacity)
+    add_glass_piece(base, (270, 576, 382, 736), 34, mark_top, mark_bottom, mark_opacity)
+    add_glass_piece(base, (456, 546, 568, 766), 38, mark_top, mark_bottom, mark_opacity)
+    add_glass_piece(base, (642, 576, 754, 736), 34, mark_top, mark_bottom, mark_opacity)
 
     return base.convert("RGB").resize((SIZE, SIZE), Image.Resampling.LANCZOS)
 
