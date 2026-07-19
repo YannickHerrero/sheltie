@@ -236,7 +236,9 @@ public struct WorkspaceFileReadRequest: Codable, Equatable, Sendable {
 public struct WorkspaceFileSaveRequest: Codable, Equatable, Sendable {
     public let requestID: String
     public let sessionID: String
+    public let workspaceID: String
     public let documentID: String
+    public let relativePath: String
     public let contentBase64: String
     public let expectedRevision: String?
     public let force: Bool
@@ -244,14 +246,18 @@ public struct WorkspaceFileSaveRequest: Codable, Equatable, Sendable {
     public init(
         requestID: String,
         sessionID: String,
+        workspaceID: String,
         documentID: String,
+        relativePath: String,
         contentBase64: String,
         expectedRevision: String?,
         force: Bool = false
     ) {
         self.requestID = requestID
         self.sessionID = sessionID
+        self.workspaceID = workspaceID
         self.documentID = documentID
+        self.relativePath = relativePath
         self.contentBase64 = contentBase64
         self.expectedRevision = expectedRevision
         self.force = force

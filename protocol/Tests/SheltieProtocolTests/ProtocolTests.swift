@@ -151,7 +151,9 @@ import Testing
         .workspaceFileSave(.init(
             requestID: "file-save",
             sessionID: "default",
+            workspaceID: "w1",
             documentID: "document-1",
+            relativePath: "Sources/App.swift",
             contentBase64: Data("updated\n".utf8).base64EncodedString(),
             expectedRevision: "def"
         )),

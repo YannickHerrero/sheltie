@@ -497,7 +497,9 @@ final class AppStore: ObservableObject {
         let request = WorkspaceFileSaveRequest(
             requestID: requestID,
             sessionID: activeSessionID,
+            workspaceID: document.workspaceID,
             documentID: documentID,
+            relativePath: document.relativePath,
             contentBase64: bytes.base64EncodedString(),
             expectedRevision: document.revision,
             force: force

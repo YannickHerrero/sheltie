@@ -271,7 +271,9 @@ describe("bridge HTTP service", () => {
             request: {
               requestID: "save",
               sessionID: "default",
+              workspaceID: "w1",
               documentID: message.document.documentID,
+              relativePath: "Sources/App.swift",
               contentBase64: Buffer.from("let privateValue = 2\n").toString("base64"),
               expectedRevision: message.document.revision,
               force: false,
@@ -291,6 +293,81 @@ describe("bridge HTTP service", () => {
     const audit = readFileSync(join(config.dataDirectory, "audit.jsonl"), "utf8");
     expect(audit).toContain('"type":"workspace.file.save"');
     expect(audit).not.toContain("privateValue");
+  });
+
+  test("keeps opaque workspace file handles across authenticated stream reconnects", async () => {
+    const config = developmentConfig();
+    writeFileSync(join(config.configRoot, "README.md"), "before\n");
+    const state = new FakeState();
+    state.snapshot.workspaces[0]!.path = config.configRoot;
+    const auth = new AuthStore(config, { id: "studio", name: "Mac Studio", host: config.publicHost }, () => {});
+    bridge = createBridgeServer(config, state, auth);
+    const base = `http://127.0.0.1:${bridge.server.port}`;
+    const refresh = await fetch(`${base}/v1/session/refresh`, {
+      method: "POST",
+      headers: { authorization: "Bearer development" },
+    });
+    const { sessionToken } = await refresh.json() as { sessionToken: string };
+    const AuthenticatedWebSocket = WebSocket as unknown as new (
+      url: string,
+      options: { headers: Record<string, string> },
+    ) => WebSocket;
+
+    const opened = await new Promise<Record<string, unknown>>((resolve, reject) => {
+      const socket = new AuthenticatedWebSocket(
+        `${base.replace("http", "ws")}/v1/stream?session=default`,
+        { headers: { authorization: `Bearer ${sessionToken}` } },
+      );
+      const timeout = setTimeout(() => reject(new Error("workspace file read timeout")), 2_000);
+      socket.onmessage = (event) => {
+        const message = JSON.parse(String(event.data)) as { type: string; document?: Record<string, unknown> };
+        if (message.type === "snapshot") {
+          socket.send(JSON.stringify({
+            type: "workspace.file.read",
+            request: { requestID: "read-reconnect", sessionID: "default", workspaceID: "w1", relativePath: "README.md" },
+          }));
+        } else if (message.type === "workspace.file") {
+          clearTimeout(timeout);
+          socket.close();
+          resolve(message.document!);
+        }
+      };
+      socket.onerror = () => reject(new Error("workspace file read websocket failed"));
+    });
+
+    const saved = await new Promise<Record<string, unknown>>((resolve, reject) => {
+      const socket = new AuthenticatedWebSocket(
+        `${base.replace("http", "ws")}/v1/stream?session=default`,
+        { headers: { authorization: `Bearer ${sessionToken}` } },
+      );
+      const timeout = setTimeout(() => reject(new Error("workspace file reconnect timeout")), 2_000);
+      socket.onmessage = (event) => {
+        const message = JSON.parse(String(event.data)) as { type: string; document?: Record<string, unknown> };
+        if (message.type === "snapshot") {
+          socket.send(JSON.stringify({
+            type: "workspace.file.save",
+            request: {
+              requestID: "save-reconnect",
+              sessionID: "default",
+              workspaceID: "w1",
+              documentID: opened.documentID,
+              relativePath: "README.md",
+              contentBase64: Buffer.from("after\n").toString("base64"),
+              expectedRevision: opened.revision,
+              force: false,
+            },
+          }));
+        } else if (message.type === "workspace.file") {
+          clearTimeout(timeout);
+          socket.close();
+          resolve(message.document!);
+        }
+      };
+      socket.onerror = () => reject(new Error("workspace file reconnect websocket failed"));
+    });
+
+    expect(saved.errorCode).toBeNull();
+    expect(readFileSync(join(config.configRoot, "README.md"), "utf8")).toBe("after\n");
   });
 
   test("rejects missing credentials and unknown actions", async () => {

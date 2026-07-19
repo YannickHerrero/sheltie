@@ -27,10 +27,12 @@ import type {
 import { BRIDGE_VERSION, PROTOCOL_VERSION } from "./types.ts";
 
 interface OpenWorkspaceDocument {
+  deviceID: string;
   sessionID: string;
   workspaceID: string;
   rootPath: string;
   relativePath: string;
+  expiresAtMillis: number;
 }
 
 interface WebSocketData {
@@ -38,7 +40,6 @@ interface WebSocketData {
   expiresAtMillis: number;
   sessionID: string;
   feeds: Map<string, TerminalFeed>;
-  documents: Map<string, OpenWorkspaceDocument>;
 }
 
 const MAX_TERMINAL_HISTORY_LINES = 1_000;
@@ -73,6 +74,7 @@ export function createBridgeServer(
   files = new WorkspaceFileStore(),
 ): BridgeServer {
   const sockets = new Set<ServerWebSocket<WebSocketData>>();
+  const openDocuments = new Map<string, OpenWorkspaceDocument>();
 
   const send = (socket: ServerWebSocket<WebSocketData>, message: StreamServerMessage) => {
     if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
@@ -86,6 +88,9 @@ export function createBridgeServer(
 
   const heartbeat = setInterval(() => {
     const now = Date.now();
+    for (const [documentID, document] of openDocuments) {
+      if (document.expiresAtMillis <= now) openDocuments.delete(documentID);
+    }
     for (const socket of sockets) {
       if (socket.data.expiresAtMillis <= now) {
         socket.close(4001, "session expired");
@@ -158,7 +163,6 @@ export function createBridgeServer(
               expiresAtMillis: session.expiresAtMillis,
               sessionID,
               feeds: new Map(),
-              documents: new Map(),
             },
           });
           return upgraded ? undefined : json({ error: "websocket_upgrade_failed" }, 500);
@@ -337,16 +341,18 @@ export function createBridgeServer(
             const workspace = await workspaceFor(state, request.sessionID, request.workspaceID);
             const stored = files.read(workspace.path, request.relativePath);
             const documentID = crypto.randomUUID();
-            while (socket.data.documents.size >= 16) {
-              const oldest = socket.data.documents.keys().next().value;
+            while (openDocuments.size >= 128) {
+              const oldest = openDocuments.keys().next().value;
               if (typeof oldest !== "string") break;
-              socket.data.documents.delete(oldest);
+              openDocuments.delete(oldest);
             }
-            socket.data.documents.set(documentID, {
+            openDocuments.set(documentID, {
+              deviceID: socket.data.deviceID,
               sessionID: request.sessionID,
               workspaceID: request.workspaceID,
               rootPath: workspace.path,
               relativePath: request.relativePath,
+              expiresAtMillis: Date.now() + 60 * 60_000,
             });
             send(socket, {
               type: "workspace.file",
@@ -362,8 +368,28 @@ export function createBridgeServer(
         }
         case "workspace.file.save": {
           const request = normalizeFileSaveRequest(message.request);
-          const open = socket.data.documents.get(request.documentID);
-          if (!open || open.sessionID !== request.sessionID) throw new Error("The file is no longer open");
+          const open = openDocuments.get(request.documentID);
+          if (!open
+            || open.deviceID !== socket.data.deviceID
+            || open.sessionID !== request.sessionID
+            || open.workspaceID !== request.workspaceID
+            || open.relativePath !== request.relativePath) {
+            const document = workspaceFileErrorDocument(
+              request,
+              request.documentID,
+              new WorkspaceFileError("conflict", "Reopen the file before saving because its editor session expired"),
+            );
+            audit.recordOperation(socket.data.deviceID, {
+              requestID: request.requestID,
+              sessionID: request.sessionID,
+              type: "workspace.file.save",
+              targetID: `${request.workspaceID}:${request.relativePath}`,
+              ok: false,
+              errorCode: document.errorCode,
+            });
+            send(socket, { type: "workspace.file", document });
+            break;
+          }
           let document: WorkspaceFileDocument;
           try {
             const workspace = await workspaceFor(state, open.sessionID, open.workspaceID);
@@ -382,6 +408,7 @@ export function createBridgeServer(
               request.documentID,
               stored,
             );
+            open.expiresAtMillis = Date.now() + 60 * 60_000;
           } catch (error) {
             document = workspaceFileErrorDocument(
               { ...open, requestID: request.requestID },
@@ -480,7 +507,9 @@ function normalizeFileSaveRequest(value: WorkspaceFileSaveRequest): WorkspaceFil
   return {
     requestID: requiredString(value.requestID),
     sessionID: requiredString(value.sessionID),
+    workspaceID: requiredString(value.workspaceID),
     documentID: requiredString(value.documentID),
+    relativePath: requiredRelativePath(value.relativePath, false),
     contentBase64: requiredBase64(value.contentBase64),
     expectedRevision: value.expectedRevision,
     force: value.force === true,

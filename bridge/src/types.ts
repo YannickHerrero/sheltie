@@ -198,7 +198,9 @@ export interface WorkspaceFileReadRequest extends WorkspaceDirectoryListRequest 
 export interface WorkspaceFileSaveRequest {
   requestID: string;
   sessionID: string;
+  workspaceID: string;
   documentID: string;
+  relativePath: string;
   contentBase64: string;
   expectedRevision: string | null;
   force: boolean;
