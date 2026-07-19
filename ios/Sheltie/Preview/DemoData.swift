@@ -59,7 +59,7 @@ enum DemoData {
             \u{001B}[1;34mClaude Code\u{001B}[0m  \u{001B}[2m2.1.198 · Fable 5 with high effort\u{001B}[0m
             \u{001B}[2m~/Projects/herdr/website\u{001B}[0m
 
-            ❯ make Sheltie feel native on iPad
+            ❯ make Sheltie feel native everywhere
 
             Read Herdr over the local socket. Keeping the spaces + agents
             split, then adapting terminal controls for touch.

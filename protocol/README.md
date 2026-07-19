@@ -1,6 +1,6 @@
 # Sheltie protocol
 
-This directory owns the versioned, bridge-independent wire contract shared by the iPad app and Mac bridge.
+This directory owns the versioned, bridge-independent wire contract shared by the iPhone/iPad app and Mac bridge.
 
 - `Sources/SheltieProtocol/` contains the Swift `Codable` models used by the app.
 - `schema/sheltie-v1.schema.json` is the language-neutral bootstrap schema.

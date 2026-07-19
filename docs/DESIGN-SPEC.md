@@ -35,7 +35,7 @@ Boundaries are low-contrast one-point rules. The selected pane receives a restra
 
 ## Adaptive behavior
 
-The adaptive breakpoint is based directly on the iPad window’s available width. The prototype’s outer presentation frame is a mockup device, not part of the native application.
+The adaptive breakpoint is based directly on the app window’s available width. The prototype’s outer presentation frame is a mockup device, not part of the native application.
 
 - Wide: persistent sidebar and complete recursive pane split.
 - Compact: app-bar menu button, drawer sidebar, one pane at a time, explicit pane switcher.
@@ -85,4 +85,4 @@ The app preserves the connected geometry when practical and presents explicit na
 
 ## Visual verification
 
-Use `--demo` for deterministic screenshots. Verify portrait/compact and landscape/wide layouts, then test raw window widths around 820 and 560 points. Screenshots prove geometry only; keyboard repeat, marked text, gestures, menus, dictation, background suspension, and biometric behavior require device testing.
+Use `--demo` for deterministic screenshots. Verify iPhone portrait/compact plus iPad portrait and landscape layouts, then test raw window widths around 820 and 560 points. Screenshots prove geometry only; keyboard repeat, marked text, gestures, menus, dictation, background suspension, and biometric behavior require device testing.

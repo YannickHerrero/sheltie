@@ -11,10 +11,16 @@ final class SheltieUITests: XCTestCase {
         app.launchArguments.append("--demo")
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["Sheltie"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["instance.selector"].exists)
+        XCTAssertTrue(app.buttons["instance.selector"].waitForExistence(timeout: 5))
+        if app.windows.firstMatch.frame.width > 560 {
+            XCTAssertTrue(app.staticTexts["Sheltie"].exists)
+        }
         XCTAssertTrue(app.staticTexts["Claude Code"].firstMatch.exists)
         XCTAssertTrue(app.descendants(matching: .any)["terminal.keybar"].exists)
-        XCTAssertTrue(app.staticTexts["SPACES"].exists)
+        if app.windows.firstMatch.frame.width <= 820 {
+            XCTAssertTrue(app.buttons["Show spaces and agents"].exists)
+        } else {
+            XCTAssertTrue(app.staticTexts["SPACES"].exists)
+        }
     }
 }

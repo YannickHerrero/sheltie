@@ -6,13 +6,13 @@ _Last updated: 2026-07-19_
 
 - Phases 0–4 have an initial implementation across `protocol/`, `bridge/`, and `ios/`.
 - The bridge and protocol are covered by automated unit and live local Herdr integration checks.
-- The iPad app builds and its model, security, networking, and demo UI paths are covered by simulator tests.
+- The iPhone/iPad app builds and its model, security, networking, and demo UI paths are covered by simulator tests.
 - Phase 5 remains in progress: independent security review, physical-device interaction testing, performance/energy profiling, licensing, TestFlight, and public release automation are not complete.
 - The local integration Mac still runs Herdr 0.7.1, so live verification uses the polling fallback; Herdr 0.7.3 observer support is implemented and unit-tested but still needs live verification after the server is upgraded.
 
 ## 1. Product definition
 
-Sheltie is an iPad-first native client for Herdr. It should feel like using Herdr directly while replacing terminal-host interaction with controls designed for iPadOS.
+Sheltie is an iPad-first native client for Herdr with a compact iPhone experience. It should feel like using Herdr directly while replacing terminal-host interaction with controls designed for iOS and iPadOS.
 
 The app will recreate Herdr's workspace, agent, tab, and pane layout in SwiftUI. Terminal contents remain real interactive terminals hosted by the Mac. A companion bridge running beside Herdr will expose semantic state, actions, and terminal streams over a secure Tailscale connection.
 
@@ -35,13 +35,13 @@ The app will recreate Herdr's workspace, agent, tab, and pane layout in SwiftUI.
 - Render every visible terminal pane with low-latency incremental updates.
 - Support terminal text, special keys, modifier chords, paste, scroll, and resize.
 - Support workspace, tab, pane, split, focus, zoom, move, rename, and close operations.
-- Recover cleanly after iPadOS suspension, network loss, Tailscale reconnection, or a Herdr restart.
+- Recover cleanly after iOS/iPadOS suspension, network loss, Tailscale reconnection, or a Herdr restart.
 - Keep the host unreachable from the public internet.
 - Make protocol and security boundaries suitable for eventual public use.
 
 ### Non-goals for the initial version
 
-- Running Herdr or agent processes on the iPad.
+- Running Herdr or agent processes on the mobile device.
 - Acting as a general-purpose SSH client.
 - Reimplementing Herdr's server, PTY ownership, or agent detection.
 - Public internet access or Tailscale Funnel support.
@@ -100,7 +100,7 @@ Use available window width rather than device identity or orientation:
 - Above 820 points: keep the sidebar persistent and show the complete Herdr pane split.
 - At or below 820 points: present the sidebar as a drawer and show one pane at a time with an explicit pane switcher.
 - At or below 560 points: condense connection metadata, usage presentation, tabs, and keybar notes for narrow Split View and possible future phone support.
-- Fill the iPad window edge to edge at every width; the prototype’s outer presentation frame is not application chrome.
+- Fill the app window edge to edge at every width; the prototype’s outer presentation frame is not application chrome.
 
 The prototype documents the connected success path. Before implementation, specify native loading, empty, pairing-required, connecting, disconnected, reconnecting, incompatible-server, revoked-device, pane-stream-error, and optional-data-unavailable states without changing the established geometry unnecessarily.
 
@@ -108,7 +108,7 @@ The prototype documents the connected success path. Before implementation, speci
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│ Native iPad application                                     │
+│ Native iPhone and iPad application                          │
 │                                                             │
 │ SwiftUI shell  ·  terminal views  ·  keyboard/input router  │
 │ state cache    ·  pairing         ·  reconnect coordinator  │
@@ -140,7 +140,7 @@ Each registered Mac runs its own loopback bridge and Tailscale Serve ingress. Th
 
 ### Architectural boundary
 
-The iPad app must not speak Herdr's private binary client protocol directly. The bridge will translate Herdr's local APIs into a versioned Sheltie protocol. This keeps Herdr compatibility code on the Mac and allows the app and bridge to negotiate their own stable contract.
+The mobile app must not speak Herdr's private binary client protocol directly. The bridge will translate Herdr's local APIs into a versioned Sheltie protocol. This keeps Herdr compatibility code on the Mac and allows the app and bridge to negotiate their own stable contract.
 
 The bridge should use documented Herdr interfaces wherever possible:
 
@@ -152,7 +152,7 @@ The bridge should use documented Herdr interfaces wherever possible:
 
 The preferred baseline is Herdr 0.7.3 or newer. The bridge must query version and capabilities instead of assuming every method exists.
 
-## 3. Native iPad application
+## 3. Native iPhone and iPad application
 
 ### 3.1 Application shell
 
@@ -193,7 +193,7 @@ Bootstrap provides a complete snapshot. WebSocket events update the cache. Any s
 Use a custom SwiftUI layout driven by Herdr's layout snapshot:
 
 - Preserve horizontal and vertical split structure.
-- Normalize server layout rectangles into available iPad geometry.
+- Normalize server layout rectangles into the available window geometry.
 - Keep pane IDs stable across redraws.
 - Render visible dividers with native drag targets.
 - Send split-ratio changes deliberately and debounce drag updates.
@@ -261,7 +261,7 @@ The app cannot rely on a WebSocket remaining alive in the background. On foregro
 - Publish optional presentation metadata and provider-usage meters only when a trusted source supplies them.
 - Multiplex terminal streams onto one authenticated WebSocket.
 - Enforce capability and protocol compatibility.
-- Pair and revoke iPad devices.
+- Pair and revoke iPhone and iPad devices.
 - Apply request limits and backpressure.
 - Audit every input and structural mutation.
 - Recover after Herdr socket replacement or server restart.
@@ -343,7 +343,7 @@ Sheltie is remote shell access and must be designed accordingly.
 - Validate the Tailscale user identity injected by Serve.
 - Validate expected public hosts.
 - Use a cryptographic per-device pairing flow in addition to Tailscale identity.
-- Generate the iPad device key in the Secure Enclave when available.
+- Generate the mobile device key in the Secure Enclave when available.
 - Store credentials in Keychain with biometric/user-presence protection where practical.
 - Support host-side device revocation.
 - Use short-lived authenticated sessions and replay-resistant challenges.
@@ -384,7 +384,7 @@ Before public distribution, review:
 - Loopback server and Tailscale Serve integration.
 - Development-only pairing and audit foundations.
 
-### Phase 2 — read-only iPad client
+### Phase 2 — read-only Apple mobile client
 
 - Native shell matching the approved mockup and adaptive width thresholds.
 - Registered-instance selector, pairing, connection, and reconnect states.
@@ -432,14 +432,14 @@ Before public distribution, review:
 
 - Screenshot comparison against the final HTML at 1024×768, 820×1180, and representative widths above and below 820 and 560 points.
 - Exact verification of app-bar, sidebar, tab, pane-header, composer, and keybar geometry.
-- iPad portrait and landscape sizes.
+- iPhone portrait plus iPad portrait and landscape sizes.
 - Split View and Stage Manager resizing across both adaptive thresholds.
 - Network interruption and Tailscale reconnection.
 - App background/foreground restoration.
 - External keyboard typing, chords, key repeat, and shortcuts.
 - Software keyboard, dictation, marked text, and autocorrect.
 - Touch focus, divider dragging, scroll, selection, and context menus.
-- Simultaneous Mac and iPad attachment behavior.
+- Simultaneous Mac and mobile-client attachment behavior.
 
 Screenshots can verify layout, but physical-keyboard timing, gestures, dictation, background suspension, biometric prompts, and native menu behavior require manual device testing.
 
@@ -454,7 +454,7 @@ Screenshots can verify layout, but physical-keyboard timing, gestures, dictation
 - Terminal component selection and support for arbitrary TUIs.
 - Theme synchronization and custom Herdr configurations.
 - Background notification architecture without requiring a hosted service.
-- Minimum supported iPadOS version.
+- Minimum supported iOS and iPadOS versions.
 - Bridge implementation language and update mechanism.
 - Scope of the first release: terminal control only versus complete structural management.
 - Whether search, global New Session, or an agent inspector should return in a future design revision.

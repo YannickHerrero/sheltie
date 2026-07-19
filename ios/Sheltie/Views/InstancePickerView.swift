@@ -122,7 +122,7 @@ struct InstancePickerView: View {
 
     private var pairingSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionLabel(pendingPairing == nil ? "ADD A MAC" : "CONFIRM ON THIS IPAD")
+            sectionLabel(pendingPairing == nil ? "ADD A MAC" : "CONFIRM ON THIS DEVICE")
             if let pendingPairing {
                 Text("Enter the six-digit code printed by the Sheltie bridge on \(pendingPairing.baseURL.host ?? "the Mac").")
                     .font(SheltieTheme.body(13))
@@ -151,7 +151,7 @@ struct InstancePickerView: View {
                 .font(SheltieTheme.body(13))
                 .foregroundStyle(SheltieTheme.muted)
             } else {
-                Text("Use the HTTPS URL exposed by Tailscale Serve. Pairing also verifies a key generated on this iPad.")
+                Text("Use the HTTPS URL exposed by Tailscale Serve. Pairing also verifies a key generated on this device.")
                     .font(SheltieTheme.body(13))
                     .foregroundStyle(SheltieTheme.muted)
                 TextField("https://mac-name.ts.net/sheltie", text: $baseURL)
