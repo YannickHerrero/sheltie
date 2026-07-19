@@ -168,6 +168,10 @@ export function createBridgeServer(
   });
 
   async function handleWebSocketMessage(socket: ServerWebSocket<WebSocketData>, raw: string | Buffer) {
+    if (Buffer.byteLength(raw) > 512 * 1024) {
+      socket.close(1009, "message too large");
+      return;
+    }
     if (socket.data.expiresAtMillis <= Date.now()) {
       socket.close(4001, "session expired");
       return;
