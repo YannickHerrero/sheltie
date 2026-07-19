@@ -25,6 +25,7 @@ Sheltie is a native iPhone and iPad client for [Herdr](https://herdr.dev). It re
 - SwiftTerm-backed ANSI terminal panes with physical and software keyboard input
 - Touch composers, special keys, sticky modifiers, context menus, and keyboard commands
 - Spaces, grouped agents, tabs, recursive split layouts, focus, zoom, resize, move, rename, create, and close actions
+- Persistent drag resizing between the Spaces and Agents sections
 - Multiple paired Macs and multiple Herdr sessions
 - HTTPS bootstrap plus authenticated WebSocket snapshots, actions, and terminal frames
 - Herdr 0.7.3 live observer streams with a read-only `pane.read` fallback for older Herdr versions

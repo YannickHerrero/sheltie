@@ -55,6 +55,14 @@ private final class MemoryInstanceRepository: InstancePersisting {
 #endif
 }
 
+@Test func sidebarSplitRatioPreservesUsefulSectionHeights() {
+    #expect(SidebarSplitLayout.clampedRatio(0.42, totalHeight: 800) == 0.42)
+    #expect(SidebarSplitLayout.clampedRatio(0, totalHeight: 800) == 0.225)
+    #expect(SidebarSplitLayout.clampedRatio(1, totalHeight: 800) == 0.775)
+    #expect(SidebarSplitLayout.clampedRatio(0, totalHeight: 300) == 0.35)
+    #expect(SidebarSplitLayout.clampedRatio(.nan, totalHeight: 800) == 0.42)
+}
+
 @Test func deviceIdentitySignsPairingChallenge() throws {
     let service = "com.yannickherrero.SheltieTests.\(UUID().uuidString)"
     let keychain = KeychainStore(service: service)

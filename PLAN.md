@@ -88,7 +88,7 @@ Status presentation follows the prototype exactly: working is warning/gold, bloc
 The native shell consists of:
 
 - A 58-point app bar with Sheltie identity, current Mac/connection selector, and an optional provider-usage meter.
-- A 205–240-point sidebar split vertically between Spaces (approximately 42%) and grouped Agents.
+- A 205–240-point sidebar split vertically between Spaces and grouped Agents, defaulting to 42/58 with a persistent draggable ratio.
 - A 46-point horizontally scrollable tab strip.
 - A Herdr-driven split-pane workspace with 38-point pane headers.
 - Separate agent-message and terminal-command composers.
@@ -200,7 +200,7 @@ Use a custom SwiftUI layout driven by Herdr's layout snapshot:
 - Send split-ratio changes deliberately and debounce drag updates.
 - Support zoom without destroying the cached full layout.
 - At compact widths, retain the Herdr split model while rendering and subscribing only to the explicitly selected visible pane.
-- Keep sidebar and pane-switcher presentation state local to the app; do not mutate Herdr merely because the window crosses an adaptive threshold.
+- Keep sidebar, its persisted Spaces/Agents ratio, and pane-switcher presentation state local to the app; do not mutate Herdr merely because the window crosses an adaptive threshold.
 
 ### 3.4 Terminal rendering
 

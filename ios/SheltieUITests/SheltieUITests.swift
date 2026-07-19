@@ -14,6 +14,7 @@ final class SheltieUITests: XCTestCase {
         let windowWidth = app.windows.firstMatch.frame.width
         if windowWidth <= 430 {
             XCTAssertTrue(app.staticTexts["SPACES"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.descendants(matching: .any)["Resize Spaces and Agents"].exists)
             XCTAssertTrue(app.buttons["workspace.w1"].exists)
             XCTAssertFalse(app.buttons["esc"].exists)
             app.terminate()
@@ -24,6 +25,7 @@ final class SheltieUITests: XCTestCase {
             XCTAssertTrue(workspaceApp.buttons["Back to spaces and agents"].waitForExistence(timeout: 5))
             XCTAssertTrue(workspaceApp.staticTexts["Implementation Agent"].firstMatch.exists)
             XCTAssertTrue(workspaceApp.buttons["esc"].exists)
+            workspaceApp.terminate()
         } else {
             XCTAssertTrue(app.buttons["instance.selector"].waitForExistence(timeout: 5))
             if windowWidth > 560 {
@@ -35,7 +37,35 @@ final class SheltieUITests: XCTestCase {
                 XCTAssertTrue(app.buttons["Show spaces and agents"].exists)
             } else {
                 XCTAssertTrue(app.staticTexts["SPACES"].exists)
+                XCTAssertTrue(app.descendants(matching: .any)["Resize Spaces and Agents"].exists)
             }
         }
+        app.terminate()
+    }
+
+    func testSidebarDividerResizesOnPhone() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments.append("--demo")
+        app.launch()
+
+        let window = app.windows.firstMatch
+        guard window.frame.width <= 430 else { return }
+        let agentsLabel = app.staticTexts["AGENTS"]
+        XCTAssertTrue(agentsLabel.waitForExistence(timeout: 5))
+        let originalAgentsY = agentsLabel.frame.minY
+        let divider = app.descendants(matching: .any)["Resize Spaces and Agents"]
+        XCTAssertTrue(divider.exists)
+
+        divider.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(
+                forDuration: 0.1,
+                thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.66))
+            )
+        XCTAssertGreaterThan(agentsLabel.frame.minY, originalAgentsY + 40)
+
+        app.descendants(matching: .any)["Resize Spaces and Agents"].doubleTap()
+        XCTAssertEqual(agentsLabel.frame.minY, originalAgentsY, accuracy: 3)
+        app.terminate()
     }
 }

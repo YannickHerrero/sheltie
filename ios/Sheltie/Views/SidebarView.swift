@@ -1,6 +1,19 @@
 import SheltieProtocol
 import SwiftUI
 
+enum SidebarSplitLayout {
+    static let defaultRatio = 0.42
+    static let dividerHeight: CGFloat = 18
+
+    static func clampedRatio(_ ratio: Double, totalHeight: CGFloat) -> Double {
+        guard totalHeight > 0 else { return defaultRatio }
+        let minimumSectionHeight = min(180, totalHeight * 0.35)
+        let minimumRatio = Double(minimumSectionHeight / totalHeight)
+        let candidate = ratio.isFinite ? ratio : defaultRatio
+        return min(1 - minimumRatio, max(minimumRatio, candidate))
+    }
+}
+
 struct SidebarView: View {
     @ObservedObject var store: AppStore
     var onSelection: (() -> Void)? = nil
@@ -8,14 +21,21 @@ struct SidebarView: View {
     @State private var workspaceToRename: WorkspaceSnapshot?
     @State private var renameText = ""
     @State private var workspaceToClose: WorkspaceSnapshot?
+    @State private var dragStartRatio: Double?
+    @AppStorage("sheltie.sidebarSplitRatio") private var splitRatio = SidebarSplitLayout.defaultRatio
 
     var body: some View {
         GeometryReader { proxy in
+            let availableHeight = max(1, proxy.size.height - SidebarSplitLayout.dividerHeight)
+            let resolvedRatio = SidebarSplitLayout.clampedRatio(splitRatio, totalHeight: availableHeight)
+            let spacesHeight = availableHeight * CGFloat(resolvedRatio)
+
             VStack(spacing: 0) {
                 spaces
-                    .frame(height: max(220, proxy.size.height * 0.42))
-                Rectangle().fill(SheltieTheme.border).frame(height: 1)
+                    .frame(height: spacesHeight)
+                splitDivider(totalHeight: availableHeight, currentRatio: resolvedRatio)
                 agents
+                    .frame(height: max(0, availableHeight - spacesHeight))
             }
         }
         .background(SheltieTheme.surface.opacity(0.58))
@@ -39,6 +59,50 @@ struct SidebarView: View {
             Text("Every pane in the space will be terminated on the Mac.")
         }
         .accessibilityIdentifier("sidebar")
+    }
+
+    private func splitDivider(totalHeight: CGFloat, currentRatio: Double) -> some View {
+        ZStack {
+            Rectangle()
+                .fill(SheltieTheme.border)
+                .frame(height: 1)
+            Capsule()
+                .fill(SheltieTheme.muted.opacity(0.55))
+                .frame(width: 34, height: 3)
+        }
+        .frame(height: SidebarSplitLayout.dividerHeight)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 1)
+                .onChanged { value in
+                    let start = dragStartRatio ?? currentRatio
+                    dragStartRatio = start
+                    splitRatio = SidebarSplitLayout.clampedRatio(
+                        start + Double(value.translation.height / max(1, totalHeight)),
+                        totalHeight: totalHeight
+                    )
+                }
+                .onEnded { _ in dragStartRatio = nil }
+        )
+        .onTapGesture(count: 2) {
+            splitRatio = SidebarSplitLayout.defaultRatio
+        }
+        .hoverEffect(.highlight)
+        .accessibilityElement()
+        .accessibilityIdentifier("sidebar.splitDivider")
+        .accessibilityLabel("Resize Spaces and Agents")
+        .accessibilityValue("Spaces use \(Int((currentRatio * 100).rounded())) percent")
+        .accessibilityHint("Drag vertically. Double-tap to reset.")
+        .accessibilityAdjustableAction { adjustment in
+            switch adjustment {
+            case .increment:
+                splitRatio = SidebarSplitLayout.clampedRatio(currentRatio + 0.05, totalHeight: totalHeight)
+            case .decrement:
+                splitRatio = SidebarSplitLayout.clampedRatio(currentRatio - 0.05, totalHeight: totalHeight)
+            @unknown default:
+                break
+            }
+        }
     }
 
     private var spaces: some View {

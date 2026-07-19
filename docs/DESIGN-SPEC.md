@@ -25,7 +25,7 @@ Spacing follows 8, 12, 20, and 32-point steps. Common radii are 8 points and mod
 The connected wide layout is composed in this order:
 
 1. 58-point app bar: brand, paired Mac/connection selector, optional provider meter.
-2. 205–240-point sidebar: Spaces in the upper 42%, grouped Agents below.
+2. 205–240-point sidebar: Spaces above grouped Agents, defaulting to a 42/58 split with a draggable separator.
 3. 46-point horizontally scrolling Herdr tab strip.
 4. Recursive Herdr pane layout, including 38-point native pane headers.
 5. Per-pane 54-point agent or shell composer.
@@ -54,7 +54,8 @@ Window width—not orientation—controls iPad Split View and Stage Manager adap
 - The iPhone workspace back control returns to the full-screen Spaces/Agents hierarchy without changing Herdr focus.
 - Tab selection focuses the Herdr tab.
 - Pane focus determines hardware-keyboard, composer, and keybar routing.
-- Divider drags update local geometry continuously and send one split-ratio action on release.
+- Terminal divider drags update local geometry continuously and send one split-ratio action on release.
+- The Spaces/Agents separator updates only a persisted local preference, clamps both sections to useful minimum heights, and resets to 42/58 on double-tap.
 - Context menus expose rename, move, split, zoom, and destructive close operations.
 - Destructive operations require a confirmation dialog.
 - The agent composer sends semantic agent text plus submit.
@@ -80,7 +81,7 @@ The app preserves the connected geometry when practical and presents explicit na
 
 - Every status color has a spoken state label.
 - Selected workspaces and tabs expose selection traits.
-- Pane dividers expose adjustable accessibility actions.
+- Pane dividers and the Spaces/Agents separator expose adjustable accessibility actions.
 - Controls use semantic labels instead of relying on symbols alone.
 - Horizontal regions remain scrollable at larger text sizes.
 - Motion respects Reduce Motion.
