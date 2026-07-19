@@ -67,7 +67,7 @@ Window width—not orientation—controls iPad Split View and Stage Manager adap
 - SwiftTerm sends direct hardware/software keyboard bytes to the focused pane.
 - Only the pane's explicit history button opens a stable, read-only snapshot of recent Herdr scrollback; live terminal swipes remain available to terminal applications, and a Latest control returns to current output.
 - Terminal history is bounded, memory-only, and exposes native touch, pointer, selection, and VoiceOver scrolling.
-- Sticky keybar modifiers clear after one key.
+- Repeatable Page Up and Page Down keybar controls send terminal page-navigation keys for alternate-screen TUIs such as OpenCode; sticky modifiers clear after one key.
 - Settings exposes independent done and blocked notification opt-ins, system permission/denied treatment, Mac provider readiness, and Codex usage health.
 
 ## Operational states
