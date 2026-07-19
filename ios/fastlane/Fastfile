@@ -85,7 +85,7 @@ platform :ios do
       configuration: "Release",
       destination: "generic/platform=iOS",
       export_method: "app-store",
-      xcargs: "-allowProvisioningUpdates DEVELOPMENT_TEAM=#{TEAM_ID} CURRENT_PROJECT_VERSION=#{build_number}",
+      xcargs: "#{export_auth_xcargs} DEVELOPMENT_TEAM=#{TEAM_ID} CURRENT_PROJECT_VERSION=#{build_number}",
       export_xcargs: export_auth_xcargs,
       output_directory: "build",
       output_name: "Sheltie.ipa",
