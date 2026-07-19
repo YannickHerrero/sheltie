@@ -428,6 +428,9 @@ Before public distribution, review:
 - [x] Add a per-Space to-do list backed by `todo.md` in the related workspace project root.
   - Add **Todo List** to each Space's long-press context menu and present the list in an in-app dialog.
   - Refine the Markdown editing model, save and conflict behavior, external-change handling, path security, and empty and error states before implementation.
+- [x] Add native per-Space file browsing and UTF-8 text editing.
+  - Resolve paths only from authoritative workspace roots, save through opaque device-bound handles, preserve permissions, and reject traversal, symlinks, binary data, and files above 1 MiB.
+  - Provide explicit save, `Command-S`, unsaved-draft protection, external-change conflicts, and reconnect-safe editor handles.
 - [x] Show compact project paths in the Spaces section.
   - Display only the final path component, such as `/project` instead of `/Users/yannickherrero/dev/project`.
   - When final components collide, prepend the minimum parent component needed to disambiguate them, adding further parents only if necessary.

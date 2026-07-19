@@ -27,7 +27,7 @@ Sheltie is a native iPhone and iPad client for [Herdr](https://herdr.dev). It re
 - Touch composers, special keys, sticky modifiers, context menus, and keyboard commands
 - Spaces, grouped agents, tabs, recursive split layouts, focus, zoom, resize, move, rename, create, and close actions
 - Persistent drag resizing between the Spaces and Agents sections
-- Compact, collision-aware project paths and per-Space `todo.md` editing
+- Compact project paths, per-Space `todo.md`, and native workspace file browsing/editing
 - Cached Codex weekly usage from the trusted local app-server API
 - Independent done/blocked push-notification preferences with direct Mac-to-APNs delivery
 - Multiple paired Macs and multiple Herdr sessions

@@ -41,6 +41,8 @@ Server messages:
 - `terminal.frame`
 - `terminal.history`
 - `workspace.todo`
+- `workspace.directory`
+- `workspace.file`
 - `notifications.configuration`
 - `terminal.closed`
 - `action.result`
@@ -53,6 +55,9 @@ Client messages:
 - `terminal.history.request`
 - `workspace.todo.read`
 - `workspace.todo.save`
+- `workspace.directory.list`
+- `workspace.file.read`
+- `workspace.file.save`
 - `notifications.configure`
 - `action`
 - `resync`
@@ -79,6 +84,12 @@ Live terminal frames describe the current viewport and cannot reconstruct canoni
 ## Workspace todo documents
 
 Authenticated clients address todo documents by Herdr session and workspace ID; they never supply a filesystem path. The bridge resolves the authoritative workspace root and reads or atomically writes `todo.md`. Documents carry SHA-256 revisions for conflict detection. Reads reject symlinks, non-UTF-8 data, path escapes, and files above 256 KiB. Writes are audited without recording Markdown content.
+
+## Workspace files
+
+The `workspace.files` capability adds a native text-file workflow scoped to authoritative Herdr workspace roots. Clients list one directory at a time and open a file by workspace ID plus relative path. The bridge rejects absolute paths, traversal, symbolic links, non-regular files, invalid UTF-8, null bytes, and files above 1 MiB.
+
+A successful open returns file bytes, metadata, a SHA-256 revision, and an opaque device-bound document ID. Saves identify that document rather than selecting a new destination; the bridge revalidates the workspace and path, compares the expected revision, preserves file permissions, and atomically replaces the file in its original directory. Handles survive authenticated WebSocket reconnects for one hour. A missing handle or external edit returns an explicit conflict instead of silently overwriting data. File content is never audited.
 
 ## Notifications and usage
 
