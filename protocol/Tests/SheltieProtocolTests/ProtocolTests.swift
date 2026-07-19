@@ -49,9 +49,18 @@ import Testing
         requestedLines: 1_000,
         bytesBase64: Data("older output".utf8).base64EncodedString()
     )
+    let todo = WorkspaceTodoDocument(
+        requestID: "todo-1",
+        sessionID: "default",
+        workspaceID: "w1",
+        exists: true,
+        content: "- [ ] Test\n",
+        revision: "abc"
+    )
     let messages: [StreamServerMessage] = [
         .terminalFrame(frame),
         .terminalHistory(history),
+        .workspaceTodo(todo),
         .terminalClosed(.init(sessionID: "default", paneID: "w1:p1", reason: "done")),
         .actionResult(.init(requestID: "request-1", ok: true)),
         .sessionExpiring(expiresAtMillis: 1_800_000_000_000),
@@ -86,6 +95,14 @@ import Testing
     let messages: [StreamClientMessage] = [
         .subscribe([.init(sessionID: "default", paneID: "w1:p1", columns: 100, rows: 32, writable: true)]),
         .terminalHistoryRequest(.init(requestID: "history-2", sessionID: "default", paneID: "w1:p1", lines: 1_000)),
+        .workspaceTodoRead(.init(requestID: "todo-read", sessionID: "default", workspaceID: "w1")),
+        .workspaceTodoSave(.init(
+            requestID: "todo-save",
+            sessionID: "default",
+            workspaceID: "w1",
+            content: "- [ ] Ship\n",
+            expectedRevision: "abc"
+        )),
         .action(action),
         .action(move),
         .resync,

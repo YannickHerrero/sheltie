@@ -14,15 +14,28 @@ export class AuditLog {
   }
 
   record(deviceID: string, action: ActionCommand, result: ActionResult) {
-    const entry = {
-      at: new Date().toISOString(),
-      deviceID,
+    this.recordOperation(deviceID, {
       requestID: action.requestID,
       sessionID: action.sessionID,
       type: action.type,
       targetID: action.targetID ?? null,
       ok: result.ok,
       errorCode: result.errorCode,
+    });
+  }
+
+  recordOperation(deviceID: string, operation: {
+    requestID: string;
+    sessionID: string;
+    type: string;
+    targetID: string | null;
+    ok: boolean;
+    errorCode: string | null;
+  }) {
+    const entry = {
+      at: new Date().toISOString(),
+      deviceID,
+      ...operation,
     };
     appendFileSync(this.path, `${JSON.stringify(entry)}\n`, { encoding: "utf8", mode: 0o600 });
   }

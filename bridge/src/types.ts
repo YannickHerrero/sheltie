@@ -148,6 +148,27 @@ export interface TerminalHistory {
   errorMessage: string | null;
 }
 
+export interface WorkspaceTodoReadRequest {
+  requestID: string;
+  sessionID: string;
+  workspaceID: string;
+}
+
+export interface WorkspaceTodoSaveRequest extends WorkspaceTodoReadRequest {
+  content: string;
+  expectedRevision: string | null;
+  force: boolean;
+}
+
+export interface WorkspaceTodoDocument extends WorkspaceTodoReadRequest {
+  exists: boolean;
+  content: string | null;
+  revision: string | null;
+  modifiedAtMillis: number | null;
+  errorCode: string | null;
+  message: string | null;
+}
+
 export interface TerminalFrame {
   sessionID: string;
   paneID: string;
@@ -215,6 +236,7 @@ export type StreamServerMessage =
   | { type: "snapshot"; snapshot: BootstrapSnapshot }
   | { type: "terminal.frame"; frame: TerminalFrame }
   | { type: "terminal.history"; history: TerminalHistory }
+  | { type: "workspace.todo"; document: WorkspaceTodoDocument }
   | { type: "terminal.closed"; terminal: { sessionID: string; paneID: string; reason: string } }
   | { type: "action.result"; result: ActionResult }
   | { type: "session.expiring"; expiresAtMillis: number }
@@ -223,6 +245,8 @@ export type StreamServerMessage =
 export type StreamClientMessage =
   | { type: "subscribe"; subscriptions: TerminalSubscription[] }
   | { type: "terminal.history.request"; request: TerminalHistoryRequest }
+  | { type: "workspace.todo.read"; request: WorkspaceTodoReadRequest }
+  | { type: "workspace.todo.save"; request: WorkspaceTodoSaveRequest }
   | { type: "action"; action: ActionCommand }
   | { type: "resync" }
   | { type: "pong"; id: string };
@@ -236,6 +260,7 @@ export interface RawHerdrWorkspace {
   tab_count: number;
   active_tab_id?: string | null;
   agent_status: AgentStatus;
+  worktree?: { checkout_path: string } | null;
 }
 
 export interface RawHerdrTab {

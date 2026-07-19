@@ -134,7 +134,7 @@ export function adaptSnapshot(raw: RawHerdrSnapshot, context: AdaptSnapshotConte
     bridge: {
       version: BRIDGE_VERSION,
       protocolVersion: PROTOCOL_VERSION,
-      capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "usage.codex", "multi-session"],
+      capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "workspace.todo", "usage.codex", "multi-session"],
     },
     instance: context.instance,
     herdr: {
@@ -148,7 +148,7 @@ export function adaptSnapshot(raw: RawHerdrSnapshot, context: AdaptSnapshotConte
       id: workspace.workspace_id,
       number: workspace.number,
       label: workspace.label,
-      path: firstPaneByWorkspace.get(workspace.workspace_id)?.cwd ?? null,
+      path: workspace.worktree?.checkout_path ?? firstPaneByWorkspace.get(workspace.workspace_id)?.cwd ?? null,
       branch: null,
       activeTabID: workspace.active_tab_id ?? null,
       paneCount: workspace.pane_count,

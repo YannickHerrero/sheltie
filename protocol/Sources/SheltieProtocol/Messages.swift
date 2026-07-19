@@ -74,6 +74,77 @@ public struct TerminalHistory: Codable, Equatable, Sendable {
     }
 }
 
+public struct WorkspaceTodoReadRequest: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let sessionID: String
+    public let workspaceID: String
+
+    public init(requestID: String, sessionID: String, workspaceID: String) {
+        self.requestID = requestID
+        self.sessionID = sessionID
+        self.workspaceID = workspaceID
+    }
+}
+
+public struct WorkspaceTodoSaveRequest: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let sessionID: String
+    public let workspaceID: String
+    public let content: String
+    public let expectedRevision: String?
+    public let force: Bool
+
+    public init(
+        requestID: String,
+        sessionID: String,
+        workspaceID: String,
+        content: String,
+        expectedRevision: String?,
+        force: Bool = false
+    ) {
+        self.requestID = requestID
+        self.sessionID = sessionID
+        self.workspaceID = workspaceID
+        self.content = content
+        self.expectedRevision = expectedRevision
+        self.force = force
+    }
+}
+
+public struct WorkspaceTodoDocument: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let sessionID: String
+    public let workspaceID: String
+    public let exists: Bool
+    public let content: String?
+    public let revision: String?
+    public let modifiedAtMillis: Int64?
+    public let errorCode: String?
+    public let message: String?
+
+    public init(
+        requestID: String,
+        sessionID: String,
+        workspaceID: String,
+        exists: Bool,
+        content: String? = nil,
+        revision: String? = nil,
+        modifiedAtMillis: Int64? = nil,
+        errorCode: String? = nil,
+        message: String? = nil
+    ) {
+        self.requestID = requestID
+        self.sessionID = sessionID
+        self.workspaceID = workspaceID
+        self.exists = exists
+        self.content = content
+        self.revision = revision
+        self.modifiedAtMillis = modifiedAtMillis
+        self.errorCode = errorCode
+        self.message = message
+    }
+}
+
 public struct TerminalFrame: Codable, Equatable, Sendable {
     public let sessionID: String
     public let paneID: String
@@ -315,6 +386,7 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
     case snapshot(BootstrapSnapshot)
     case terminalFrame(TerminalFrame)
     case terminalHistory(TerminalHistory)
+    case workspaceTodo(WorkspaceTodoDocument)
     case terminalClosed(TerminalClosed)
     case actionResult(ActionResult)
     case sessionExpiring(expiresAtMillis: Int64)
@@ -325,6 +397,7 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
         case snapshot
         case frame
         case history
+        case document
         case terminal
         case result
         case expiresAtMillis
@@ -335,6 +408,7 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
         case snapshot
         case terminalFrame = "terminal.frame"
         case terminalHistory = "terminal.history"
+        case workspaceTodo = "workspace.todo"
         case terminalClosed = "terminal.closed"
         case actionResult = "action.result"
         case sessionExpiring = "session.expiring"
@@ -350,6 +424,8 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
             self = .terminalFrame(try container.decode(TerminalFrame.self, forKey: .frame))
         case .terminalHistory:
             self = .terminalHistory(try container.decode(TerminalHistory.self, forKey: .history))
+        case .workspaceTodo:
+            self = .workspaceTodo(try container.decode(WorkspaceTodoDocument.self, forKey: .document))
         case .terminalClosed:
             self = .terminalClosed(try container.decode(TerminalClosed.self, forKey: .terminal))
         case .actionResult:
@@ -373,6 +449,9 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
         case let .terminalHistory(history):
             try container.encode(MessageType.terminalHistory, forKey: .type)
             try container.encode(history, forKey: .history)
+        case let .workspaceTodo(document):
+            try container.encode(MessageType.workspaceTodo, forKey: .type)
+            try container.encode(document, forKey: .document)
         case let .terminalClosed(terminal):
             try container.encode(MessageType.terminalClosed, forKey: .type)
             try container.encode(terminal, forKey: .terminal)
@@ -392,6 +471,8 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
 public enum StreamClientMessage: Codable, Equatable, Sendable {
     case subscribe([TerminalSubscription])
     case terminalHistoryRequest(TerminalHistoryRequest)
+    case workspaceTodoRead(WorkspaceTodoReadRequest)
+    case workspaceTodoSave(WorkspaceTodoSaveRequest)
     case action(ActionCommand)
     case resync
     case pong(id: String)
@@ -407,6 +488,8 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
     private enum MessageType: String, Codable {
         case subscribe
         case terminalHistoryRequest = "terminal.history.request"
+        case workspaceTodoRead = "workspace.todo.read"
+        case workspaceTodoSave = "workspace.todo.save"
         case action
         case resync
         case pong
@@ -419,6 +502,10 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
             self = .subscribe(try container.decode([TerminalSubscription].self, forKey: .subscriptions))
         case .terminalHistoryRequest:
             self = .terminalHistoryRequest(try container.decode(TerminalHistoryRequest.self, forKey: .request))
+        case .workspaceTodoRead:
+            self = .workspaceTodoRead(try container.decode(WorkspaceTodoReadRequest.self, forKey: .request))
+        case .workspaceTodoSave:
+            self = .workspaceTodoSave(try container.decode(WorkspaceTodoSaveRequest.self, forKey: .request))
         case .action:
             self = .action(try container.decode(ActionCommand.self, forKey: .action))
         case .resync:
@@ -436,6 +523,12 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
             try container.encode(subscriptions, forKey: .subscriptions)
         case let .terminalHistoryRequest(request):
             try container.encode(MessageType.terminalHistoryRequest, forKey: .type)
+            try container.encode(request, forKey: .request)
+        case let .workspaceTodoRead(request):
+            try container.encode(MessageType.workspaceTodoRead, forKey: .type)
+            try container.encode(request, forKey: .request)
+        case let .workspaceTodoSave(request):
+            try container.encode(MessageType.workspaceTodoSave, forKey: .type)
             try container.encode(request, forKey: .request)
         case let .action(action):
             try container.encode(MessageType.action, forKey: .type)

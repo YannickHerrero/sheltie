@@ -31,6 +31,17 @@ private final class MemoryInstanceRepository: InstancePersisting {
     store.requestTerminalHistory(for: "w1:p1")
     #expect(store.terminalHistories["w1:p1"]?.bytes != nil)
     #expect(store.terminalHistoryLoadingPaneIDs.contains("w1:p1") == false)
+
+    let readID = store.requestWorkspaceTodo(for: "w1")
+    #expect(store.workspaceTodos["w1"]?.requestID == readID)
+    #expect(store.workspaceTodos["w1"]?.content?.contains("TestFlight") == true)
+    let saveID = store.saveWorkspaceTodo(
+        workspaceID: "w1",
+        content: "- [ ] Test todo.md\n",
+        expectedRevision: store.workspaceTodos["w1"]?.revision
+    )
+    #expect(store.workspaceTodos["w1"]?.requestID == saveID)
+    #expect(store.workspaceTodos["w1"]?.content == "- [ ] Test todo.md\n")
 }
 
 @MainActor

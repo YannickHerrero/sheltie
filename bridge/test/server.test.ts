@@ -167,6 +167,64 @@ describe("bridge HTTP service", () => {
     expect(state.historyReads).toEqual([{ paneID: "w1:p1", lines: 1_000, source: "recent" }]);
   });
 
+  test("reads and saves workspace todo documents without auditing content", async () => {
+    const config = developmentConfig();
+    const state = new FakeState();
+    state.snapshot.workspaces[0]!.path = config.configRoot;
+    const auth = new AuthStore(config, { id: "studio", name: "Mac Studio", host: config.publicHost }, () => {});
+    bridge = createBridgeServer(config, state, auth);
+    const base = `http://127.0.0.1:${bridge.server.port}`;
+    const refresh = await fetch(`${base}/v1/session/refresh`, {
+      method: "POST",
+      headers: { authorization: "Bearer development" },
+    });
+    const { sessionToken } = await refresh.json() as { sessionToken: string };
+
+    const saved = await new Promise<Record<string, unknown>>((resolve, reject) => {
+      const AuthenticatedWebSocket = WebSocket as unknown as new (
+        url: string,
+        options: { headers: Record<string, string> },
+      ) => WebSocket;
+      const socket = new AuthenticatedWebSocket(
+        `${base.replace("http", "ws")}/v1/stream?session=default`,
+        { headers: { authorization: `Bearer ${sessionToken}` } },
+      );
+      const timeout = setTimeout(() => reject(new Error("workspace todo timeout")), 2_000);
+      socket.onmessage = (event) => {
+        const message = JSON.parse(String(event.data)) as { type: string; document?: Record<string, unknown> };
+        if (message.type === "snapshot") {
+          socket.send(JSON.stringify({
+            type: "workspace.todo.read",
+            request: { requestID: "todo-read", sessionID: "default", workspaceID: "w1" },
+          }));
+        } else if (message.type === "workspace.todo" && message.document?.requestID === "todo-read") {
+          expect(message.document).toMatchObject({ exists: false, revision: null, errorCode: null });
+          socket.send(JSON.stringify({
+            type: "workspace.todo.save",
+            request: {
+              requestID: "todo-save",
+              sessionID: "default",
+              workspaceID: "w1",
+              content: "- [ ] private task text\\n",
+              expectedRevision: null,
+              force: false,
+            },
+          }));
+        } else if (message.type === "workspace.todo" && message.document?.requestID === "todo-save") {
+          clearTimeout(timeout);
+          socket.close();
+          resolve(message.document);
+        }
+      };
+      socket.onerror = () => reject(new Error("workspace todo websocket failed"));
+    });
+
+    expect(saved).toMatchObject({ exists: true, content: "- [ ] private task text\\n", errorCode: null });
+    const audit = readFileSync(join(config.dataDirectory, "audit.jsonl"), "utf8");
+    expect(audit).toContain('"type":"workspace.todo.save"');
+    expect(audit).not.toContain("private task text");
+  });
+
   test("rejects missing credentials and unknown actions", async () => {
     const config = developmentConfig();
     const state = new FakeState();

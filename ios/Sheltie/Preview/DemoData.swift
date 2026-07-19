@@ -35,7 +35,7 @@ enum DemoData {
             PaneLayoutSnapshot(workspaceID: "w3", tabID: "w3:t1", zoomed: false, focusedPaneID: "w3:p1", root: .pane(paneID: "w3:p1")),
         ]
         return BootstrapSnapshot(
-            bridge: BridgeInfo(version: "0.1.0", protocolVersion: 1, capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "usage.codex"]),
+            bridge: BridgeInfo(version: "0.1.0", protocolVersion: 1, capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "workspace.todo", "usage.codex"]),
             instance: InstanceInfo(id: "studio", name: "Mac Studio", host: "studio.example.ts.net"),
             herdr: HerdrInfo(version: "0.7.3", protocolVersion: 17, capabilities: ["session.snapshot", "terminal.session.observe"]),
             sessions: [SessionSummary(id: "default", name: "default", isDefault: true, reachable: true)],
@@ -91,6 +91,24 @@ enum DemoData {
             """
         ),
     ]
+
+    static func workspaceTodo(workspaceID: String, requestID: String) -> WorkspaceTodoDocument {
+        WorkspaceTodoDocument(
+            requestID: requestID,
+            sessionID: "default",
+            workspaceID: workspaceID,
+            exists: true,
+            content: """
+            # Todo
+
+            - [x] Connect the native terminal stream
+            - [ ] Verify terminal history on a physical iPad
+            - [ ] Prepare the next TestFlight build
+            """,
+            revision: "demo-todo-v1",
+            modifiedAtMillis: Int64(Date().timeIntervalSince1970 * 1_000)
+        )
+    }
 
     static func terminalHistory(paneID: String, requestID: String) -> TerminalHistory {
         let olderLines = (1 ... 180).map { line in

@@ -4,12 +4,15 @@ import { AuthenticationError, AuthStore, validateIngress } from "./auth.ts";
 import type { BridgeConfig } from "./config.ts";
 import type { BridgeStateProviding } from "./state-engine.ts";
 import { TerminalFeed } from "./terminal-feed.ts";
+import { WorkspaceTodoError, WorkspaceTodoStore, todoDocument, todoErrorDocument } from "./workspace-todos.ts";
 import type {
   ActionCommand,
   StreamClientMessage,
   StreamServerMessage,
   TerminalHistoryRequest,
   TerminalSubscription,
+  WorkspaceTodoReadRequest,
+  WorkspaceTodoSaveRequest,
 } from "./types.ts";
 import { BRIDGE_VERSION, PROTOCOL_VERSION } from "./types.ts";
 
@@ -48,6 +51,7 @@ export function createBridgeServer(
   state: BridgeStateProviding,
   auth: AuthStore,
   audit = new AuditLog(config.dataDirectory),
+  todos = new WorkspaceTodoStore(),
 ): BridgeServer {
   const sockets = new Set<ServerWebSocket<WebSocketData>>();
 
@@ -217,6 +221,42 @@ export function createBridgeServer(
           }
           break;
         }
+        case "workspace.todo.read": {
+          const request = normalizeTodoReadRequest(message.request);
+          let document;
+          try {
+            const snapshot = await state.getSnapshot(request.sessionID);
+            const workspace = snapshot.workspaces.find((candidate) => candidate.id === request.workspaceID);
+            if (!workspace?.path) throw new WorkspaceTodoError("invalid_workspace_path", "Workspace root is unavailable");
+            document = todoDocument(request, todos.read(workspace.path));
+          } catch (error) {
+            document = todoErrorDocument(request, error);
+          }
+          send(socket, { type: "workspace.todo", document });
+          break;
+        }
+        case "workspace.todo.save": {
+          const request = normalizeTodoSaveRequest(message.request);
+          let document;
+          try {
+            const snapshot = await state.getSnapshot(request.sessionID);
+            const workspace = snapshot.workspaces.find((candidate) => candidate.id === request.workspaceID);
+            if (!workspace?.path) throw new WorkspaceTodoError("invalid_workspace_path", "Workspace root is unavailable");
+            document = todoDocument(request, todos.save(workspace.path, request));
+          } catch (error) {
+            document = todoErrorDocument(request, error);
+          }
+          audit.recordOperation(socket.data.deviceID, {
+            requestID: request.requestID,
+            sessionID: request.sessionID,
+            type: "workspace.todo.save",
+            targetID: request.workspaceID,
+            ok: document.errorCode === null,
+            errorCode: document.errorCode,
+          });
+          send(socket, { type: "workspace.todo", document });
+          break;
+        }
         case "action": {
           const action = parseAction(message.action as unknown as Record<string, unknown>);
           const result = await state.performAction(action);
@@ -271,6 +311,29 @@ export function createBridgeServer(
 function stopFeeds(socket: ServerWebSocket<WebSocketData>) {
   for (const feed of socket.data.feeds.values()) feed.stop();
   socket.data.feeds.clear();
+}
+
+function normalizeTodoReadRequest(value: WorkspaceTodoReadRequest): WorkspaceTodoReadRequest {
+  if (!value || typeof value !== "object") throw new Error("workspace todo request is invalid");
+  return {
+    requestID: requiredString(value.requestID),
+    sessionID: requiredString(value.sessionID),
+    workspaceID: requiredString(value.workspaceID),
+  };
+}
+
+function normalizeTodoSaveRequest(value: WorkspaceTodoSaveRequest): WorkspaceTodoSaveRequest {
+  const base = normalizeTodoReadRequest(value);
+  if (typeof value.content !== "string") throw new Error("workspace todo content is invalid");
+  if (value.expectedRevision !== null && typeof value.expectedRevision !== "string") {
+    throw new Error("workspace todo revision is invalid");
+  }
+  return {
+    ...base,
+    content: value.content,
+    expectedRevision: value.expectedRevision,
+    force: value.force === true,
+  };
 }
 
 function normalizeHistoryRequest(value: TerminalHistoryRequest): TerminalHistoryRequest {

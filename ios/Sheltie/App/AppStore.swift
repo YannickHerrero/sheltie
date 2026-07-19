@@ -13,6 +13,9 @@ final class AppStore: ObservableObject {
     @Published private(set) var terminalFrames: [String: TerminalFrame] = [:]
     @Published private(set) var terminalHistories: [String: TerminalHistory] = [:]
     @Published private(set) var terminalHistoryLoadingPaneIDs = Set<String>()
+    @Published private(set) var workspaceTodos: [String: WorkspaceTodoDocument] = [:]
+    @Published private(set) var workspaceTodoLoadingIDs = Set<String>()
+    @Published private(set) var workspaceTodoSavingIDs = Set<String>()
     @Published private(set) var toast: ToastMessage?
     @Published var selectedWorkspaceID: String?
     @Published var selectedTabID: String?
@@ -29,6 +32,7 @@ final class AppStore: ObservableObject {
     private var terminalViewports: [String: TerminalViewport] = [:]
     private var terminalHistoryRequestIDs: [String: String] = [:]
     private var terminalHistoryCacheOrder: [String] = []
+    private var workspaceTodoRequestIDs: [String: String] = [:]
 
     init(
         repository: any InstancePersisting = InstanceRepository(),
@@ -96,6 +100,7 @@ final class AppStore: ObservableObject {
         activeClient = nil
         activeSessionToken = nil
         resetTerminalHistory()
+        resetWorkspaceTodos()
         Task { await client?.disconnect() }
         phase = profiles.isEmpty ? .noInstances : .disconnected
     }
@@ -107,6 +112,7 @@ final class AppStore: ObservableObject {
         snapshot = nil
         terminalFrames = [:]
         resetTerminalHistory()
+        resetWorkspaceTodos()
         connectSelectedInstance()
     }
 
@@ -118,6 +124,7 @@ final class AppStore: ObservableObject {
         snapshot = nil
         terminalFrames = [:]
         resetTerminalHistory()
+        resetWorkspaceTodos()
         connectSelectedInstance()
     }
 
@@ -132,6 +139,7 @@ final class AppStore: ObservableObject {
             snapshot = nil
             terminalFrames = [:]
             resetTerminalHistory()
+            resetWorkspaceTodos()
             connectionTask?.cancel()
             profiles.isEmpty ? (phase = .noInstances) : connectSelectedInstance()
         }
@@ -230,6 +238,93 @@ final class AppStore: ObservableObject {
         guard terminalViewports[paneID] != viewport else { return }
         terminalViewports[paneID] = viewport
         if visiblePaneIDs.contains(paneID) { sendSubscriptions() }
+    }
+
+    @discardableResult
+    func requestWorkspaceTodo(for workspaceID: String) -> String? {
+        guard snapshot?.workspaces.contains(where: { $0.id == workspaceID }) == true else { return nil }
+        guard snapshot?.bridge.capabilities.contains("workspace.todo") == true else {
+            toast = ToastMessage(text: "Update the Sheltie bridge to edit todo.md.", isError: true)
+            return nil
+        }
+        let requestID = UUID().uuidString
+        workspaceTodoRequestIDs[workspaceID] = requestID
+        workspaceTodoLoadingIDs.insert(workspaceID)
+        if isDemo {
+            workspaceTodos[workspaceID] = DemoData.workspaceTodo(workspaceID: workspaceID, requestID: requestID)
+            workspaceTodoLoadingIDs.remove(workspaceID)
+            workspaceTodoRequestIDs[workspaceID] = nil
+            return requestID
+        }
+        guard let client = activeClient, phase.isConnected else {
+            workspaceTodoLoadingIDs.remove(workspaceID)
+            workspaceTodoRequestIDs[workspaceID] = nil
+            toast = ToastMessage(text: "The Mac is not connected.", isError: true)
+            return nil
+        }
+        let request = WorkspaceTodoReadRequest(requestID: requestID, sessionID: activeSessionID, workspaceID: workspaceID)
+        Task {
+            do {
+                try await client.sendStreamMessage(.workspaceTodoRead(request))
+            } catch {
+                guard workspaceTodoRequestIDs[workspaceID] == requestID else { return }
+                workspaceTodoLoadingIDs.remove(workspaceID)
+                workspaceTodoRequestIDs[workspaceID] = nil
+                toast = ToastMessage(text: "todo.md is unavailable.", isError: true)
+            }
+        }
+        return requestID
+    }
+
+    @discardableResult
+    func saveWorkspaceTodo(
+        workspaceID: String,
+        content: String,
+        expectedRevision: String?,
+        force: Bool = false
+    ) -> String? {
+        guard snapshot?.bridge.capabilities.contains("workspace.todo") == true else { return nil }
+        let requestID = UUID().uuidString
+        workspaceTodoRequestIDs[workspaceID] = requestID
+        workspaceTodoSavingIDs.insert(workspaceID)
+        if isDemo {
+            workspaceTodos[workspaceID] = WorkspaceTodoDocument(
+                requestID: requestID,
+                sessionID: activeSessionID,
+                workspaceID: workspaceID,
+                exists: true,
+                content: content,
+                revision: UUID().uuidString,
+                modifiedAtMillis: Int64(Date().timeIntervalSince1970 * 1_000)
+            )
+            workspaceTodoSavingIDs.remove(workspaceID)
+            workspaceTodoRequestIDs[workspaceID] = nil
+            return requestID
+        }
+        guard let client = activeClient, phase.isConnected else {
+            workspaceTodoSavingIDs.remove(workspaceID)
+            workspaceTodoRequestIDs[workspaceID] = nil
+            return nil
+        }
+        let request = WorkspaceTodoSaveRequest(
+            requestID: requestID,
+            sessionID: activeSessionID,
+            workspaceID: workspaceID,
+            content: content,
+            expectedRevision: expectedRevision,
+            force: force
+        )
+        Task {
+            do {
+                try await client.sendStreamMessage(.workspaceTodoSave(request))
+            } catch {
+                guard workspaceTodoRequestIDs[workspaceID] == requestID else { return }
+                workspaceTodoSavingIDs.remove(workspaceID)
+                workspaceTodoRequestIDs[workspaceID] = nil
+                toast = ToastMessage(text: "todo.md could not be saved.", isError: true)
+            }
+        }
+        return requestID
     }
 
     func requestTerminalHistory(for paneID: String) {
@@ -482,6 +577,13 @@ final class AppStore: ObservableObject {
             } else {
                 terminalFrames[frame.paneID] = frame
             }
+        case let .workspaceTodo(document):
+            guard workspaceTodoRequestIDs[document.workspaceID] == document.requestID,
+                  document.sessionID == activeSessionID else { return }
+            workspaceTodoLoadingIDs.remove(document.workspaceID)
+            workspaceTodoSavingIDs.remove(document.workspaceID)
+            workspaceTodoRequestIDs[document.workspaceID] = nil
+            workspaceTodos[document.workspaceID] = document
         case let .terminalHistory(history):
             guard terminalHistoryRequestIDs[history.paneID] == history.requestID,
                   history.sessionID == activeSessionID else { return }
@@ -524,6 +626,13 @@ final class AppStore: ObservableObject {
         terminalHistoryLoadingPaneIDs = []
         terminalHistoryRequestIDs = [:]
         terminalHistoryCacheOrder = []
+    }
+
+    private func resetWorkspaceTodos() {
+        workspaceTodos = [:]
+        workspaceTodoLoadingIDs = []
+        workspaceTodoSavingIDs = []
+        workspaceTodoRequestIDs = [:]
     }
 
     private var storeSessions: [SessionSummary] {
