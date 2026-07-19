@@ -13,6 +13,10 @@ Herdr 0.7.1 remains usable during development through a `pane.read` polling fall
 
 The bridge collects the Codex weekly rate-limit meter from the trusted local `codex app-server` API, caches it for one minute, and retains the last good reading across transient collector failures. Set `SHELTIE_CODEX_BINARY` when Codex is not on the LaunchAgent `PATH`; `SHELTIE_USAGE_FILE` remains an explicit local-file override.
 
+Per-Space todo access resolves `todo.md` from Herdr's authoritative workspace root, uses revision-based conflict checks and atomic saves, and rejects path escapes, symlinks, oversized files, and invalid UTF-8. Todo content is never audited.
+
+Optional done/blocked push alerts travel directly from the Mac bridge to APNs. Configure all `SHELTIE_APNS_*` values together with an Apple Push Notification service signing key kept outside Git. Without those credentials the bridge does not advertise notification delivery.
+
 ## Development
 
 ```bash

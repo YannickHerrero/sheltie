@@ -49,6 +49,8 @@ Window width—not orientation—controls iPad Split View and Stage Manager adap
 
 ## Interaction mapping
 
+- Space rows show the shortest unique project-path suffix; matching final components gain only the parent components needed for disambiguation.
+- A Space context menu opens its project-root `todo.md` in a native Markdown edit/preview sheet with explicit conflict recovery.
 - Space selection focuses its active Herdr tab and pane, then opens the full-screen workspace on iPhone.
 - Agent selection focuses its linked space, tab, and pane, then opens the full-screen workspace on iPhone.
 - The iPhone workspace back control returns to the full-screen Spaces/Agents hierarchy without changing Herdr focus.
@@ -64,6 +66,7 @@ Window width—not orientation—controls iPad Split View and Stage Manager adap
 - A vertical terminal swipe or the pane menu opens a stable, read-only snapshot of recent Herdr scrollback; live output continues underneath and a Latest control returns to it.
 - Terminal history is bounded, memory-only, and exposes native touch, pointer, selection, and VoiceOver scrolling.
 - Sticky keybar modifiers clear after one key.
+- Settings exposes independent done and blocked notification opt-ins, system permission/denied treatment, Mac provider readiness, and Codex usage health.
 
 ## Operational states
 

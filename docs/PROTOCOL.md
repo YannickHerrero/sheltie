@@ -40,6 +40,8 @@ Server messages:
 - `snapshot`
 - `terminal.frame`
 - `terminal.history`
+- `workspace.todo`
+- `notifications.configuration`
 - `terminal.closed`
 - `action.result`
 - `session.expiring`
@@ -49,6 +51,9 @@ Client messages:
 
 - `subscribe`
 - `terminal.history.request`
+- `workspace.todo.read`
+- `workspace.todo.save`
+- `notifications.configure`
 - `action`
 - `resync`
 - `pong`
@@ -70,6 +75,16 @@ Input uses explicit actions. Raw SwiftTerm bytes are base64-encoded; composed sh
 ## Terminal history
 
 Live terminal frames describe the current viewport and cannot reconstruct canonical scrollback. A client may therefore request recent history for one pane. The bridge reads Herdr's ANSI `pane.read` `recent` source and returns a base64-encoded, read-only snapshot. Requests are clamped to Herdr's 1,000-line limit and a bridge byte ceiling. The iOS client presents the stable snapshot over the still-updating live terminal, then dismisses it to return immediately to current output. History remains memory-only and is never audited or logged.
+
+## Workspace todo documents
+
+Authenticated clients address todo documents by Herdr session and workspace ID; they never supply a filesystem path. The bridge resolves the authoritative workspace root and reads or atomically writes `todo.md`. Documents carry SHA-256 revisions for conflict detection. Reads reject symlinks, non-UTF-8 data, path escapes, and files above 256 KiB. Writes are audited without recording Markdown content.
+
+## Notifications and usage
+
+Notification registration binds an APNs device token and independent done/blocked preferences to the authenticated paired device. The bridge seeds agent state from bootstrap, emits only real post-bootstrap transitions, and sends generic APNs payloads without project, path, prompt, or terminal data. Delivery capability is advertised only when local APNs credentials are configured.
+
+Codex usage is collected from the trusted local `account/rateLimits/read` app-server method, cached, and mapped to an optional weekly meter. The explicit trusted JSON file remains an override. Clients use `observedAtMillis` to distinguish current and stale readings.
 
 ## Structural actions
 

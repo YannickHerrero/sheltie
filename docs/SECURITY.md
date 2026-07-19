@@ -52,6 +52,7 @@ Restart the bridge after revocation to discard any already-issued in-memory sess
 
 - HTTP bodies are limited to 128 KiB.
 - Terminal text and agent messages are limited to 64 KiB.
+- Workspace `todo.md` is resolved from authoritative Herdr state, rejects symlinks and path escapes, and is limited to 256 KiB of UTF-8 Markdown.
 - Key batches are limited to 32 validated key names.
 - A WebSocket may subscribe to at most eight terminal panes.
 - Terminal dimensions are clamped.
@@ -60,7 +61,9 @@ Restart the bridge after revocation to discard any already-issued in-memory sess
 
 ## Audit and sensitive data
 
-Write and structural actions are appended to `audit.jsonl` with device, request, session, action type, target, result, and time. Terminal text, key values, access tokens, pairing codes, live terminal frames, and terminal-history snapshots are intentionally omitted.
+Write and structural actions are appended to `audit.jsonl` with device, request, session, action type, target, result, and time. Todo writes are audited without Markdown content. Terminal text, todo content, key values, access tokens, pairing codes, APNs device tokens, live terminal frames, and terminal-history snapshots are intentionally omitted.
+
+APNs provider keys stay in a host-local file outside Git. Push payloads are deliberately generic and contain no project names, paths, pane IDs, prompts, or terminal output. Revoked devices and APNs-invalid tokens are excluded from future delivery.
 
 Do not place secrets in diagnostics, screenshots, usage-meter files, or committed configuration. The ignored design directory is not a secret store.
 
