@@ -64,7 +64,13 @@ private struct WorkspaceDirectoryView: View {
 
     var body: some View {
         Group {
-            if store.workspaceDirectoryLoadingLocations.contains(location), listing == nil {
+            if !fileSupportAvailable {
+                ContentUnavailableView {
+                    Label("Bridge update required", systemImage: "arrow.down.app")
+                } description: {
+                    Text("Update the Sheltie bridge on the Mac before browsing workspace files.")
+                }
+            } else if store.workspaceDirectoryLoadingLocations.contains(location), listing == nil {
                 ProgressView("Loading files…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let listing, let message = listing.message {
@@ -99,7 +105,7 @@ private struct WorkspaceDirectoryView: View {
                     newFileName = ""
                     isCreatingFile = true
                 }
-                .disabled(listing?.errorCode != nil)
+                .disabled(!fileSupportAvailable || listing?.errorCode != nil)
             }
         }
         .navigationDestination(item: $newFilePath) { path in
@@ -155,6 +161,10 @@ private struct WorkspaceDirectoryView: View {
         .scrollContentBackground(.hidden)
         .refreshable { load() }
         .accessibilityIdentifier("workspace.files.list")
+    }
+
+    private var fileSupportAvailable: Bool {
+        store.snapshot?.bridge.capabilities.contains("workspace.files") == true
     }
 
     private var title: String {
