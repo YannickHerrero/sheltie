@@ -1,15 +1,25 @@
 # Sheltie
 
-Sheltie is a native iPad client for [Herdr](https://herdr.dev). It recreates Herdr’s spaces, agents, tabs, split panes, and terminal controls with SwiftUI and UIKit while a loopback-only companion bridge talks to the existing Herdr server on the Mac.
+Sheltie is a native iPhone and iPad client for [Herdr](https://herdr.dev). It recreates Herdr’s spaces, agents, tabs, split panes, and terminal controls with SwiftUI and UIKit while a loopback-only companion bridge talks to the existing Herdr server on the Mac.
 
 > [!WARNING]
 > This is an initial personal-use implementation, not a security-audited release. Keep the bridge tailnet-only, never enable Tailscale Funnel, and review the configuration before allowing terminal writes.
 
-![Sheltie running its native edge-to-edge iPad workspace](docs/images/sheltie-ipad.png)
+## Preview
+
+### iPad
+
+![Sheltie running its edge-to-edge workspace in iPad landscape](docs/images/sheltie-ipad-landscape.png)
+
+### iPhone
+
+<p align="center">
+  <img src="docs/images/sheltie-iphone-portrait.png" width="360" alt="Sheltie running its compact workspace on iPhone in portrait">
+</p>
 
 ## Implemented
 
-- Native adaptive iPad shell based on the approved local prototype
+- Native adaptive iPhone and iPad shell based on the approved local prototype
 - SwiftTerm-backed ANSI terminal panes with physical and software keyboard input
 - Touch composers, special keys, sticky modifiers, context menus, and keyboard commands
 - Spaces, grouped agents, tabs, recursive split layouts, focus, zoom, resize, move, rename, create, and close actions
@@ -25,7 +35,7 @@ See [PLAN.md](PLAN.md) for product scope and remaining public-release decisions.
 ## Architecture
 
 ```text
-iPad app (SwiftUI + SwiftTerm)
+iPhone/iPad app (SwiftUI + SwiftTerm)
         │ HTTPS / WebSocket over the tailnet
         ▼
 Tailscale Serve (TLS + identity headers)
@@ -37,11 +47,11 @@ Sheltie bridge (Bun/TypeScript)
 Herdr server and its existing PTYs
 ```
 
-The iPad app never talks to Herdr’s private protocol directly and does not use SSH or `WKWebView`.
+The app never talks to Herdr’s private protocol directly and does not use SSH or `WKWebView`.
 
 ## Requirements
 
-- Xcode 26 or a compatible current Xcode with an iPad simulator
+- Xcode 26 or a compatible current Xcode with iPhone and iPad simulators
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen)
 - [Bun](https://bun.sh/) 1.3+
 - Herdr 0.7.3+ recommended; 0.7.1 works through the polling fallback
@@ -67,7 +77,7 @@ bun test
 
 See [bridge/README.md](bridge/README.md) for production configuration, pairing, optional usage data, and device revocation.
 
-## Run the iPad app
+## Run the Apple mobile app
 
 The generated Xcode project is committed, while `project.yml` remains authoritative:
 
@@ -77,7 +87,7 @@ xcodegen generate
 open Sheltie.xcodeproj
 ```
 
-Run the `Sheltie` scheme on an iPad simulator. Add the launch argument below for the deterministic design/demo workspace:
+Run the `Sheltie` scheme on an iPhone or iPad simulator. Add the launch argument below for the deterministic design/demo workspace:
 
 ```text
 --demo
@@ -117,7 +127,7 @@ Do not use a raw Herdr socket URL, public ingress, or Tailscale Funnel.
 
 ```text
 bridge/      Mac bridge, authentication, Herdr adapter, and tests
-ios/         Native iPad application and Xcode project
+ios/         Native iPhone/iPad application and Xcode project
 protocol/    Versioned Codable models, JSON schema, and fixtures
 docs/        Design, protocol, and security documentation
 do-not-commit/  Local ignored design references
