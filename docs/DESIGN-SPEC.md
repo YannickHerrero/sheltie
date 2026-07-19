@@ -49,6 +49,7 @@ Window width—not orientation—controls iPad Split View and Stage Manager adap
 
 ## Interaction mapping
 
+- The Spaces add control immediately creates and focuses a Herdr workspace rooted at the Mac user's home directory; Herdr supplies its default label.
 - Space rows show the shortest unique project-path suffix; matching final components gain only the parent components needed for disambiguation.
 - A Space context menu opens its project-root `todo.md` in a native Markdown edit/preview sheet with explicit conflict recovery.
 - Space selection focuses its active Herdr tab and pane, then opens the full-screen workspace on iPhone.

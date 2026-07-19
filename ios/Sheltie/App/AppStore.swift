@@ -409,14 +409,8 @@ final class AppStore: ObservableObject {
         perform(.init(sessionID: activeSessionID, type: .terminalKeys, targetID: target, keys: keys))
     }
 
-    func createWorkspace(cwd: String, label: String?) {
-        guard !cwd.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        perform(.init(
-            sessionID: activeSessionID,
-            type: .createWorkspace,
-            label: label?.trimmingCharacters(in: .whitespacesAndNewlines),
-            cwd: cwd.trimmingCharacters(in: .whitespacesAndNewlines)
-        ))
+    func createWorkspace() {
+        perform(.init(sessionID: activeSessionID, type: .createWorkspace))
     }
 
     func renameWorkspace(_ id: String, label: String) {

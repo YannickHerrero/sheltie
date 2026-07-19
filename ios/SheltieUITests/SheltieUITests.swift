@@ -43,6 +43,19 @@ final class SheltieUITests: XCTestCase {
         app.terminate()
     }
 
+    func testSpacePlusCreatesWithoutShowingAForm() throws {
+        let app = XCUIApplication()
+        app.launchArguments.append("--demo")
+        app.launch()
+
+        let createWorkspace = app.buttons["Create workspace"]
+        XCTAssertTrue(createWorkspace.waitForExistence(timeout: 5))
+        createWorkspace.tap()
+        XCTAssertFalse(app.navigationBars["New Space"].exists)
+        XCTAssertTrue(app.staticTexts["Demo mode · action not sent"].waitForExistence(timeout: 5))
+        app.terminate()
+    }
+
     func testSettingsShowsIndependentNotificationControls() throws {
         let app = XCUIApplication()
         app.launchArguments.append("--demo")

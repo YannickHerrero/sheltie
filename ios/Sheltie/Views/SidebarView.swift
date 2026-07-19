@@ -45,7 +45,6 @@ enum SidebarSplitLayout {
 struct SidebarView: View {
     @ObservedObject var store: AppStore
     var onSelection: (() -> Void)? = nil
-    @State private var isCreatingWorkspace = false
     @State private var workspaceToRename: WorkspaceSnapshot?
     @State private var renameText = ""
     @State private var workspaceToClose: WorkspaceSnapshot?
@@ -68,9 +67,6 @@ struct SidebarView: View {
             }
         }
         .background(SheltieTheme.surface.opacity(0.58))
-        .sheet(isPresented: $isCreatingWorkspace) {
-            WorkspaceCreationView(store: store)
-        }
         .sheet(item: $workspaceForTodo) { workspace in
             WorkspaceTodoView(store: store, workspace: workspace)
         }
@@ -140,7 +136,7 @@ struct SidebarView: View {
     private var spaces: some View {
         VStack(spacing: 0) {
             sectionHeader("SPACES") {
-                isCreatingWorkspace = true
+                store.createWorkspace()
             }
             ScrollView {
                 LazyVStack(spacing: 4) {
@@ -480,43 +476,5 @@ private struct WorkspaceTodoView: View {
             force: true
         )
         if let document = store.workspaceTodos[workspace.id] { handle(document) }
-    }
-}
-
-private struct WorkspaceCreationView: View {
-    @ObservedObject var store: AppStore
-    @Environment(\.dismiss) private var dismiss
-    @State private var path = ""
-    @State private var label = ""
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Workspace") {
-                    TextField("Absolute path on the Mac", text: $path)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                    TextField("Label (optional)", text: $label)
-                }
-                Section {
-                    Text("Herdr creates the workspace and its first shell pane on the selected Mac.")
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .navigationTitle("New Space")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") {
-                        store.createWorkspace(cwd: path, label: label.isEmpty ? nil : label)
-                        dismiss()
-                    }
-                    .disabled(path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-            }
-        }
-        .presentationDetents([.medium])
     }
 }
