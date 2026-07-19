@@ -98,7 +98,7 @@ platform :ios do
       api_key: api_key,
       app_identifier: APP_IDENTIFIER,
       ipa: "build/Sheltie.ipa",
-      changelog: ENV.fetch("TESTFLIGHT_CHANGELOG", "Edge-to-edge iPad workspace with reliable Herdr terminal focusing."),
+      changelog: ENV.fetch("TESTFLIGHT_CHANGELOG", "Universal iPhone and iPad support with adaptive terminal workspaces."),
       skip_submission: true,
       skip_waiting_for_build_processing: false,
       distribute_external: false
