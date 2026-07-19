@@ -256,6 +256,7 @@ export class BridgeStateEngine implements BridgeStateProviding {
         sessions: summaries,
         exportedLayouts: layouts,
         usageMeters,
+        notificationDeliveryAvailable: this.config.apns !== null,
       });
       const previous = this.snapshots.get(location.id);
       const changed = !previous || snapshotFingerprint(previous) !== snapshotFingerprint(snapshot);

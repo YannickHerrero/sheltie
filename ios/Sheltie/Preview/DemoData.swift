@@ -35,7 +35,7 @@ enum DemoData {
             PaneLayoutSnapshot(workspaceID: "w3", tabID: "w3:t1", zoomed: false, focusedPaneID: "w3:p1", root: .pane(paneID: "w3:p1")),
         ]
         return BootstrapSnapshot(
-            bridge: BridgeInfo(version: "0.1.0", protocolVersion: 1, capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "workspace.todo", "usage.codex"]),
+            bridge: BridgeInfo(version: "0.1.0", protocolVersion: 1, capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "workspace.todo", "usage.codex", "notifications.apns"]),
             instance: InstanceInfo(id: "studio", name: "Mac Studio", host: "studio.example.ts.net"),
             herdr: HerdrInfo(version: "0.7.3", protocolVersion: 17, capabilities: ["session.snapshot", "terminal.session.observe"]),
             sessions: [SessionSummary(id: "default", name: "default", isDefault: true, reachable: true)],

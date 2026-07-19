@@ -9,6 +9,7 @@ import type {
   ActionCommand,
   StreamClientMessage,
   StreamServerMessage,
+  NotificationRegistrationRequest,
   TerminalHistoryRequest,
   TerminalSubscription,
   WorkspaceTodoReadRequest,
@@ -221,6 +222,21 @@ export function createBridgeServer(
           }
           break;
         }
+        case "notifications.configure": {
+          const request = normalizeNotificationRequest(message.request);
+          const saved = auth.configureNotifications(socket.data.deviceID, request);
+          send(socket, {
+            type: "notifications.configuration",
+            configuration: {
+              requestID: request.requestID,
+              doneEnabled: request.doneEnabled,
+              blockedEnabled: request.blockedEnabled,
+              providerConfigured: config.apns !== null,
+              errorMessage: saved ? null : "Notification settings require a paired device",
+            },
+          });
+          break;
+        }
         case "workspace.todo.read": {
           const request = normalizeTodoReadRequest(message.request);
           let document;
@@ -311,6 +327,17 @@ export function createBridgeServer(
 function stopFeeds(socket: ServerWebSocket<WebSocketData>) {
   for (const feed of socket.data.feeds.values()) feed.stop();
   socket.data.feeds.clear();
+}
+
+function normalizeNotificationRequest(value: NotificationRegistrationRequest): NotificationRegistrationRequest {
+  if (!value || typeof value !== "object") throw new Error("notification request is invalid");
+  if (value.deviceToken !== null && typeof value.deviceToken !== "string") throw new Error("notification token is invalid");
+  return {
+    requestID: requiredString(value.requestID),
+    deviceToken: value.deviceToken,
+    doneEnabled: value.doneEnabled === true,
+    blockedEnabled: value.blockedEnabled === true,
+  };
 }
 
 function normalizeTodoReadRequest(value: WorkspaceTodoReadRequest): WorkspaceTodoReadRequest {

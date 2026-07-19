@@ -145,6 +145,47 @@ public struct WorkspaceTodoDocument: Codable, Equatable, Sendable {
     }
 }
 
+public struct NotificationRegistrationRequest: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let deviceToken: String?
+    public let doneEnabled: Bool
+    public let blockedEnabled: Bool
+
+    public init(
+        requestID: String,
+        deviceToken: String?,
+        doneEnabled: Bool,
+        blockedEnabled: Bool
+    ) {
+        self.requestID = requestID
+        self.deviceToken = deviceToken
+        self.doneEnabled = doneEnabled
+        self.blockedEnabled = blockedEnabled
+    }
+}
+
+public struct NotificationConfiguration: Codable, Equatable, Sendable {
+    public let requestID: String
+    public let doneEnabled: Bool
+    public let blockedEnabled: Bool
+    public let providerConfigured: Bool
+    public let errorMessage: String?
+
+    public init(
+        requestID: String,
+        doneEnabled: Bool,
+        blockedEnabled: Bool,
+        providerConfigured: Bool,
+        errorMessage: String? = nil
+    ) {
+        self.requestID = requestID
+        self.doneEnabled = doneEnabled
+        self.blockedEnabled = blockedEnabled
+        self.providerConfigured = providerConfigured
+        self.errorMessage = errorMessage
+    }
+}
+
 public struct TerminalFrame: Codable, Equatable, Sendable {
     public let sessionID: String
     public let paneID: String
@@ -387,6 +428,7 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
     case terminalFrame(TerminalFrame)
     case terminalHistory(TerminalHistory)
     case workspaceTodo(WorkspaceTodoDocument)
+    case notificationConfiguration(NotificationConfiguration)
     case terminalClosed(TerminalClosed)
     case actionResult(ActionResult)
     case sessionExpiring(expiresAtMillis: Int64)
@@ -398,6 +440,7 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
         case frame
         case history
         case document
+        case configuration
         case terminal
         case result
         case expiresAtMillis
@@ -409,6 +452,7 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
         case terminalFrame = "terminal.frame"
         case terminalHistory = "terminal.history"
         case workspaceTodo = "workspace.todo"
+        case notificationConfiguration = "notifications.configuration"
         case terminalClosed = "terminal.closed"
         case actionResult = "action.result"
         case sessionExpiring = "session.expiring"
@@ -426,6 +470,8 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
             self = .terminalHistory(try container.decode(TerminalHistory.self, forKey: .history))
         case .workspaceTodo:
             self = .workspaceTodo(try container.decode(WorkspaceTodoDocument.self, forKey: .document))
+        case .notificationConfiguration:
+            self = .notificationConfiguration(try container.decode(NotificationConfiguration.self, forKey: .configuration))
         case .terminalClosed:
             self = .terminalClosed(try container.decode(TerminalClosed.self, forKey: .terminal))
         case .actionResult:
@@ -452,6 +498,9 @@ public enum StreamServerMessage: Codable, Equatable, Sendable {
         case let .workspaceTodo(document):
             try container.encode(MessageType.workspaceTodo, forKey: .type)
             try container.encode(document, forKey: .document)
+        case let .notificationConfiguration(configuration):
+            try container.encode(MessageType.notificationConfiguration, forKey: .type)
+            try container.encode(configuration, forKey: .configuration)
         case let .terminalClosed(terminal):
             try container.encode(MessageType.terminalClosed, forKey: .type)
             try container.encode(terminal, forKey: .terminal)
@@ -473,6 +522,7 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
     case terminalHistoryRequest(TerminalHistoryRequest)
     case workspaceTodoRead(WorkspaceTodoReadRequest)
     case workspaceTodoSave(WorkspaceTodoSaveRequest)
+    case configureNotifications(NotificationRegistrationRequest)
     case action(ActionCommand)
     case resync
     case pong(id: String)
@@ -490,6 +540,7 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
         case terminalHistoryRequest = "terminal.history.request"
         case workspaceTodoRead = "workspace.todo.read"
         case workspaceTodoSave = "workspace.todo.save"
+        case configureNotifications = "notifications.configure"
         case action
         case resync
         case pong
@@ -506,6 +557,8 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
             self = .workspaceTodoRead(try container.decode(WorkspaceTodoReadRequest.self, forKey: .request))
         case .workspaceTodoSave:
             self = .workspaceTodoSave(try container.decode(WorkspaceTodoSaveRequest.self, forKey: .request))
+        case .configureNotifications:
+            self = .configureNotifications(try container.decode(NotificationRegistrationRequest.self, forKey: .request))
         case .action:
             self = .action(try container.decode(ActionCommand.self, forKey: .action))
         case .resync:
@@ -529,6 +582,9 @@ public enum StreamClientMessage: Codable, Equatable, Sendable {
             try container.encode(request, forKey: .request)
         case let .workspaceTodoSave(request):
             try container.encode(MessageType.workspaceTodoSave, forKey: .type)
+            try container.encode(request, forKey: .request)
+        case let .configureNotifications(request):
+            try container.encode(MessageType.configureNotifications, forKey: .type)
             try container.encode(request, forKey: .request)
         case let .action(action):
             try container.encode(MessageType.action, forKey: .type)

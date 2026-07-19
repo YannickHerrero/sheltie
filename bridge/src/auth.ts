@@ -12,6 +12,13 @@ import { join } from "node:path";
 import type { BridgeConfig } from "./config.ts";
 import type { InstanceInfo } from "./types.ts";
 
+interface StoredNotificationSettings {
+  deviceToken: string | null;
+  doneEnabled: boolean;
+  blockedEnabled: boolean;
+  updatedAtMillis: number;
+}
+
 interface StoredDevice {
   id: string;
   name: string;
@@ -19,6 +26,7 @@ interface StoredDevice {
   tokenHash: string;
   pairedAtMillis: number;
   revokedAtMillis: number | null;
+  notifications?: StoredNotificationSettings;
 }
 
 interface DeviceFile {
@@ -53,6 +61,11 @@ export interface PairCompleteResult {
   deviceID: string;
   accessToken: string;
   instance: InstanceInfo;
+}
+
+export interface NotificationTarget {
+  deviceID: string;
+  deviceToken: string;
 }
 
 export interface SessionResult {
@@ -213,6 +226,43 @@ export class AuthStore {
     const device = this.devices.find((candidate) => candidate.id === credential.deviceID && candidate.revokedAtMillis === null);
     if (!device) throw new AuthenticationError("unauthorized", "paired device is revoked");
     return { deviceID: credential.deviceID, expiresAtMillis: credential.expiresAtMillis };
+  }
+
+  configureNotifications(
+    deviceID: string,
+    settings: { deviceToken: string | null; doneEnabled: boolean; blockedEnabled: boolean },
+  ): boolean {
+    const device = this.devices.find((candidate) => candidate.id === deviceID && candidate.revokedAtMillis === null);
+    if (!device) return false;
+    const token = settings.deviceToken?.trim().toLowerCase() ?? null;
+    if (token !== null && !/^[a-f0-9]{64,200}$/.test(token)) {
+      throw new AuthenticationError("forbidden", "APNs device token is invalid");
+    }
+    device.notifications = {
+      deviceToken: token,
+      doneEnabled: settings.doneEnabled,
+      blockedEnabled: settings.blockedEnabled,
+      updatedAtMillis: this.now(),
+    };
+    this.saveDevices();
+    return true;
+  }
+
+  notificationTargets(status: "done" | "blocked"): NotificationTarget[] {
+    return this.devices.flatMap((device) => {
+      const settings = device.notifications;
+      if (device.revokedAtMillis !== null || !settings?.deviceToken) return [];
+      if (status === "done" ? !settings.doneEnabled : !settings.blockedEnabled) return [];
+      return [{ deviceID: device.id, deviceToken: settings.deviceToken }];
+    });
+  }
+
+  clearNotificationToken(deviceID: string): void {
+    const device = this.devices.find((candidate) => candidate.id === deviceID);
+    if (!device?.notifications?.deviceToken) return;
+    device.notifications.deviceToken = null;
+    device.notifications.updatedAtMillis = this.now();
+    this.saveDevices();
   }
 
   revoke(deviceID: string): boolean {

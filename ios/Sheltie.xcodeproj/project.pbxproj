@@ -24,6 +24,7 @@
 		978DF35971A3ABEC19A10C64 /* TerminalSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CF1898F97E25C37436A64 /* TerminalSurface.swift */; };
 		97A2F55A729872CED5E99E8D /* PaneWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1655081AC10F3ED6C1E3F97F /* PaneWorkspaceView.swift */; };
 		A1CDB64A74E4F14B5E57DB9B /* AppBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C135BB2F5FE86FE2FD05F98 /* AppBar.swift */; };
+		BA3C4D8CEE3BAFD35B36F5C4 /* SheltieAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54C2319436FA3D7B3D5EACA4 /* SheltieAppDelegate.swift */; };
 		BE7E38DDEED3C24E1A2AE1D1 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADB83BDE6DB46981EE0B32E /* KeychainStore.swift */; };
 		C553C491FBF795700864C369 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B06FC9763958271E7C32BA8 /* SidebarView.swift */; };
 		CBAAE4249A47EFD3D68AC155 /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D255E4FF872E67C1C39260FE /* DeviceIdentity.swift */; };
@@ -60,10 +61,12 @@
 		2CB01B631976E5F834B1DBEC /* BridgeClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeClientTests.swift; sourceTree = "<group>"; };
 		2DE68CA8F2058CAA516DF82A /* protocol */ = {isa = PBXFileReference; lastKnownFileType = folder; name = protocol; path = ../protocol; sourceTree = SOURCE_ROOT; };
 		318EB1500AF85FC6DC08FEA9 /* Sheltie.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Sheltie.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		34ABC17BCDE1683104162F5D /* Sheltie.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Sheltie.entitlements; sourceTree = "<group>"; };
 		3923CE5EED6ED3F9FD0914F9 /* SheltieCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheltieCommands.swift; sourceTree = "<group>"; };
 		4A361361AA73A2826220318D /* SheltieApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheltieApp.swift; sourceTree = "<group>"; };
 		4B06FC9763958271E7C32BA8 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		4F5CF1898F97E25C37436A64 /* TerminalSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSurface.swift; sourceTree = "<group>"; };
+		54C2319436FA3D7B3D5EACA4 /* SheltieAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheltieAppDelegate.swift; sourceTree = "<group>"; };
 		5A9CA58EEC7872A889209724 /* BridgeClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeClient.swift; sourceTree = "<group>"; };
 		63FE19A679A1C227979FFBB2 /* SheltieTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheltieTheme.swift; sourceTree = "<group>"; };
 		6E776A6A880896B5B8150BA8 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -107,6 +110,7 @@
 			children = (
 				E09DE6B1270DC6AA63F0F7E1 /* Assets.xcassets */,
 				7594A95E304F8FD1A4A60A1C /* Info.plist */,
+				34ABC17BCDE1683104162F5D /* Sheltie.entitlements */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -193,6 +197,7 @@
 			children = (
 				FF806E4AAB4E91C4FD2C1437 /* AppStore.swift */,
 				4A361361AA73A2826220318D /* SheltieApp.swift */,
+				54C2319436FA3D7B3D5EACA4 /* SheltieAppDelegate.swift */,
 				3923CE5EED6ED3F9FD0914F9 /* SheltieCommands.swift */,
 			);
 			path = App;
@@ -402,6 +407,7 @@
 				FCA1E192F005A8FA1FEE5D88 /* RootView.swift in Sources */,
 				DA16A3614EC89B2550F885E4 /* SessionTabsView.swift in Sources */,
 				30D114C7AFC610F852115E04 /* SheltieApp.swift in Sources */,
+				BA3C4D8CEE3BAFD35B36F5C4 /* SheltieAppDelegate.swift in Sources */,
 				417D590A892287C1BED8F9B8 /* SheltieCommands.swift in Sources */,
 				E580386368039C8E3A53F216 /* SheltieTheme.swift in Sources */,
 				C553C491FBF795700864C369 /* SidebarView.swift in Sources */,
@@ -539,6 +545,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sheltie/Resources/Sheltie.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -654,6 +661,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sheltie/Resources/Sheltie.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;

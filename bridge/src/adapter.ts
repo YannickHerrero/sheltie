@@ -89,6 +89,7 @@ export interface AdaptSnapshotContext {
   sessions: SessionSummary[];
   exportedLayouts: Map<string, RawLayoutDescription>;
   usageMeters?: UsageMeter[];
+  notificationDeliveryAvailable?: boolean;
   generatedAtMillis?: number;
 }
 
@@ -129,12 +130,15 @@ export function adaptSnapshot(raw: RawHerdrSnapshot, context: AdaptSnapshotConte
     capabilities.push("session.snapshot", "terminal.session.observe");
   }
 
+  const bridgeCapabilities = ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "workspace.todo", "usage.codex", "multi-session"];
+  if (context.notificationDeliveryAvailable) bridgeCapabilities.push("notifications.apns");
+
   return {
     protocolVersion: PROTOCOL_VERSION,
     bridge: {
       version: BRIDGE_VERSION,
       protocolVersion: PROTOCOL_VERSION,
-      capabilities: ["pairing", "snapshots", "actions", "terminal.stream", "terminal.history", "workspace.todo", "usage.codex", "multi-session"],
+      capabilities: bridgeCapabilities,
     },
     instance: context.instance,
     herdr: {

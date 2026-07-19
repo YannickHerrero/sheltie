@@ -1,6 +1,14 @@
 import { homedir, hostname } from "node:os";
 import { join } from "node:path";
 
+export interface APNSConfig {
+  keyPath: string;
+  keyID: string;
+  teamID: string;
+  topic: string;
+  environment: "development" | "production";
+}
+
 export interface BridgeConfig {
   bindHost: string;
   port: number;
@@ -18,6 +26,7 @@ export interface BridgeConfig {
   terminalPollMilliseconds: number;
   usageRefreshMilliseconds: number;
   codexBinary: string;
+  apns: APNSConfig | null;
   usageFile?: string;
 }
 
@@ -38,6 +47,29 @@ function splitSet(raw: string | undefined): Set<string> {
       .map((value) => value.trim().toLowerCase())
       .filter(Boolean),
   );
+}
+
+function loadAPNSConfig(): APNSConfig | null {
+  const values = {
+    keyPath: process.env.SHELTIE_APNS_KEY_PATH,
+    keyID: process.env.SHELTIE_APNS_KEY_ID,
+    teamID: process.env.SHELTIE_APNS_TEAM_ID,
+    topic: process.env.SHELTIE_APNS_TOPIC,
+  };
+  const configured = Object.values(values).filter(Boolean).length;
+  if (configured === 0) return null;
+  if (configured !== Object.keys(values).length) throw new Error("all SHELTIE_APNS_* credentials are required");
+  const environment = process.env.SHELTIE_APNS_ENVIRONMENT ?? "production";
+  if (environment !== "development" && environment !== "production") {
+    throw new Error("SHELTIE_APNS_ENVIRONMENT must be development or production");
+  }
+  return {
+    keyPath: values.keyPath!,
+    keyID: values.keyID!,
+    teamID: values.teamID!,
+    topic: values.topic!,
+    environment,
+  };
 }
 
 export function loadConfig(): BridgeConfig {
@@ -63,6 +95,7 @@ export function loadConfig(): BridgeConfig {
     terminalPollMilliseconds: positiveInteger("SHELTIE_TERMINAL_POLL_MS", 350),
     usageRefreshMilliseconds: positiveInteger("SHELTIE_USAGE_REFRESH_MS", 60_000),
     codexBinary: process.env.SHELTIE_CODEX_BINARY ?? "codex",
+    apns: loadAPNSConfig(),
     ...(process.env.SHELTIE_USAGE_FILE ? { usageFile: process.env.SHELTIE_USAGE_FILE } : {}),
   };
 

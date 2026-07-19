@@ -61,6 +61,12 @@ import Testing
         .terminalFrame(frame),
         .terminalHistory(history),
         .workspaceTodo(todo),
+        .notificationConfiguration(.init(
+            requestID: "notifications-1",
+            doneEnabled: true,
+            blockedEnabled: false,
+            providerConfigured: true
+        )),
         .terminalClosed(.init(sessionID: "default", paneID: "w1:p1", reason: "done")),
         .actionResult(.init(requestID: "request-1", ok: true)),
         .sessionExpiring(expiresAtMillis: 1_800_000_000_000),
@@ -102,6 +108,12 @@ import Testing
             workspaceID: "w1",
             content: "- [ ] Ship\n",
             expectedRevision: "abc"
+        )),
+        .configureNotifications(.init(
+            requestID: "notifications-2",
+            deviceToken: String(repeating: "ab", count: 32),
+            doneEnabled: true,
+            blockedEnabled: true
         )),
         .action(action),
         .action(move),

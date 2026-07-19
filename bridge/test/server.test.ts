@@ -37,6 +37,7 @@ function developmentConfig(): BridgeConfig {
     terminalPollMilliseconds: 350,
     usageRefreshMilliseconds: 60_000,
     codexBinary: "codex",
+    apns: null,
   };
 }
 

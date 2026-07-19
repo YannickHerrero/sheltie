@@ -43,6 +43,24 @@ final class SheltieUITests: XCTestCase {
         app.terminate()
     }
 
+    func testSettingsShowsIndependentNotificationControls() throws {
+        let app = XCUIApplication()
+        app.launchArguments.append("--demo")
+        app.launch()
+
+        let instance = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH %@", "Mac instance")
+        ).firstMatch
+        XCTAssertTrue(instance.waitForExistence(timeout: 5))
+        instance.tap()
+        app.staticTexts["Settings"].tap()
+        XCTAssertTrue(app.switches["Agent completed"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.switches["Agent blocked"].exists)
+        XCTAssertTrue(app.staticTexts["System permission"].exists)
+        XCTAssertTrue(app.staticTexts["Mac provider"].exists)
+        app.terminate()
+    }
+
     func testWorkspaceTodoOpensFromSpaceContextMenu() throws {
         XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()

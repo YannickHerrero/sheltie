@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct SheltieApp: App {
+    @UIApplicationDelegateAdaptor(SheltieAppDelegate.self) private var appDelegate
     @StateObject private var store = AppStore()
     @Environment(\.scenePhase) private var scenePhase
 

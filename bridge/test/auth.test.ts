@@ -31,6 +31,7 @@ function config(overrides: Partial<BridgeConfig> = {}): BridgeConfig {
     terminalPollMilliseconds: 350,
     usageRefreshMilliseconds: 60_000,
     codexBinary: "codex",
+    apns: null,
     ...overrides,
   };
 }
@@ -61,6 +62,14 @@ describe("pairing and session authentication", () => {
     expect(store.authenticateSession(new Request("https://studio.example.ts.net/v1/bootstrap", {
       headers: { authorization: `Bearer ${refreshed.sessionToken}` },
     })).deviceID).toBe(completed.deviceID);
+
+    expect(store.configureNotifications(completed.deviceID, {
+      deviceToken: "ab".repeat(32),
+      doneEnabled: true,
+      blockedEnabled: false,
+    })).toBeTrue();
+    expect(store.notificationTargets("done")).toEqual([{ deviceID: completed.deviceID, deviceToken: "ab".repeat(32) }]);
+    expect(store.notificationTargets("blocked")).toEqual([]);
 
     expect(store.revoke(completed.deviceID)).toBeTrue();
     expect(() => store.authenticateSession(new Request("https://studio.example.ts.net/v1/bootstrap", {

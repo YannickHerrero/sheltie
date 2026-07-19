@@ -2,6 +2,7 @@ import Combine
 import Foundation
 import SheltieProtocol
 import UIKit
+import UserNotifications
 
 @MainActor
 final class AppStore: ObservableObject {
@@ -16,6 +17,11 @@ final class AppStore: ObservableObject {
     @Published private(set) var workspaceTodos: [String: WorkspaceTodoDocument] = [:]
     @Published private(set) var workspaceTodoLoadingIDs = Set<String>()
     @Published private(set) var workspaceTodoSavingIDs = Set<String>()
+    @Published private(set) var notificationAuthorizationStatus: UNAuthorizationStatus = .notDetermined
+    @Published private(set) var notificationProviderConfigured = false
+    @Published private(set) var notificationErrorMessage: String?
+    @Published private(set) var doneNotificationsEnabled = UserDefaults.standard.bool(forKey: "notifications.doneEnabled")
+    @Published private(set) var blockedNotificationsEnabled = UserDefaults.standard.bool(forKey: "notifications.blockedEnabled")
     @Published private(set) var toast: ToastMessage?
     @Published var selectedWorkspaceID: String?
     @Published var selectedTabID: String?
@@ -33,6 +39,9 @@ final class AppStore: ObservableObject {
     private var terminalHistoryRequestIDs: [String: String] = [:]
     private var terminalHistoryCacheOrder: [String] = []
     private var workspaceTodoRequestIDs: [String: String] = [:]
+    private var notificationRequestID: String?
+    private var notificationDeviceToken = UserDefaults.standard.string(forKey: "notifications.deviceToken")
+    private var notificationObservers: [NSObjectProtocol] = []
 
     init(
         repository: any InstancePersisting = InstanceRepository(),
@@ -60,10 +69,12 @@ final class AppStore: ObservableObject {
             selectedProfileID = profiles.contains(where: { $0.id == savedID }) ? savedID : profiles.first?.id
             phase = profiles.isEmpty ? .noInstances : .disconnected
         }
+        configureNotificationObservers()
     }
 
     deinit {
         connectionTask?.cancel()
+        for observer in notificationObservers { NotificationCenter.default.removeObserver(observer) }
     }
 
     var selectedProfile: InstanceProfile? {
@@ -83,6 +94,7 @@ final class AppStore: ObservableObject {
     }
 
     func start() {
+        refreshNotificationAuthorization()
         guard !isDemo else { return }
         connectSelectedInstance()
     }
@@ -513,6 +525,38 @@ final class AppStore: ObservableObject {
         toast = nil
     }
 
+    func setDoneNotificationsEnabled(_ enabled: Bool) {
+        doneNotificationsEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: "notifications.doneEnabled")
+        updateNotificationAuthorizationIfNeeded(enabling: enabled)
+    }
+
+    func setBlockedNotificationsEnabled(_ enabled: Bool) {
+        blockedNotificationsEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: "notifications.blockedEnabled")
+        updateNotificationAuthorizationIfNeeded(enabling: enabled)
+    }
+
+    func refreshNotificationAuthorization() {
+        if isDemo {
+            notificationAuthorizationStatus = .authorized
+            notificationProviderConfigured = true
+            return
+        }
+        Task {
+            let settings = await UNUserNotificationCenter.current().notificationSettings()
+            notificationAuthorizationStatus = settings.authorizationStatus
+            if settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional {
+                UIApplication.shared.registerForRemoteNotifications()
+            }
+        }
+    }
+
+    func openSystemNotificationSettings() {
+        guard let url = URL(string: UIApplication.openNotificationSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+    }
+
     private var activeSessionID: String {
         snapshot?.activeSessionID ?? "default"
     }
@@ -549,6 +593,7 @@ final class AppStore: ObservableObject {
                     sessionToken: credential.sessionToken
                 )
                 sendSubscriptions()
+                sendNotificationConfiguration()
                 while !Task.isCancelled {
                     let message = try await client.receiveStreamMessage()
                     try await consume(message, client: client)
@@ -577,6 +622,11 @@ final class AppStore: ObservableObject {
             } else {
                 terminalFrames[frame.paneID] = frame
             }
+        case let .notificationConfiguration(configuration):
+            guard configuration.requestID == notificationRequestID else { return }
+            notificationRequestID = nil
+            notificationProviderConfigured = configuration.providerConfigured
+            notificationErrorMessage = configuration.errorMessage
         case let .workspaceTodo(document):
             guard workspaceTodoRequestIDs[document.workspaceID] == document.requestID,
                   document.sessionID == activeSessionID else { return }
@@ -641,6 +691,9 @@ final class AppStore: ObservableObject {
 
     private func apply(_ newSnapshot: BootstrapSnapshot) {
         snapshot = newSnapshot
+        if !newSnapshot.bridge.capabilities.contains("notifications.apns") {
+            notificationProviderConfigured = false
+        }
         selectedSessionID = newSnapshot.activeSessionID
         let workspaceIDs = Set(newSnapshot.workspaces.map(\.id))
         if selectedWorkspaceID == nil || !workspaceIDs.contains(selectedWorkspaceID!) {
@@ -665,6 +718,86 @@ final class AppStore: ObservableObject {
             profiles[index].displayName = newSnapshot.instance.name
             profiles[index].lastConnectedAt = Date()
             if !isDemo { repository.saveProfiles(profiles) }
+        }
+    }
+
+    private func configureNotificationObservers() {
+        notificationObservers.append(NotificationCenter.default.addObserver(
+            forName: SheltieNotificationEvents.deviceToken,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let token = notification.object as? String else { return }
+            Task { @MainActor [weak self] in
+                self?.notificationDeviceToken = token
+                UserDefaults.standard.set(token, forKey: "notifications.deviceToken")
+                self?.notificationErrorMessage = nil
+                self?.sendNotificationConfiguration()
+            }
+        })
+        notificationObservers.append(NotificationCenter.default.addObserver(
+            forName: SheltieNotificationEvents.registrationFailed,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.notificationErrorMessage = "This device could not register with Apple Push Notification service."
+            }
+        })
+    }
+
+    private func updateNotificationAuthorizationIfNeeded(enabling: Bool) {
+        notificationErrorMessage = nil
+        if isDemo {
+            notificationAuthorizationStatus = .authorized
+            notificationProviderConfigured = true
+            return
+        }
+        guard enabling, notificationAuthorizationStatus == .notDetermined else {
+            sendNotificationConfiguration()
+            return
+        }
+        Task {
+            do {
+                _ = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+                let settings = await UNUserNotificationCenter.current().notificationSettings()
+                notificationAuthorizationStatus = settings.authorizationStatus
+                if settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional {
+                    UIApplication.shared.registerForRemoteNotifications()
+                } else {
+                    sendNotificationConfiguration()
+                }
+            } catch {
+                notificationErrorMessage = "Notification permission could not be requested."
+            }
+        }
+    }
+
+    private func sendNotificationConfiguration() {
+        guard !isDemo,
+              let client = activeClient,
+              phase.isConnected,
+              snapshot?.bridge.capabilities.contains("notifications.apns") == true else {
+            notificationProviderConfigured = isDemo
+            return
+        }
+        let requestID = UUID().uuidString
+        notificationRequestID = requestID
+        let authorized = notificationAuthorizationStatus == .authorized || notificationAuthorizationStatus == .provisional
+        let request = NotificationRegistrationRequest(
+            requestID: requestID,
+            deviceToken: authorized ? notificationDeviceToken : nil,
+            doneEnabled: doneNotificationsEnabled,
+            blockedEnabled: blockedNotificationsEnabled
+        )
+        Task {
+            do {
+                try await client.sendStreamMessage(.configureNotifications(request))
+            } catch {
+                guard notificationRequestID == requestID else { return }
+                notificationRequestID = nil
+                notificationErrorMessage = "Notification settings could not reach the Mac."
+            }
         }
     }
 

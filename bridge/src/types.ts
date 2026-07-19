@@ -169,6 +169,21 @@ export interface WorkspaceTodoDocument extends WorkspaceTodoReadRequest {
   message: string | null;
 }
 
+export interface NotificationRegistrationRequest {
+  requestID: string;
+  deviceToken: string | null;
+  doneEnabled: boolean;
+  blockedEnabled: boolean;
+}
+
+export interface NotificationConfiguration {
+  requestID: string;
+  doneEnabled: boolean;
+  blockedEnabled: boolean;
+  providerConfigured: boolean;
+  errorMessage: string | null;
+}
+
 export interface TerminalFrame {
   sessionID: string;
   paneID: string;
@@ -237,6 +252,7 @@ export type StreamServerMessage =
   | { type: "terminal.frame"; frame: TerminalFrame }
   | { type: "terminal.history"; history: TerminalHistory }
   | { type: "workspace.todo"; document: WorkspaceTodoDocument }
+  | { type: "notifications.configuration"; configuration: NotificationConfiguration }
   | { type: "terminal.closed"; terminal: { sessionID: string; paneID: string; reason: string } }
   | { type: "action.result"; result: ActionResult }
   | { type: "session.expiring"; expiresAtMillis: number }
@@ -247,6 +263,7 @@ export type StreamClientMessage =
   | { type: "terminal.history.request"; request: TerminalHistoryRequest }
   | { type: "workspace.todo.read"; request: WorkspaceTodoReadRequest }
   | { type: "workspace.todo.save"; request: WorkspaceTodoSaveRequest }
+  | { type: "notifications.configure"; request: NotificationRegistrationRequest }
   | { type: "action"; action: ActionCommand }
   | { type: "resync" }
   | { type: "pong"; id: string };

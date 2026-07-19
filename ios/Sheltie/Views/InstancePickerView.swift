@@ -1,4 +1,75 @@
 import SwiftUI
+import UserNotifications
+
+private struct SheltieSettingsView: View {
+    @ObservedObject var store: AppStore
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle("Agent completed", isOn: Binding(
+                    get: { store.doneNotificationsEnabled },
+                    set: store.setDoneNotificationsEnabled
+                ))
+                Toggle("Agent blocked", isOn: Binding(
+                    get: { store.blockedNotificationsEnabled },
+                    set: store.setBlockedNotificationsEnabled
+                ))
+            } header: {
+                Text("Push Notifications")
+            } footer: {
+                Text("The Mac sends generic alerts through Apple Push Notification service. Project names, paths, prompts, and terminal output are never included.")
+            }
+
+            Section("Delivery Status") {
+                LabeledContent("System permission", value: authorizationLabel)
+                LabeledContent("Mac provider", value: providerLabel)
+                if store.notificationAuthorizationStatus == .denied {
+                    Button("Open System Notification Settings") {
+                        store.openSystemNotificationSettings()
+                    }
+                }
+                if let message = store.notificationErrorMessage {
+                    Label(message, systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(SheltieTheme.danger)
+                }
+            }
+
+            Section("Provider Usage") {
+                if let usage = store.snapshot?.usageMeters.first {
+                    LabeledContent(usage.label, value: "\(Int((usage.remainingFraction * 100).rounded()))% left")
+                    if Date().timeIntervalSince1970 * 1_000 - Double(usage.observedAtMillis) > 5 * 60_000 {
+                        Label("Last reading is stale", systemImage: "clock.badge.exclamationmark")
+                            .foregroundStyle(SheltieTheme.warning)
+                    }
+                } else {
+                    LabeledContent("Codex", value: "Unavailable")
+                }
+            }
+        }
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { store.refreshNotificationAuthorization() }
+    }
+
+    private var authorizationLabel: String {
+        switch store.notificationAuthorizationStatus {
+        case .notDetermined: "Not requested"
+        case .denied: "Denied"
+        case .authorized: "Allowed"
+        case .provisional: "Provisional"
+        case .ephemeral: "Temporary"
+        @unknown default: "Unknown"
+        }
+    }
+
+    private var providerLabel: String {
+        if store.snapshot?.bridge.capabilities.contains("notifications.apns") != true {
+            return "Bridge not configured"
+        }
+        return store.notificationProviderConfigured ? "Ready" : "Waiting for device token"
+    }
+}
 
 struct InstancePickerView: View {
     @ObservedObject var store: AppStore
@@ -13,6 +84,7 @@ struct InstancePickerView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+                    settingsSection
                     if !store.profiles.isEmpty {
                         instancesSection
                     }
@@ -34,6 +106,37 @@ struct InstancePickerView: View {
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+    }
+
+    private var settingsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionLabel("SETTINGS")
+            NavigationLink {
+                SheltieSettingsView(store: store)
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "gearshape")
+                        .foregroundStyle(SheltieTheme.muted)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Settings")
+                            .font(SheltieTheme.body(14, weight: .semibold))
+                            .foregroundStyle(SheltieTheme.foreground)
+                        Text("Notifications and provider status")
+                            .font(SheltieTheme.mono(10))
+                            .foregroundStyle(SheltieTheme.muted)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(SheltieTheme.muted)
+                }
+                .padding(.horizontal, 14)
+                .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 10).fill(SheltieTheme.surface.opacity(0.5)))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(SheltieTheme.border, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     private var instancesSection: some View {
