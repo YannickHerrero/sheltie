@@ -43,6 +43,20 @@ final class SheltieUITests: XCTestCase {
         app.terminate()
     }
 
+    func testTerminalPageButtonsSendToFocusedPane() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments += ["--demo", "--phone-workspace"]
+        app.launch()
+
+        let pageUp = app.buttons["Page up"]
+        XCTAssertTrue(pageUp.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Page down"].exists)
+        pageUp.tap()
+        XCTAssertTrue(app.staticTexts["Demo mode · action not sent"].waitForExistence(timeout: 5))
+        app.terminate()
+    }
+
     func testSpacePlusCreatesWithoutShowingAForm() throws {
         let app = XCUIApplication()
         app.launchArguments.append("--demo")

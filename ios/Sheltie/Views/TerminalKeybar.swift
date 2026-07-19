@@ -14,6 +14,8 @@ struct TerminalKeybar: View {
                     key("esc") { send("Escape") }
                     key("tab") { send("Tab") }
                     key("ctrl c") { store.sendKeys(["ctrl+c"]) }
+                    key("pg ↑", accessibility: "Page up", repeats: true) { send("PageUp") }
+                    key("pg ↓", accessibility: "Page down", repeats: true) { send("PageDown") }
                     modifier("ctrl", active: $controlIsSticky)
                     modifier("opt", active: $optionIsSticky)
                     modifier("shift", active: $shiftIsSticky)
@@ -46,6 +48,7 @@ struct TerminalKeybar: View {
     private func key(
         _ label: String,
         accessibility: String? = nil,
+        repeats: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -58,6 +61,7 @@ struct TerminalKeybar: View {
                 .overlay(RoundedRectangle(cornerRadius: 7).stroke(SheltieTheme.border, lineWidth: 1))
         }
         .buttonStyle(.plain)
+        .buttonRepeatBehavior(repeats ? .enabled : .disabled)
         .disabled(store.selectedPaneID == nil)
         .accessibilityLabel(accessibility ?? label)
     }
