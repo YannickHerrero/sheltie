@@ -31,6 +31,12 @@ platform :ios do
         platform: "IOS"
       )
     end
+
+    push_type = Spaceship::ConnectAPI::BundleIdCapability::Type::PUSH_NOTIFICATIONS
+    unless bundle.get_capabilities.any? { |capability| capability.is_type?(push_type) }
+      bundle.create_capability(push_type)
+      UI.success("Enabled Push Notifications for #{APP_IDENTIFIER}")
+    end
   end
 
   private_lane :require_app_record do
