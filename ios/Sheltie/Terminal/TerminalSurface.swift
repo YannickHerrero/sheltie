@@ -8,7 +8,6 @@ struct TerminalSurface: UIViewRepresentable {
     let frame: TerminalFrame?
     let onInput: (Data) -> Void
     let onFocus: () -> Void
-    let onHistoryRequest: () -> Void
     let onSizeChange: (Int, Int) -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -19,7 +18,6 @@ struct TerminalSurface: UIViewRepresentable {
         let view = FocusTerminalView(frame: .zero)
         view.terminalDelegate = context.coordinator
         view.onFocus = context.coordinator.onFocus
-        view.onHistoryRequest = onHistoryRequest
         view.font = UIFont.monospacedSystemFont(ofSize: 12, weight: .regular)
         view.nativeBackgroundColor = SheltieTheme.uiBackground
         view.nativeForegroundColor = SheltieTheme.uiForeground
@@ -40,7 +38,6 @@ struct TerminalSurface: UIViewRepresentable {
         context.coordinator.onFocus = onFocus
         context.coordinator.onSizeChange = onSizeChange
         view.onFocus = onFocus
-        view.onHistoryRequest = onHistoryRequest
         context.coordinator.stage(frame: frame, paneID: paneID, in: view)
     }
 
@@ -221,29 +218,11 @@ struct TerminalHistorySurface: UIViewRepresentable {
 
 final class FocusTerminalView: TerminalView {
     var onFocus: (() -> Void)?
-    var onHistoryRequest: (() -> Void)?
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        panGestureRecognizer.addTarget(self, action: #selector(handleHistoryPan(_:)))
-    }
-
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        panGestureRecognizer.addTarget(self, action: #selector(handleHistoryPan(_:)))
-    }
 
     override func becomeFirstResponder() -> Bool {
         let became = super.becomeFirstResponder()
         if became { onFocus?() }
         return became
-    }
-
-    @objc private func handleHistoryPan(_ gesture: UIPanGestureRecognizer) {
-        guard gesture.state == .ended else { return }
-        let translation = gesture.translation(in: self)
-        guard abs(translation.y) > 32, abs(translation.y) > abs(translation.x) * 1.2 else { return }
-        onHistoryRequest?()
     }
 }
 

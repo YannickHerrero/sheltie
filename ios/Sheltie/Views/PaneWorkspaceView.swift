@@ -163,7 +163,6 @@ private struct TerminalPaneView: View {
                     frame: store.terminalFrames[pane.id],
                     onInput: { store.sendTerminalData($0, to: pane.id) },
                     onFocus: { store.selectPane(pane.id) },
-                    onHistoryRequest: showHistory,
                     onSizeChange: { store.updateTerminalSize(paneID: pane.id, columns: $0, rows: $1) }
                 )
                 .padding(.horizontal, 14)

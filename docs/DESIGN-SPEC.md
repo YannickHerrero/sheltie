@@ -64,7 +64,7 @@ Window width—not orientation—controls iPad Split View and Stage Manager adap
 - The agent composer sends semantic agent text plus submit and retains keyboard focus for consecutive messages.
 - The shell composer sends text and Enter atomically.
 - SwiftTerm sends direct hardware/software keyboard bytes to the focused pane.
-- A vertical terminal swipe or the pane menu opens a stable, read-only snapshot of recent Herdr scrollback; live output continues underneath and a Latest control returns to it.
+- Only the pane's explicit history button opens a stable, read-only snapshot of recent Herdr scrollback; live terminal swipes remain available to terminal applications, and a Latest control returns to current output.
 - Terminal history is bounded, memory-only, and exposes native touch, pointer, selection, and VoiceOver scrolling.
 - Sticky keybar modifiers clear after one key.
 - Settings exposes independent done and blocked notification opt-ins, system permission/denied treatment, Mac provider readiness, and Codex usage health.

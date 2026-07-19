@@ -120,8 +120,12 @@ final class SheltieUITests: XCTestCase {
 
         let terminalTitle = app.staticTexts["Implementation Agent"].firstMatch
         XCTAssertTrue(terminalTitle.waitForExistence(timeout: 5))
-        app.buttons["Show terminal history"].firstMatch.tap()
+        let liveTerminal = app.textViews["Live terminal"].firstMatch
+        XCTAssertTrue(liveTerminal.waitForExistence(timeout: 5))
+        liveTerminal.swipeDown()
+        XCTAssertFalse(app.buttons["Latest"].exists)
 
+        app.buttons["Show terminal history"].firstMatch.tap()
         let latest = app.buttons["Latest"]
         XCTAssertTrue(latest.waitForExistence(timeout: 5))
         let history = app.textViews["Terminal history"]
