@@ -210,11 +210,12 @@ Required behavior:
 
 - Initial full ANSI frame followed by ordered incremental frames.
 - Per-pane sequence numbers and explicit resynchronization.
-- UTF-8, wide characters, combining characters, color, cursor, hyperlinks, and scrollback.
+- UTF-8, wide characters, combining characters, color, cursor, hyperlinks, and bounded Herdr-backed scrollback.
 - Independent terminal dimensions for every visible pane.
 - Read-only subscriptions for background panes.
 - Writable control for the focused pane.
 - Clean teardown and restoration when switching tabs, sessions, or instances.
+- Keep history as a stable, memory-only recent snapshot over the still-updating live terminal, with touch/pointer scrolling and an explicit return to latest output.
 
 Pane headers, command composers, and the keybar are native chrome outside the terminal emulator. The terminal view must not reproduce those elements from ANSI output. Kitty graphics and image protocols can be deferred until text terminal fidelity is established.
 

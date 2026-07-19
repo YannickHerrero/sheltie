@@ -61,6 +61,8 @@ Window width—not orientation—controls iPad Split View and Stage Manager adap
 - The agent composer sends semantic agent text plus submit.
 - The shell composer sends text and Enter atomically.
 - SwiftTerm sends direct hardware/software keyboard bytes to the focused pane.
+- A vertical terminal swipe or the pane menu opens a stable, read-only snapshot of recent Herdr scrollback; live output continues underneath and a Latest control returns to it.
+- Terminal history is bounded, memory-only, and exposes native touch, pointer, selection, and VoiceOver scrolling.
 - Sticky keybar modifiers clear after one key.
 
 ## Operational states
@@ -82,6 +84,7 @@ The app preserves the connected geometry when practical and presents explicit na
 - Every status color has a spoken state label.
 - Selected workspaces and tabs expose selection traits.
 - Pane dividers and the Spaces/Agents separator expose adjustable accessibility actions.
+- Live terminal and terminal-history surfaces have distinct spoken labels; the Latest control reports whether the history view is away from the tail.
 - Controls use semantic labels instead of relying on symbols alone.
 - Horizontal regions remain scrollable at larger text sizes.
 - Motion respects Reduce Motion.

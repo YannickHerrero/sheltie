@@ -146,6 +146,9 @@ private struct TerminalPaneView: View {
     @State private var isConfirmingClose = false
     @State private var isRenaming = false
     @State private var renameText = ""
+    @State private var isShowingHistory = false
+    @State private var historyIsAwayFromLatest = false
+    @State private var historyOpenedAtSequence: Int64?
 
     private var selected: Bool { pane.id == store.selectedPaneID }
 
@@ -159,6 +162,7 @@ private struct TerminalPaneView: View {
                     frame: store.terminalFrames[pane.id],
                     onInput: { store.sendTerminalData($0, to: pane.id) },
                     onFocus: { store.selectPane(pane.id) },
+                    onHistoryRequest: showHistory,
                     onSizeChange: { store.updateTerminalSize(paneID: pane.id, columns: $0, rows: $1) }
                 )
                 .padding(.horizontal, 14)
@@ -167,6 +171,10 @@ private struct TerminalPaneView: View {
                     ProgressView()
                         .tint(SheltieTheme.accent)
                         .accessibilityLabel("Loading terminal")
+                }
+                if isShowingHistory {
+                    historyView
+                        .transition(.opacity)
                 }
             }
             Rectangle().fill(SheltieTheme.border).frame(height: 1)
@@ -206,6 +214,15 @@ private struct TerminalPaneView: View {
                     .buttonStyle(.plain)
                     .frame(minWidth: 44, minHeight: 38)
             }
+            Button(action: showHistory) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(SheltieTheme.muted)
+                    .frame(width: 40, height: 38)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Show terminal history")
+
             Menu {
                 Button("Split Side by Side", systemImage: "rectangle.split.2x1") {
                     store.selectPane(pane.id)
@@ -245,6 +262,89 @@ private struct TerminalPaneView: View {
         .padding(.leading, 12)
         .frame(height: 38)
         .background(SheltieTheme.surface.opacity(0.45))
+    }
+
+    private var historyView: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Text("HISTORY")
+                    .font(SheltieTheme.mono(9, weight: .bold))
+                    .tracking(1)
+                    .foregroundStyle(SheltieTheme.muted)
+                if hasNewOutputSinceHistoryOpened {
+                    Circle()
+                        .fill(SheltieTheme.accent)
+                        .frame(width: 6, height: 6)
+                        .accessibilityHidden(true)
+                }
+                Spacer()
+                Button {
+                    isShowingHistory = false
+                } label: {
+                    Label("Latest", systemImage: "arrow.down.to.line")
+                        .font(SheltieTheme.mono(10, weight: .semibold))
+                        .foregroundStyle(SheltieTheme.foreground)
+                        .frame(minWidth: 70, minHeight: 32)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("terminal.history.latest.\(pane.id)")
+                .accessibilityValue(historyIsAwayFromLatest ? "Earlier output" : "Latest output")
+                .accessibilityHint("Returns to live terminal output")
+            }
+            .padding(.horizontal, 10)
+            .frame(height: 34)
+            .background(SheltieTheme.surface)
+            .overlay(alignment: .bottom) { Rectangle().fill(SheltieTheme.border).frame(height: 1) }
+
+            if let history = store.terminalHistories[pane.id] {
+                TerminalHistorySurface(
+                    history: history,
+                    onScrolledAwayFromLatest: { historyIsAwayFromLatest = $0 }
+                )
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+            } else if store.terminalHistoryLoadingPaneIDs.contains(pane.id) {
+                VStack(spacing: 10) {
+                    ProgressView()
+                        .tint(SheltieTheme.accent)
+                    Text("Loading recent terminal history…")
+                        .font(SheltieTheme.mono(10))
+                        .foregroundStyle(SheltieTheme.muted)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .accessibilityElement(children: .combine)
+            } else {
+                ContentUnavailableView {
+                    Label("History unavailable", systemImage: "clock.badge.exclamationmark")
+                } description: {
+                    Text("The recent terminal buffer could not be loaded.")
+                } actions: {
+                    Button("Try Again") { store.requestTerminalHistory(for: pane.id) }
+                }
+                .foregroundStyle(SheltieTheme.muted)
+            }
+        }
+        .background(SheltieTheme.background)
+        .accessibilityIdentifier("terminal.history.container.\(pane.id)")
+        .accessibilityValue(historyIsAwayFromLatest ? "Earlier output" : "Latest output")
+    }
+
+    private var hasNewOutputSinceHistoryOpened: Bool {
+        guard let historyOpenedAtSequence,
+              let current = store.terminalFrames[pane.id]?.sequence else { return false }
+        return current != historyOpenedAtSequence
+    }
+
+    private func showHistory() {
+        guard !isShowingHistory else { return }
+        historyOpenedAtSequence = store.terminalFrames[pane.id]?.sequence
+        historyIsAwayFromLatest = false
+        guard store.snapshot?.bridge.capabilities.contains("terminal.history") == true else {
+            store.requestTerminalHistory(for: pane.id)
+            return
+        }
+        isShowingHistory = true
+        store.requestTerminalHistory(for: pane.id)
     }
 
     private var destinationTabs: [TabSnapshot] {

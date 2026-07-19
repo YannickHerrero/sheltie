@@ -43,6 +43,29 @@ final class SheltieUITests: XCTestCase {
         app.terminate()
     }
 
+    func testTerminalHistoryScrollsAndReturnsToLatest() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments += ["--demo", "--phone-workspace"]
+        app.launch()
+
+        let terminalTitle = app.staticTexts["Implementation Agent"].firstMatch
+        XCTAssertTrue(terminalTitle.waitForExistence(timeout: 5))
+        app.buttons["Show terminal history"].firstMatch.tap()
+
+        let latest = app.buttons["Latest"]
+        XCTAssertTrue(latest.waitForExistence(timeout: 5))
+        let history = app.textViews["Terminal history"]
+        XCTAssertTrue(history.waitForExistence(timeout: 5))
+        history.swipeDown()
+        XCTAssertEqual(history.value as? String, "Earlier output")
+
+        latest.tap()
+        XCTAssertFalse(latest.exists)
+        XCTAssertTrue(terminalTitle.exists)
+        app.terminate()
+    }
+
     func testSidebarDividerResizesOnPhone() throws {
         XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
