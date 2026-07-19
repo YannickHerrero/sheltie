@@ -417,6 +417,20 @@ Before public distribution, review:
 - Optional notifications and image support.
 - Documentation, licensing, CI, release automation, and TestFlight evaluation.
 
+### Near-term backlog
+
+- [ ] Add push notifications when an agent transitions to `done` or `blocked`.
+  - Add a Settings page with independent opt-ins for done and blocked notifications, including system-permission and denied states.
+  - Prevent duplicate notifications after bootstrap or reconnect, and define the bridge/APNs delivery architecture and its privacy constraints.
+- [ ] Fix the Codex usage-limit meter not appearing.
+  - Trace the usage data from its trusted local source through the bridge bootstrap to the app bar, with useful handling for missing, stale, or malformed data.
+- [ ] Add a per-Space to-do list backed by `todo.md` in the related workspace project root.
+  - Add **Todo List** to each Space's long-press context menu and present the list in an in-app dialog.
+  - Refine the Markdown editing model, save and conflict behavior, external-change handling, path security, and empty and error states before implementation.
+- [ ] Show compact project paths in the Spaces section.
+  - Display only the final path component, such as `/project` instead of `/Users/yannickherrero/dev/project`.
+  - When final components collide, prepend the minimum parent component needed to disambiguate them, adding further parents only if necessary.
+
 ## 7. Verification strategy
 
 ### Automated
