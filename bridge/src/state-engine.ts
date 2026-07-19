@@ -11,6 +11,7 @@ import type {
   RawHerdrSnapshot,
   RawLayoutDescription,
   SessionSummary,
+  SplitDirection,
 } from "./types.ts";
 
 interface EventWatcher {
@@ -130,7 +131,7 @@ export class BridgeStateEngine implements BridgeStateProviding {
       case "pane.split":
         return await client.perform("pane.split", {
           target_pane_id: target(),
-          direction: required(action.splitDirection, "splitDirection"),
+          direction: herdrSplitDirection(required(action.splitDirection, "splitDirection")),
           ...(action.ratio ? { ratio: action.ratio } : {}),
           ...(action.cwd ? { cwd: action.cwd } : {}),
           focus: true,
@@ -329,14 +330,18 @@ function clampedRatio(value: number): number {
   return Math.max(0.1, Math.min(0.9, value));
 }
 
-function herdrMoveDestination(destination: NonNullable<ActionCommand["moveDestination"]>): Record<string, unknown> {
+export function herdrSplitDirection(direction: SplitDirection): "right" | "down" {
+  return direction === "horizontal" ? "right" : "down";
+}
+
+export function herdrMoveDestination(destination: NonNullable<ActionCommand["moveDestination"]>): Record<string, unknown> {
   switch (destination.type) {
     case "tab":
       return {
         type: "tab",
         tab_id: destination.tabID,
         ...(destination.targetPaneID ? { target_pane_id: destination.targetPaneID } : {}),
-        split: destination.split,
+        split: herdrSplitDirection(destination.split),
       };
     case "new_tab":
       return {

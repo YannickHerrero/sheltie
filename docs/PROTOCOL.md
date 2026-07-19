@@ -67,7 +67,7 @@ Input uses explicit actions. Raw SwiftTerm bytes are base64-encoded; composed sh
 
 ## Structural actions
 
-Protocol v1 supports a closed set of workspace, tab, pane, layout, terminal, and agent actions. The bridge maps each action to typed Herdr parameters. Pane move destinations are discriminated as existing tab, new tab, or new workspace. Split-divider updates include the recursive Boolean split path and a clamped ratio.
+Protocol v1 supports a closed set of workspace, tab, pane, layout, terminal, and agent actions. The bridge maps each action to typed Herdr parameters. Semantic split axes translate to Herdr placement directions (`horizontal` → `right`, `vertical` → `down`) for pane creation and moves. Pane move destinations are discriminated as existing tab, new tab, or new workspace. Split-divider updates include the recursive Boolean split path and a clamped ratio.
 
 Unknown action names are rejected before reaching Herdr.
 
