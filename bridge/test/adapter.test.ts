@@ -66,7 +66,7 @@ describe("Herdr snapshot adapter", () => {
           focused_pane_id: "w1:p1",
           root: {
             type: "split" as const,
-            direction: "horizontal" as const,
+            direction: "right" as const,
             ratio: 0.54,
             first: { type: "pane" as const, pane_id: "w1:p1" },
             second: { type: "pane" as const, pane_id: "w1:p2" },
@@ -107,12 +107,40 @@ describe("Herdr snapshot adapter", () => {
     expect(
       adaptLayoutNode({
         type: "split",
-        direction: "vertical",
+        direction: "down",
         ratio: 12,
         first: { type: "pane", pane_id: "left" },
         second: { type: "pane", pane_id: "right" },
       }),
-    ).toMatchObject({ type: "split", ratio: 0.9 });
+    ).toMatchObject({ type: "split", direction: "vertical", ratio: 0.9 });
+  });
+
+  test("normalizes nested Herdr placement directions to protocol axes", () => {
+    expect(adaptLayoutNode({
+      type: "split",
+      direction: "right",
+      ratio: 0.5,
+      first: { type: "pane", pane_id: "left" },
+      second: {
+        type: "split",
+        direction: "down",
+        ratio: 0.4,
+        first: { type: "pane", pane_id: "top" },
+        second: { type: "pane", pane_id: "bottom" },
+      },
+    })).toEqual({
+      type: "split",
+      direction: "horizontal",
+      ratio: 0.5,
+      first: { type: "pane", paneID: "left" },
+      second: {
+        type: "split",
+        direction: "vertical",
+        ratio: 0.4,
+        first: { type: "pane", paneID: "top" },
+        second: { type: "pane", paneID: "bottom" },
+      },
+    });
   });
 
   test("compares semantic versions numerically", () => {

@@ -11,6 +11,7 @@ import type {
   SessionSummary,
   UsageMeter,
 } from "./types.ts";
+import { protocolSplitDirection } from "./directions.ts";
 import { BRIDGE_VERSION, PROTOCOL_VERSION } from "./types.ts";
 
 function displayAgentName(agent: string): string {
@@ -41,7 +42,7 @@ export function adaptLayoutNode(node: RawLayoutNode): LayoutNode | null {
   if (!first || !second) return first ?? second;
   return {
     type: "split",
-    direction: node.direction,
+    direction: protocolSplitDirection(node.direction),
     ratio: Math.min(0.9, Math.max(0.1, node.ratio)),
     first,
     second,

@@ -4,6 +4,7 @@ export const BRIDGE_VERSION = "0.1.0";
 export type AgentStatus = "idle" | "working" | "blocked" | "done" | "unknown";
 export type PaneKind = "agent" | "shell";
 export type SplitDirection = "horizontal" | "vertical";
+export type HerdrLayoutDirection = SplitDirection | "right" | "down";
 export type PaneDirection = "left" | "right" | "up" | "down";
 
 export interface BridgeInfo {
@@ -368,7 +369,7 @@ export type RawLayoutNode =
   | { type: "pane"; pane_id?: string | null; label?: string | null; cwd?: string | null }
   | {
       type: "split";
-      direction: SplitDirection;
+      direction: HerdrLayoutDirection;
       ratio: number;
       first: RawLayoutNode;
       second: RawLayoutNode;

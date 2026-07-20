@@ -1,5 +1,6 @@
 import { homedir } from "node:os";
 import { adaptSnapshot, compareVersions } from "./adapter.ts";
+import { herdrSplitDirection } from "./directions.ts";
 import type { BridgeConfig } from "./config.ts";
 import { HerdrClient } from "./herdr-client.ts";
 import { discoverSessions, type HerdrSessionLocation } from "./sessions.ts";
@@ -12,7 +13,6 @@ import type {
   RawHerdrSnapshot,
   RawLayoutDescription,
   SessionSummary,
-  SplitDirection,
 } from "./types.ts";
 
 interface EventWatcher {
@@ -384,10 +384,6 @@ export function herdrWorkspaceCreateParameters(
     ...(label ? { label } : {}),
     focus: true,
   };
-}
-
-export function herdrSplitDirection(direction: SplitDirection): "right" | "down" {
-  return direction === "horizontal" ? "right" : "down";
 }
 
 export function herdrMoveDestination(destination: NonNullable<ActionCommand["moveDestination"]>): Record<string, unknown> {

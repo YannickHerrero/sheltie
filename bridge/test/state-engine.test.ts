@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { homedir } from "node:os";
+import { herdrSplitDirection, protocolSplitDirection } from "../src/directions.ts";
 import {
   herdrMoveDestination,
-  herdrSplitDirection,
   herdrWorkspaceCreateParameters,
   sendHerdrTerminalKeys,
 } from "../src/state-engine.ts";
@@ -17,9 +17,13 @@ describe("Herdr structural action translation", () => {
     });
   });
 
-  test("maps semantic split axes to Herdr placement directions", () => {
+  test("maps split directions across the Herdr boundary in both directions", () => {
     expect(herdrSplitDirection("horizontal")).toBe("right");
     expect(herdrSplitDirection("vertical")).toBe("down");
+    expect(protocolSplitDirection("right")).toBe("horizontal");
+    expect(protocolSplitDirection("down")).toBe("vertical");
+    expect(protocolSplitDirection("horizontal")).toBe("horizontal");
+    expect(protocolSplitDirection("vertical")).toBe("vertical");
   });
 
   test("maps existing-tab move splits to Herdr placement directions", () => {
