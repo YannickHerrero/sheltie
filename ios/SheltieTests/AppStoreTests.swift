@@ -18,6 +18,85 @@ private final class MemoryInstanceRepository: InstancePersisting {
     func removeAccessToken(for instanceID: String) throws { tokens[instanceID] = nil }
 }
 
+private actor SuspendedBridgeClient: BridgeConnecting {
+    private let snapshot: BootstrapSnapshot
+    private let resumeWhenDisconnected: Bool
+    private var receiveContinuation: CheckedContinuation<StreamServerMessage, any Error>?
+    private(set) var disconnectCount = 0
+
+    init(snapshot: BootstrapSnapshot, resumeWhenDisconnected: Bool) {
+        self.snapshot = snapshot
+        self.resumeWhenDisconnected = resumeWhenDisconnected
+    }
+
+    func refreshSession(accessToken: String) async throws -> SessionCredential {
+        SessionCredential(sessionToken: "session", deviceID: "device", expiresAtMillis: .max)
+    }
+
+    func bootstrap(sessionID: String?, sessionToken: String) async throws -> BootstrapSnapshot { snapshot }
+    func connectStream(sessionID: String, sessionToken: String) async throws {}
+
+    func receiveStreamMessage() async throws -> StreamServerMessage {
+        try await withCheckedThrowingContinuation { continuation in
+            receiveContinuation = continuation
+        }
+    }
+
+    func sendStreamMessage(_ message: StreamClientMessage) async throws {}
+
+    func disconnect() async {
+        disconnectCount += 1
+        if resumeWhenDisconnected, let continuation = receiveContinuation {
+            receiveContinuation = nil
+            continuation.resume(throwing: CancellationError())
+        }
+    }
+
+    func isReceiving() -> Bool { receiveContinuation != nil }
+
+    func failStaleReceive() {
+        guard let continuation = receiveContinuation else { return }
+        receiveContinuation = nil
+        continuation.resume(throwing: URLError(.networkConnectionLost))
+    }
+}
+
+private func snapshot(instanceID: String, name: String) -> BootstrapSnapshot {
+    let source = DemoData.snapshot
+    return BootstrapSnapshot(
+        bridge: source.bridge,
+        instance: InstanceInfo(id: instanceID, name: name, host: "\(instanceID).example.ts.net"),
+        herdr: source.herdr,
+        sessions: source.sessions,
+        activeSessionID: source.activeSessionID,
+        workspaces: source.workspaces,
+        tabs: source.tabs,
+        panes: source.panes,
+        agents: source.agents,
+        layouts: source.layouts,
+        focus: source.focus,
+        usageMeters: source.usageMeters,
+        generatedAtMillis: source.generatedAtMillis
+    )
+}
+
+@MainActor
+private func eventually(_ condition: () -> Bool) async -> Bool {
+    for _ in 0 ..< 100 {
+        if condition() { return true }
+        try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    return false
+}
+
+private func eventuallyReceiving(_ client: SuspendedBridgeClient) async -> Bool {
+    for _ in 0 ..< 100 {
+        if await client.isReceiving() { return true }
+        try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    return false
+}
+
 @MainActor
 @Test func demoStoreBootstrapsSelectionAndTerminalFrames() {
     let store = AppStore(repository: MemoryInstanceRepository(), arguments: ["tests", "--demo"])
@@ -51,6 +130,73 @@ private final class MemoryInstanceRepository: InstancePersisting {
     let fileSaveID = store.saveWorkspaceFile(file, content: "let savedFromIPad = true\n")
     #expect(store.workspaceFile(workspaceID: "w1", relativePath: "Sources/App.swift")?.requestID == fileSaveID)
     #expect(store.workspaceFile(workspaceID: "w1", relativePath: "Sources/App.swift")?.bytes == Data("let savedFromIPad = true\n".utf8))
+}
+
+@MainActor
+@Test func switchingHostsIgnoresTheCancelledConnection() async {
+    let repository = MemoryInstanceRepository()
+    let firstURL = URL(string: "https://first.example.ts.net/sheltie")!
+    let secondURL = URL(string: "https://second.example.ts.net/sheltie")!
+    repository.profiles = [
+        InstanceProfile(id: "local-first", displayName: "First", baseURL: firstURL, deviceID: "device-first"),
+        InstanceProfile(id: "local-second", displayName: "Second", baseURL: secondURL, deviceID: "device-second"),
+    ]
+    repository.selectedID = "local-first"
+    repository.tokens = ["local-first": "first-token", "local-second": "second-token"]
+    let first = SuspendedBridgeClient(snapshot: snapshot(instanceID: "remote-first", name: "First"), resumeWhenDisconnected: false)
+    let second = SuspendedBridgeClient(snapshot: snapshot(instanceID: "remote-second", name: "Second"), resumeWhenDisconnected: true)
+    let store = AppStore(repository: repository, arguments: ["tests"]) { url in
+        url == firstURL ? first : second
+    }
+
+    store.start()
+    #expect(await eventually { store.phase == .connected && store.snapshot?.instance.id == "remote-first" })
+    #expect(await eventuallyReceiving(first))
+
+    store.selectInstance("local-second")
+    #expect(await eventually { store.phase == .connected && store.snapshot?.instance.id == "remote-second" })
+    #expect(await eventuallyReceiving(second))
+    await first.failStaleReceive()
+    try? await Task.sleep(nanoseconds: 50_000_000)
+
+    #expect(store.selectedProfileID == "local-second")
+    #expect(store.snapshot?.instance.id == "remote-second")
+    #expect(store.phase == .connected)
+    #expect(await first.disconnectCount > 0)
+    store.applicationDidEnterBackground()
+}
+
+@MainActor
+@Test func pairedProfilesRemainDistinctWhenBridgesAdvertiseTheSameID() throws {
+    let firstURL = URL(string: "https://first.example.ts.net/sheltie")!
+    let secondURL = URL(string: "https://second.example.ts.net/sheltie")!
+    let remote = InstanceInfo(id: "copied-instance-id", name: "Bridge", host: "bridge.example.ts.net")
+    let first = AppStore.profileForPairing(in: [], instance: remote, baseURL: firstURL, deviceID: "first-device")
+    let second = AppStore.profileForPairing(in: [first], instance: remote, baseURL: secondURL, deviceID: "second-device")
+    let repaired = AppStore.profileForPairing(in: [first, second], instance: remote, baseURL: firstURL, deviceID: "new-device")
+
+    #expect(first.id != second.id)
+    #expect(first.bridgeInstanceID == second.bridgeInstanceID)
+    #expect(repaired.id == first.id)
+    #expect(repaired.deviceID == "new-device")
+    #expect(AppStore.sameEndpoint(firstURL, URL(string: "https://FIRST.example.ts.net:443/sheltie/")!))
+}
+
+@Test func legacyInstanceProfilesDecodeWithoutBridgeInstanceID() throws {
+    let original = InstanceProfile(
+        id: "legacy-id",
+        displayName: "Legacy",
+        baseURL: URL(string: "https://legacy.example.ts.net/sheltie")!,
+        deviceID: "legacy-device"
+    )
+    let encoded = try JSONEncoder().encode(original)
+    var object = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+    object.removeValue(forKey: "bridgeInstanceID")
+    let legacyData = try JSONSerialization.data(withJSONObject: object)
+    let decoded = try JSONDecoder().decode(InstanceProfile.self, from: legacyData)
+
+    #expect(decoded.id == original.id)
+    #expect(decoded.bridgeInstanceID == nil)
 }
 
 @MainActor

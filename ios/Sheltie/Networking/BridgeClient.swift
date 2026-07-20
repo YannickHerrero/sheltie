@@ -23,7 +23,16 @@ enum BridgeClientError: Error, LocalizedError {
     }
 }
 
-actor BridgeClient {
+protocol BridgeConnecting: Sendable {
+    func refreshSession(accessToken: String) async throws -> SessionCredential
+    func bootstrap(sessionID: String?, sessionToken: String) async throws -> BootstrapSnapshot
+    func connectStream(sessionID: String, sessionToken: String) async throws
+    func receiveStreamMessage() async throws -> StreamServerMessage
+    func sendStreamMessage(_ message: StreamClientMessage) async throws
+    func disconnect() async
+}
+
+actor BridgeClient: BridgeConnecting {
     private struct ErrorEnvelope: Decodable {
         let error: String
         let message: String?

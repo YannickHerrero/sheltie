@@ -5,6 +5,7 @@ struct InstanceProfile: Codable, Equatable, Hashable, Identifiable {
     var displayName: String
     var baseURL: URL
     var deviceID: String
+    var bridgeInstanceID: String?
     var lastConnectedAt: Date?
 
     init(
@@ -12,12 +13,14 @@ struct InstanceProfile: Codable, Equatable, Hashable, Identifiable {
         displayName: String,
         baseURL: URL,
         deviceID: String,
+        bridgeInstanceID: String? = nil,
         lastConnectedAt: Date? = nil
     ) {
         self.id = id
         self.displayName = displayName
         self.baseURL = baseURL
         self.deviceID = deviceID
+        self.bridgeInstanceID = bridgeInstanceID
         self.lastConnectedAt = lastConnectedAt
     }
 }

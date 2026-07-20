@@ -41,8 +41,10 @@ final class AppStore: ObservableObject {
 
     private let repository: any InstancePersisting
     private let isDemo: Bool
+    private let clientFactory: @Sendable (URL) -> any BridgeConnecting
     private var connectionTask: Task<Void, Never>?
-    private var activeClient: BridgeClient?
+    private var connectionGeneration = 0
+    private var activeClient: (any BridgeConnecting)?
     private var activeSessionToken: String?
     private var visiblePaneIDs = Set<String>()
     private var terminalViewports: [String: TerminalViewport] = [:]
@@ -57,9 +59,11 @@ final class AppStore: ObservableObject {
 
     init(
         repository: any InstancePersisting = InstanceRepository(),
-        arguments: [String] = ProcessInfo.processInfo.arguments
+        arguments: [String] = ProcessInfo.processInfo.arguments,
+        clientFactory: @escaping @Sendable (URL) -> any BridgeConnecting = { BridgeClient(baseURL: $0) }
     ) {
         self.repository = repository
+        self.clientFactory = clientFactory
         isDemo = arguments.contains("--demo") || arguments.contains("-sheltie-demo")
         if isDemo {
             let profile = InstanceProfile(
@@ -67,6 +71,7 @@ final class AppStore: ObservableObject {
                 displayName: DemoData.snapshot.instance.name,
                 baseURL: URL(string: "https://studio.example.ts.net/sheltie")!,
                 deviceID: "demo",
+                bridgeInstanceID: DemoData.snapshot.instance.id,
                 lastConnectedAt: Date()
             )
             profiles = [profile]
@@ -118,14 +123,8 @@ final class AppStore: ObservableObject {
 
     func applicationDidEnterBackground() {
         guard !isDemo else { return }
-        connectionTask?.cancel()
-        connectionTask = nil
-        let client = activeClient
-        activeClient = nil
-        activeSessionToken = nil
-        resetTerminalHistory()
-        resetWorkspaceTodos()
-        Task { await client?.disconnect() }
+        invalidateConnection()
+        resetHostContent()
         phase = profiles.isEmpty ? .noInstances : .disconnected
     }
 
@@ -133,39 +132,29 @@ final class AppStore: ObservableObject {
         guard id != selectedSessionID,
               storeSessions.contains(where: { $0.id == id && $0.reachable }) else { return }
         selectedSessionID = id
-        snapshot = nil
-        terminalFrames = [:]
-        resetTerminalHistory()
-        resetWorkspaceTodos()
+        resetHostContent(preservingSelectedSession: true)
         connectSelectedInstance()
     }
 
     func selectInstance(_ id: String) {
         guard id != selectedProfileID, profiles.contains(where: { $0.id == id }) else { return }
-        selectedProfileID = id
-        selectedSessionID = nil
-        repository.saveSelectedID(id)
-        snapshot = nil
-        terminalFrames = [:]
-        resetTerminalHistory()
-        resetWorkspaceTodos()
-        connectSelectedInstance()
+        activateProfile(id)
     }
 
     func removeInstance(_ id: String) {
         profiles.removeAll { $0.id == id }
         try? repository.removeAccessToken(for: id)
         repository.saveProfiles(profiles)
-        if selectedProfileID == id {
-            selectedProfileID = profiles.first?.id
+        guard selectedProfileID == id else { return }
+        if let nextID = profiles.first?.id {
+            activateProfile(nextID)
+        } else {
+            selectedProfileID = nil
             selectedSessionID = nil
-            repository.saveSelectedID(selectedProfileID)
-            snapshot = nil
-            terminalFrames = [:]
-            resetTerminalHistory()
-            resetWorkspaceTodos()
-            connectionTask?.cancel()
-            profiles.isEmpty ? (phase = .noInstances) : connectSelectedInstance()
+            repository.saveSelectedID(nil)
+            invalidateConnection()
+            resetHostContent()
+            phase = .noInstances
         }
     }
 
@@ -197,20 +186,20 @@ final class AppStore: ObservableObject {
             code: code,
             signature: signature
         )
-        let profile = InstanceProfile(
-            id: response.instance.id,
-            displayName: response.instance.name,
+        let profile = Self.profileForPairing(
+            in: profiles,
+            instance: response.instance,
             baseURL: pairing.baseURL,
             deviceID: response.deviceID
         )
-        profiles.removeAll { $0.id == profile.id }
-        profiles.append(profile)
+        if let index = profiles.firstIndex(where: { $0.id == profile.id }) {
+            profiles[index] = profile
+        } else {
+            profiles.append(profile)
+        }
         repository.saveProfiles(profiles)
         try repository.setAccessToken(response.accessToken, for: profile.id)
-        selectedProfileID = profile.id
-        selectedSessionID = nil
-        repository.saveSelectedID(profile.id)
-        connectSelectedInstance()
+        activateProfile(profile.id)
     }
 
     func selectWorkspace(_ id: String) {
@@ -733,58 +722,175 @@ final class AppStore: ObservableObject {
         snapshot?.activeSessionID ?? "default"
     }
 
-    private func connectSelectedInstance() {
+    private func activateProfile(_ id: String) {
+        guard profiles.contains(where: { $0.id == id }) else { return }
+        selectedProfileID = id
+        selectedSessionID = nil
+        repository.saveSelectedID(id)
+        resetHostContent()
+        connectSelectedInstance()
+    }
+
+    @discardableResult
+    private func invalidateConnection() -> Int {
+        connectionGeneration &+= 1
         connectionTask?.cancel()
+        connectionTask = nil
+        let client = activeClient
+        activeClient = nil
+        activeSessionToken = nil
+        notificationRequestID = nil
+        Task { await client?.disconnect() }
+        return connectionGeneration
+    }
+
+    private func isCurrentConnection(_ generation: Int, profileID: String) -> Bool {
+        generation == connectionGeneration && selectedProfileID == profileID
+    }
+
+    private func resetHostContent(preservingSelectedSession: Bool = false) {
+        if !preservingSelectedSession { selectedSessionID = nil }
+        snapshot = nil
+        terminalFrames = [:]
+        selectedWorkspaceID = nil
+        selectedTabID = nil
+        selectedPaneID = nil
+        compactPaneID = nil
+        visiblePaneIDs = []
+        terminalViewports = [:]
+        resetTerminalHistory()
+        resetWorkspaceTodos()
+        notificationProviderConfigured = false
+        notificationErrorMessage = nil
+        notificationRequestID = nil
+        toast = nil
+    }
+
+    static func profileForPairing(
+        in profiles: [InstanceProfile],
+        instance: InstanceInfo,
+        baseURL: URL,
+        deviceID: String
+    ) -> InstanceProfile {
+        let existing = profiles.first { sameEndpoint($0.baseURL, baseURL) }
+        return InstanceProfile(
+            id: existing?.id ?? UUID().uuidString,
+            displayName: instance.name,
+            baseURL: baseURL,
+            deviceID: deviceID,
+            bridgeInstanceID: instance.id,
+            lastConnectedAt: existing?.lastConnectedAt
+        )
+    }
+
+    static func sameEndpoint(_ lhs: URL, _ rhs: URL) -> Bool {
+        func components(_ url: URL) -> (String, String, Int?, String) {
+            let scheme = url.scheme?.lowercased() ?? ""
+            let host = url.host?.lowercased() ?? ""
+            let defaultPort = scheme == "https" ? 443 : (scheme == "http" ? 80 : nil)
+            let path = url.path.split(separator: "/").joined(separator: "/")
+            return (scheme, host, url.port ?? defaultPort, path)
+        }
+        let left = components(lhs)
+        let right = components(rhs)
+        return left.0 == right.0 && left.1 == right.1 && left.2 == right.2 && left.3 == right.3
+    }
+
+    private func connectSelectedInstance() {
+        let generation = invalidateConnection()
         guard let profile = selectedProfile else {
             phase = .noInstances
             return
         }
         phase = .connecting
         connectionTask = Task { [weak self] in
-            await self?.connectionLoop(profile: profile)
+            await self?.connectionLoop(profile: profile, generation: generation)
         }
     }
 
-    private func connectionLoop(profile: InstanceProfile) async {
+    private func connectionLoop(profile: InstanceProfile, generation: Int) async {
         var attempt = 0
-        while !Task.isCancelled {
+        while isCurrentConnection(generation, profileID: profile.id), !Task.isCancelled {
+            var client: (any BridgeConnecting)?
             do {
                 guard let accessToken = try repository.accessToken(for: profile.id) else {
-                    throw BridgeClientError.server(status: 401, message: "This Mac must be paired again.")
+                    throw BridgeClientError.server(status: 401, message: "This host must be paired again.")
                 }
-                let client = BridgeClient(baseURL: profile.baseURL)
-                activeClient = client
-                let credential = try await client.refreshSession(accessToken: accessToken)
+                guard isCurrentConnection(generation, profileID: profile.id) else { return }
+                let candidate = clientFactory(profile.baseURL)
+                client = candidate
+                activeClient = candidate
+                let credential = try await candidate.refreshSession(accessToken: accessToken)
+                guard isCurrentConnection(generation, profileID: profile.id) else {
+                    await candidate.disconnect()
+                    return
+                }
                 activeSessionToken = credential.sessionToken
-                let initial = try await client.bootstrap(sessionID: selectedSessionID, sessionToken: credential.sessionToken)
+                let initial = try await candidate.bootstrap(
+                    sessionID: selectedSessionID,
+                    sessionToken: credential.sessionToken
+                )
+                guard isCurrentConnection(generation, profileID: profile.id) else {
+                    await candidate.disconnect()
+                    return
+                }
                 apply(initial)
                 phase = .connected
                 attempt = 0
-                try await client.connectStream(
+                try await candidate.connectStream(
                     sessionID: initial.activeSessionID ?? "default",
                     sessionToken: credential.sessionToken
                 )
+                guard isCurrentConnection(generation, profileID: profile.id) else {
+                    await candidate.disconnect()
+                    return
+                }
                 sendSubscriptions()
                 sendNotificationConfiguration()
-                while !Task.isCancelled {
-                    let message = try await client.receiveStreamMessage()
-                    try await consume(message, client: client)
+                while isCurrentConnection(generation, profileID: profile.id), !Task.isCancelled {
+                    let message = try await candidate.receiveStreamMessage()
+                    guard isCurrentConnection(generation, profileID: profile.id) else {
+                        await candidate.disconnect()
+                        return
+                    }
+                    try await consume(
+                        message,
+                        client: candidate,
+                        generation: generation,
+                        profileID: profile.id
+                    )
                 }
+                await candidate.disconnect()
                 return
             } catch is CancellationError {
+                await client?.disconnect()
                 return
             } catch {
+                await client?.disconnect()
+                guard isCurrentConnection(generation, profileID: profile.id), !Task.isCancelled else { return }
+                activeClient = nil
+                activeSessionToken = nil
                 attempt += 1
                 phase = attempt == 1
                     ? .failed(message: error.localizedDescription)
                     : .reconnecting(attempt: attempt)
                 let delay = min(30.0, pow(2.0, Double(min(attempt, 5))))
-                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                do {
+                    try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                } catch {
+                    return
+                }
             }
         }
     }
 
-    private func consume(_ message: StreamServerMessage, client: BridgeClient) async throws {
+    private func consume(
+        _ message: StreamServerMessage,
+        client: any BridgeConnecting,
+        generation: Int,
+        profileID: String
+    ) async throws {
+        guard isCurrentConnection(generation, profileID: profileID) else { return }
         switch message {
         case let .snapshot(snapshot):
             apply(snapshot)
@@ -914,8 +1020,10 @@ final class AppStore: ObservableObject {
         if compactPaneID == nil || !panes.contains(where: { $0.id == compactPaneID }) {
             compactPaneID = selectedPaneID
         }
-        if let index = profiles.firstIndex(where: { $0.id == newSnapshot.instance.id }) {
+        if let selectedProfileID,
+           let index = profiles.firstIndex(where: { $0.id == selectedProfileID }) {
             profiles[index].displayName = newSnapshot.instance.name
+            profiles[index].bridgeInstanceID = newSnapshot.instance.id
             profiles[index].lastConnectedAt = Date()
             if !isDemo { repository.saveProfiles(profiles) }
         }
@@ -990,13 +1098,14 @@ final class AppStore: ObservableObject {
             doneEnabled: doneNotificationsEnabled,
             blockedEnabled: blockedNotificationsEnabled
         )
+        let generation = connectionGeneration
         Task {
             do {
                 try await client.sendStreamMessage(.configureNotifications(request))
             } catch {
-                guard notificationRequestID == requestID else { return }
+                guard generation == connectionGeneration, notificationRequestID == requestID else { return }
                 notificationRequestID = nil
-                notificationErrorMessage = "Notification settings could not reach the Mac."
+                notificationErrorMessage = "Notification settings could not reach the host."
             }
         }
     }
@@ -1025,13 +1134,15 @@ final class AppStore: ObservableObject {
             return
         }
         guard let client = activeClient, phase.isConnected else {
-            toast = ToastMessage(text: "The Mac is not connected.", isError: true)
+            toast = ToastMessage(text: "The host is not connected.", isError: true)
             return
         }
+        let generation = connectionGeneration
         Task {
             do {
                 try await client.sendStreamMessage(.action(action))
             } catch {
+                guard generation == connectionGeneration else { return }
                 toast = ToastMessage(text: error.localizedDescription, isError: true)
             }
         }
