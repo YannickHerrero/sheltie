@@ -68,7 +68,7 @@ private struct WorkspaceDirectoryView: View {
                 ContentUnavailableView {
                     Label("Bridge update required", systemImage: "arrow.down.app")
                 } description: {
-                    Text("Update the Sheltie bridge on the Mac before browsing workspace files.")
+                    Text("Update the Sheltie bridge on the host before browsing workspace files.")
                 }
             } else if store.workspaceDirectoryLoadingLocations.contains(location), listing == nil {
                 ProgressView("Loading files…")
@@ -231,7 +231,7 @@ private struct WorkspaceFileEditorView: View {
                 ContentUnavailableView {
                     Label("File unavailable", systemImage: "doc.badge.ellipsis")
                 } description: {
-                    Text(errorMessage ?? "The file could not be opened from the Mac.")
+                    Text(errorMessage ?? "The file could not be opened from the host.")
                 } actions: {
                     Button("Try Again", action: load)
                 }
@@ -268,11 +268,11 @@ private struct WorkspaceFileEditorView: View {
             Button("Discard Changes", role: .destructive) { dismiss() }
             Button("Keep Editing", role: .cancel) {}
         } message: {
-            Text("The draft has not been written to the Mac.")
+            Text("The draft has not been written to the host.")
         }
-        .alert("File changed on the Mac", isPresented: conflictBinding) {
+        .alert("File changed on the host", isPresented: conflictBinding) {
             Button("Keep Editing", role: .cancel) {}
-            Button("Reload Mac Version", action: reloadConflict)
+            Button("Reload Host Version", action: reloadConflict)
             Button("Overwrite", role: .destructive, action: overwriteConflict)
         } message: {
             Text("Reload to preserve the external edit, or explicitly overwrite it with this iPad draft.")
@@ -295,7 +295,7 @@ private struct WorkspaceFileEditorView: View {
                     Text("Not saved")
                         .foregroundStyle(SheltieTheme.warning)
                 } else {
-                    Text("Saved on the Mac")
+                    Text("Saved on the host")
                         .foregroundStyle(SheltieTheme.muted)
                 }
             }
@@ -376,7 +376,7 @@ private struct WorkspaceFileEditorView: View {
             } else {
                 document = updated
                 original = draft
-                statusMessage = "Saved on the Mac"
+                statusMessage = "Saved on the host"
             }
         }
     }
@@ -397,7 +397,7 @@ private struct WorkspaceFileEditorView: View {
         draft = content
         original = content
         errorMessage = nil
-        statusMessage = "Reloaded the Mac version"
+        statusMessage = "Reloaded the host version"
         self.conflict = nil
     }
 

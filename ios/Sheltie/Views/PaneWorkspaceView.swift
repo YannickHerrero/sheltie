@@ -190,7 +190,7 @@ private struct TerminalPaneView: View {
         .confirmationDialog("Close this pane?", isPresented: $isConfirmingClose, titleVisibility: .visible) {
             Button("Close Pane", role: .destructive) { store.closeSelectedPane() }
         } message: {
-            Text("Closing the pane terminates its process on the Mac.")
+            Text("Closing the pane terminates its process on the bridge host.")
         }
         .accessibilityIdentifier("pane.\(pane.id)")
     }

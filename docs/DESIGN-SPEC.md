@@ -24,7 +24,7 @@ Spacing follows 8, 12, 20, and 32-point steps. Common radii are 8 points and mod
 
 The connected wide layout is composed in this order:
 
-1. 58-point app bar: brand, paired Mac/connection selector, optional provider meter.
+1. 58-point app bar: brand, paired bridge-host/connection selector, optional provider meter.
 2. 205–240-point sidebar: Spaces above grouped Agents, defaulting to a 42/58 split with a draggable separator.
 3. 46-point horizontally scrolling Herdr tab strip.
 4. Recursive Herdr pane layout, including 38-point native pane headers.
@@ -49,7 +49,7 @@ Window width—not orientation—controls iPad Split View and Stage Manager adap
 
 ## Interaction mapping
 
-- The Spaces add control immediately creates and focuses a Herdr workspace rooted at the Mac user's home directory; Herdr supplies its default label.
+- The Spaces add control immediately creates and focuses a Herdr workspace rooted at the bridge host user's home directory; Herdr supplies its default label.
 - Space rows show the shortest unique project-path suffix; matching final components gain only the parent components needed for disambiguation.
 - A Space context menu opens its project-root `todo.md` in a native Markdown edit/preview sheet with explicit conflict recovery.
 - A Space context menu also opens a full-screen native file browser scoped to its authoritative project root. UTF-8 regular files open in a monospaced editor with explicit save, `Command-S`, byte and cursor status, unsaved-change protection, and external-edit conflict recovery.
@@ -68,7 +68,7 @@ Window width—not orientation—controls iPad Split View and Stage Manager adap
 - Only the pane's explicit history button opens a stable, read-only snapshot of recent Herdr scrollback; live terminal swipes remain available to terminal applications, and a Latest control returns to current output.
 - Terminal history is bounded, memory-only, and exposes native touch, pointer, selection, and VoiceOver scrolling.
 - Repeatable Page Up and Page Down keybar controls send terminal page-navigation keys for alternate-screen TUIs such as OpenCode; sticky modifiers clear after one key.
-- Settings exposes independent done and blocked notification opt-ins, system permission/denied treatment, Mac provider readiness, and Codex usage health.
+- Settings exposes independent done and blocked notification opt-ins, system permission/denied treatment, bridge-provider readiness, and Codex usage health.
 
 ## Operational states
 

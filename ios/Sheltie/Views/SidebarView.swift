@@ -88,7 +88,7 @@ struct SidebarView: View {
                 workspaceToClose = nil
             }
         } message: {
-            Text("Every pane in the space will be terminated on the Mac.")
+            Text("Every pane in the space will be terminated on the bridge host.")
         }
         .accessibilityIdentifier("sidebar")
     }
@@ -404,9 +404,9 @@ private struct WorkspaceTodoView: View {
         .onChange(of: store.workspaceTodos[workspace.id]) { _, document in
             if let document { handle(document) }
         }
-        .alert("todo.md changed on the Mac", isPresented: conflictBinding) {
+        .alert("todo.md changed on the host", isPresented: conflictBinding) {
             Button("Cancel", role: .cancel) {}
-            Button("Reload Mac Version") { reloadConflict() }
+            Button("Reload Host Version") { reloadConflict() }
             Button("Overwrite", role: .destructive) { overwriteConflict() }
         } message: {
             Text("Reload to preserve the external edit, or explicitly overwrite it with this draft.")

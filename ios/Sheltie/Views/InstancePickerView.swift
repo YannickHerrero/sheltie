@@ -18,12 +18,12 @@ private struct SheltieSettingsView: View {
             } header: {
                 Text("Push Notifications")
             } footer: {
-                Text("The Mac sends generic alerts through Apple Push Notification service. Project names, paths, prompts, and terminal output are never included.")
+                Text("The selected bridge host sends generic alerts through Apple Push Notification service. Project names, paths, prompts, and terminal output are never included.")
             }
 
             Section("Delivery Status") {
                 LabeledContent("System permission", value: authorizationLabel)
-                LabeledContent("Mac provider", value: providerLabel)
+                LabeledContent("Bridge provider", value: providerLabel)
                 if store.notificationAuthorizationStatus == .denied {
                     Button("Open System Notification Settings") {
                         store.openSystemNotificationSettings()
@@ -141,7 +141,7 @@ struct InstancePickerView: View {
 
     private var instancesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("REGISTERED MACS")
+            sectionLabel("REGISTERED HOSTS")
             ForEach(store.profiles) { profile in
                 Button {
                     store.selectInstance(profile.id)
@@ -149,7 +149,7 @@ struct InstancePickerView: View {
                 } label: {
                     HStack(spacing: 12) {
                         Circle()
-                            .fill(profile.id == store.selectedProfileID && store.phase.isConnected ? SheltieTheme.success : SheltieTheme.muted)
+                            .fill(statusColor(for: profile))
                             .frame(width: 8, height: 8)
                         VStack(alignment: .leading, spacing: 3) {
                             Text(profile.displayName)
@@ -163,13 +163,14 @@ struct InstancePickerView: View {
                         }
                         Spacer()
                         if profile.id == store.selectedProfileID {
-                            Text("CURRENT")
+                            let color = statusColor(for: profile)
+                            Text(selectedStatusLabel)
                                 .font(SheltieTheme.mono(9, weight: .bold))
-                                .foregroundStyle(SheltieTheme.success)
+                                .foregroundStyle(color)
                                 .padding(.horizontal, 9)
                                 .frame(height: 26)
-                                .background(Capsule().fill(SheltieTheme.success.opacity(0.1)))
-                                .overlay(Capsule().stroke(SheltieTheme.success.opacity(0.4), lineWidth: 1))
+                                .background(Capsule().fill(color.opacity(0.1)))
+                                .overlay(Capsule().stroke(color.opacity(0.4), lineWidth: 1))
                         }
                     }
                     .padding(14)
@@ -225,9 +226,9 @@ struct InstancePickerView: View {
 
     private var pairingSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionLabel(pendingPairing == nil ? "ADD A MAC" : "CONFIRM ON THIS DEVICE")
+            sectionLabel(pendingPairing == nil ? "ADD A HOST" : "CONFIRM ON THIS DEVICE")
             if let pendingPairing {
-                Text("Enter the six-digit code printed by the Sheltie bridge on \(pendingPairing.baseURL.host ?? "the Mac").")
+                Text("Enter the six-digit code printed by the Sheltie bridge on \(pendingPairing.baseURL.host ?? "the host").")
                     .font(SheltieTheme.body(13))
                     .foregroundStyle(SheltieTheme.muted)
                 TextField("000000", text: $pairingCode)
@@ -281,6 +282,26 @@ struct InstancePickerView: View {
         .padding(18)
         .background(RoundedRectangle(cornerRadius: 14).fill(SheltieTheme.surface.opacity(0.44)))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(SheltieTheme.border, lineWidth: 1))
+    }
+
+    private func statusColor(for profile: InstanceProfile) -> Color {
+        guard profile.id == store.selectedProfileID else { return SheltieTheme.muted }
+        return switch store.phase {
+        case .connected: SheltieTheme.success
+        case .connecting, .reconnecting: SheltieTheme.warning
+        case .failed: SheltieTheme.danger
+        case .noInstances, .disconnected: SheltieTheme.muted
+        }
+    }
+
+    private var selectedStatusLabel: String {
+        switch store.phase {
+        case .connected: "CONNECTED"
+        case .connecting: "CONNECTING"
+        case .reconnecting: "RECONNECTING"
+        case .failed: "UNAVAILABLE"
+        case .noInstances, .disconnected: "INACTIVE"
+        }
     }
 
     private func sectionLabel(_ value: String) -> some View {

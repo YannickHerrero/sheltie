@@ -156,7 +156,7 @@ enum DemoData {
             content = """
             # Sheltie demo project
 
-            This file is being edited natively on iPad and saved on the paired Mac.
+            This file is being edited natively on iPad and saved on the paired host.
             """
         case "Sources/App.swift":
             content = """

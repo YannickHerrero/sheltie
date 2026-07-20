@@ -94,7 +94,7 @@ final class SheltieUITests: XCTestCase {
         app.launch()
 
         let instance = app.buttons.matching(
-            NSPredicate(format: "label BEGINSWITH %@", "Mac instance")
+            NSPredicate(format: "label BEGINSWITH %@", "Bridge host")
         ).firstMatch
         XCTAssertTrue(instance.waitForExistence(timeout: 5))
         instance.tap()
@@ -102,7 +102,7 @@ final class SheltieUITests: XCTestCase {
         XCTAssertTrue(app.switches["Agent completed"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.switches["Agent blocked"].exists)
         XCTAssertTrue(app.staticTexts["System permission"].exists)
-        XCTAssertTrue(app.staticTexts["Mac provider"].exists)
+        XCTAssertTrue(app.staticTexts["Bridge provider"].exists)
         app.terminate()
     }
 
@@ -126,7 +126,7 @@ final class SheltieUITests: XCTestCase {
         app.terminate()
     }
 
-    func testWorkspaceFileBrowserEditsAndSavesOnTheMac() throws {
+    func testWorkspaceFileBrowserEditsAndSavesOnTheHost() throws {
         XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
         app.launchArguments.append("--demo")
@@ -148,7 +148,7 @@ final class SheltieUITests: XCTestCase {
         let save = app.buttons["workspace.file.save"]
         XCTAssertTrue(save.isEnabled)
         save.tap()
-        XCTAssertTrue(app.staticTexts["Saved on the Mac"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Saved on the host"].waitForExistence(timeout: 5))
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Workspace file editor saved"
         screenshot.lifetime = .keepAlways

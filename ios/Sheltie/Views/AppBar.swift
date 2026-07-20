@@ -106,7 +106,7 @@ struct AppBar: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("instance.selector")
-        .accessibilityLabel("Mac instance, \(instanceTitle)")
+        .accessibilityLabel("Bridge host, \(instanceTitle)")
     }
 
     private var connectionDot: some View {
@@ -126,14 +126,14 @@ struct AppBar: View {
     }
 
     private var instanceTitle: String {
-        let name = store.snapshot?.instance.name ?? store.selectedProfile?.displayName ?? "Choose a Mac"
+        let name = store.snapshot?.instance.name ?? store.selectedProfile?.displayName ?? "Choose a host"
         return switch store.phase {
         case .connected: "\(name) · Connected"
         case .connecting: "\(name) · Connecting"
         case .reconnecting: "\(name) · Reconnecting"
         case .failed: "\(name) · Unavailable"
         case .disconnected: "\(name) · Disconnected"
-        case .noInstances: "Add a Mac"
+        case .noInstances: "Add a host"
         }
     }
 

@@ -272,7 +272,7 @@ final class AppStore: ObservableObject {
         guard let client = activeClient, phase.isConnected else {
             workspaceTodoLoadingIDs.remove(workspaceID)
             workspaceTodoRequestIDs[workspaceID] = nil
-            toast = ToastMessage(text: "The Mac is not connected.", isError: true)
+            toast = ToastMessage(text: "The host is not connected.", isError: true)
             return nil
         }
         let request = WorkspaceTodoReadRequest(requestID: requestID, sessionID: activeSessionID, workspaceID: workspaceID)
@@ -372,7 +372,7 @@ final class AppStore: ObservableObject {
         guard let client = activeClient, phase.isConnected else {
             workspaceDirectoryLoadingLocations.remove(location)
             workspaceDirectoryRequestIDs[location] = nil
-            toast = ToastMessage(text: "The Mac is not connected.", isError: true)
+            toast = ToastMessage(text: "The host is not connected.", isError: true)
             return nil
         }
         let request = WorkspaceDirectoryListRequest(
@@ -418,7 +418,7 @@ final class AppStore: ObservableObject {
         guard let client = activeClient, phase.isConnected else {
             workspaceFileLoadingLocations.remove(location)
             workspaceFileRequestIDs[location] = nil
-            toast = ToastMessage(text: "The Mac is not connected.", isError: true)
+            toast = ToastMessage(text: "The host is not connected.", isError: true)
             return nil
         }
         let request = WorkspaceFileReadRequest(
@@ -480,7 +480,7 @@ final class AppStore: ObservableObject {
         guard let client = activeClient, phase.isConnected else {
             workspaceFileSavingLocations.remove(location)
             workspaceFileRequestIDs[location] = nil
-            toast = ToastMessage(text: "The Mac is not connected.", isError: true)
+            toast = ToastMessage(text: "The host is not connected.", isError: true)
             return nil
         }
         let request = WorkspaceFileSaveRequest(
@@ -525,7 +525,7 @@ final class AppStore: ObservableObject {
         guard let client = activeClient, phase.isConnected else {
             terminalHistoryLoadingPaneIDs.remove(paneID)
             terminalHistoryRequestIDs[paneID] = nil
-            toast = ToastMessage(text: "The Mac is not connected.", isError: true)
+            toast = ToastMessage(text: "The host is not connected.", isError: true)
             return
         }
         let request = TerminalHistoryRequest(

@@ -46,7 +46,7 @@ struct SessionTabsView: View {
                 tabToClose = nil
             }
         } message: {
-            Text("Every pane in the tab will be terminated on the Mac.")
+            Text("Every pane in the tab will be terminated on the bridge host.")
         }
     }
 

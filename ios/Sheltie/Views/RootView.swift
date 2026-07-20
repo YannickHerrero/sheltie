@@ -175,7 +175,7 @@ private struct ConnectionStateView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(SheltieTheme.accent)
                 }
-                Button(store.profiles.isEmpty ? "Pair a Mac" : "Manage Macs", action: showInstances)
+                Button(store.profiles.isEmpty ? "Pair a host" : "Manage hosts", action: showInstances)
                     .buttonStyle(.bordered)
                     .tint(SheltieTheme.foreground)
             }
@@ -206,8 +206,8 @@ private struct ConnectionStateView: View {
 
     private var title: String {
         switch store.phase {
-        case .noInstances: "Pair your Mac"
-        case .disconnected: "Mac disconnected"
+        case .noInstances: "Pair a bridge host"
+        case .disconnected: "Host disconnected"
         case .connecting: "Connecting to Herdr"
         case .connected: "Connected"
         case .reconnecting: "Reconnecting"
@@ -217,8 +217,8 @@ private struct ConnectionStateView: View {
 
     private var message: String {
         switch store.phase {
-        case .noInstances: "Sheltie connects through a paired, tailnet-only Mac bridge."
-        case .disconnected: "Choose a registered Mac or try connecting again."
+        case .noInstances: "Sheltie connects through a paired, tailnet-only bridge host."
+        case .disconnected: "Choose a registered host or try connecting again."
         case .connecting: "Loading workspaces, agents, tabs, and terminal panes."
         case .connected: "Herdr is ready."
         case let .reconnecting(attempt): "Network or bridge interruption · attempt \(attempt)"
