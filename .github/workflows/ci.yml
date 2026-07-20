@@ -34,6 +34,8 @@ jobs:
       - name: Test
         working-directory: bridge
         run: bun test
+      - name: Validate Linux service installer
+        run: bash -n bridge/scripts/install-systemd-user-service.sh
 
   ios:
     name: iPad app

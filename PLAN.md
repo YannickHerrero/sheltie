@@ -137,7 +137,7 @@ The prototype documents the connected success path. Before implementation, speci
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Each registered Mac runs its own loopback bridge and Tailscale Serve ingress. The app stores multiple paired instance profiles locally, selects exactly one active instance per window, and keeps credentials isolated by instance. Multi-instance support is therefore part of the client model even if the first integration environment uses one Mac.
+Each registered macOS or WSL/Linux host runs its own loopback bridge and Tailscale Serve ingress. The app stores multiple paired instance profiles locally, selects exactly one active instance per window, and keeps credentials isolated by local registration rather than a bridge-advertised ID. Multi-instance support is therefore part of the client model even if the first integration environment uses one host.
 
 ### Architectural boundary
 
@@ -165,7 +165,7 @@ Data terminology maps as follows:
 - **Tabs** in the horizontal strip are Herdr tabs, not named Herdr sessions.
 - **Terminal panes** are Herdr panes arranged by a Herdr layout snapshot.
 - **Agents** are Herdr-detected agents linked back to their workspace, tab, and pane.
-- **Instances** are paired Macs/bridge installations; named Herdr sessions live within an instance.
+- **Instances** are paired macOS or WSL/Linux bridge installations; named Herdr sessions live within an instance.
 
 Selecting a Space focuses its active tab and pane. Selecting an Agent focuses its linked Space, tab, and pane. The instance selector is a native modal that lists paired Macs, communicates current/connected/paused state, and launches a secure pairing flow for a new Mac.
 
@@ -251,7 +251,7 @@ The app cannot rely on a WebSocket remaining alive in the background. On foregro
 5. Re-subscribe visible terminals.
 6. Request full terminal frames before accepting incremental updates.
 
-## 4. Mac bridge
+## 4. Host bridge
 
 ### 4.1 Responsibilities
 
@@ -484,7 +484,7 @@ Screenshots can verify layout, but physical-keyboard timing, gestures, dictation
 ```text
 Sheltie/
 ├── ios/                    # Xcode project and native application
-├── bridge/                 # Mac companion service/plugin
+├── bridge/                 # macOS/WSL companion service
 ├── protocol/               # Versioned schemas and fixtures
 ├── docs/                   # Architecture, security, and design specifications
 ├── do-not-commit/          # Local mockups and references; Git-ignored

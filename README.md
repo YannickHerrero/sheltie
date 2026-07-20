@@ -1,6 +1,6 @@
 # Sheltie
 
-Sheltie is a native iPhone and iPad client for [Herdr](https://herdr.dev). It recreates Herdr’s spaces, agents, tabs, split panes, and terminal controls with SwiftUI and UIKit while a loopback-only companion bridge talks to the existing Herdr server on the Mac.
+Sheltie is a native iPhone and iPad client for [Herdr](https://herdr.dev). It recreates Herdr’s spaces, agents, tabs, split panes, and terminal controls with SwiftUI and UIKit while a loopback-only companion bridge talks to Herdr on macOS or WSL2/Linux.
 
 > [!WARNING]
 > This is an initial personal-use implementation, not a security-audited release. Keep the bridge tailnet-only, never enable Tailscale Funnel, and review the configuration before allowing terminal writes.
@@ -29,8 +29,8 @@ Sheltie is a native iPhone and iPad client for [Herdr](https://herdr.dev). It re
 - Persistent drag resizing between the Spaces and Agents sections
 - Compact project paths, per-Space `todo.md`, and native workspace file browsing/editing
 - Cached Codex weekly usage from the trusted local app-server API
-- Independent done/blocked push-notification preferences with direct Mac-to-APNs delivery
-- Multiple paired Macs and multiple Herdr sessions
+- Independent done/blocked push-notification preferences with direct bridge-host-to-APNs delivery
+- Multiple paired macOS or WSL bridge hosts and multiple Herdr sessions
 - HTTPS bootstrap plus authenticated WebSocket snapshots, actions, and terminal frames
 - Herdr 0.7.3 live observer streams with a read-only `pane.read` fallback for older Herdr versions
 - P-256 device pairing, Keychain/Secure Enclave identity, short-lived sessions, revocation, limits, and private audit records
@@ -100,7 +100,7 @@ Run the `Sheltie` scheme on an iPhone or iPad simulator. Add the launch argument
 --demo
 ```
 
-Without demo mode, open the instance selector, enter the Tailscale Serve base URL, and enter the six-digit pairing code printed by the Mac bridge.
+Without demo mode, open the instance selector, enter the Tailscale Serve base URL, and enter the six-digit pairing code printed by the bridge host.
 
 App and protocol tests:
 
@@ -133,7 +133,7 @@ Do not use a raw Herdr socket URL, public ingress, or Tailscale Funnel.
 ## Repository layout
 
 ```text
-bridge/      Mac bridge, authentication, Herdr adapter, and tests
+bridge/      macOS/WSL host bridge, authentication, Herdr adapter, and tests
 ios/         Native iPhone/iPad application and Xcode project
 protocol/    Versioned Codable models, JSON schema, and fixtures
 docs/        Design, protocol, and security documentation

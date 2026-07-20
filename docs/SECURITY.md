@@ -1,12 +1,12 @@
 # Security model
 
-Sheltie provides remote input to real Mac terminal processes. Treat bridge access as remote code execution with the privileges of the user running Herdr.
+Sheltie provides remote input to real terminal processes on a macOS or WSL/Linux bridge host. Treat bridge access as remote code execution with the privileges of the user running Herdr.
 
 ## Trust boundaries
 
 1. **Tailnet:** Tailscale controls network reachability and supplies TLS.
 2. **Serve ingress:** the bridge validates the expected Host and allowlisted `Tailscale-User-Login` header.
-3. **Device pairing:** an iPhone/iPad-held P-256 private key signs a fresh bridge challenge and the user enters a six-digit code displayed on the Mac.
+3. **Device pairing:** an iPhone/iPad-held P-256 private key signs a fresh bridge challenge and the user enters a six-digit code displayed on the bridge host.
 4. **Device credential:** pairing returns a random credential stored in the device Keychain; the bridge stores only its SHA-256 hash.
 5. **Short-lived session:** the device credential is exchanged for an in-memory 15-minute bearer token used by HTTPS and WebSocket requests.
 6. **Herdr adapter:** only an explicit action allowlist reaches the Unix socket.
@@ -22,6 +22,7 @@ Tailscale identity alone does not authorize writes. A caller-provided device nam
 - Keep `SHELTIE_DEV_MODE` disabled whenever Serve is active.
 - Store bridge data under a private user-owned directory.
 - Run Herdr and the bridge as the intended non-root user.
+- On WSL, run Tailscale Serve inside the same distro; do not weaken loopback binding to proxy from the Windows host.
 
 The process refuses non-loopback binding and refuses production startup without an allowlisted Tailscale login.
 
@@ -31,14 +32,14 @@ The Apple mobile client uses Secure Enclave P-256 signing when available and a K
 
 The pairing code and signature prove two separate facts:
 
-- the user can see the Mac bridge console; and
+- the user can see the bridge host console; and
 - the requester possesses the device private key corresponding to the submitted public key.
 
-Device access tokens are shown only once. They are stored with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` on iPhone and iPad and hashed at rest on the Mac.
+Device access tokens are shown only once. They are stored with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` on iPhone and iPad and hashed at rest on the bridge host.
 
 ## Revocation
 
-List and revoke devices on the Mac:
+List and revoke devices on the bridge host:
 
 ```bash
 cd bridge
