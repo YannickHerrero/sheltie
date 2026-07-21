@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "sheltie-bridge",
+  "displayName": "Sheltie Bridge",
+  "description": "Tailnet bridge between Sheltie and local Herdr sessions",
+  "workingDirectory": ".",
+  "command": ["bun", "run", "service:start"],
+  "environment": {
+    "SHELTIE_BIND_HOST": "127.0.0.1",
+    "SHELTIE_PORT": "9847"
+  },
+  "healthCheck": {
+    "url": "http://127.0.0.1:9847/v1/health",
+    "timeoutMilliseconds": 2000
+  },
+  "restart": "on-failure",
+  "startAtLogin": true,
+  "stopTimeoutSeconds": 15
+}

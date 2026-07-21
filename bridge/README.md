@@ -51,6 +51,18 @@ A client must then complete two gates:
 
 Pairing creates a revocable device credential. The app exchanges that credential for a 15-minute session token; API and WebSocket access use only the short-lived token. Sensitive actions are appended to `~/.config/sheltie/audit.jsonl` without terminal text or keys.
 
+## Managed macOS service
+
+[`citadel.service.json`](citadel.service.json) is the machine-service contract used
+by Citadel. It provides the same command, health-check, restart, and graceful-stop
+metadata as other locally managed projects. `bun run service:start` is the stable
+production entry point consumed by that contract.
+
+Citadel should reference a private `~/.config/sheltie/bridge.env` file rather than
+copying credentials into its service registry. The bridge remains loopback-only;
+Tailscale Serve is configured independently during deployment. Linux and WSL hosts
+should continue to use the systemd unit below.
+
 ## WSL2 and Linux service
 
 Run Herdr, Bun, the Sheltie bridge, and Tailscale inside the same WSL distro. This preserves the loopback-only boundary; proxying from Windows-host Tailscale to a non-loopback WSL listener is not supported.
@@ -88,7 +100,7 @@ bun run admin revoke <device-id>
 
 Restart the bridge after revocation to evict any in-memory short-lived session immediately.
 
-Expose the bridge under a path so it can coexist with Collie:
+Expose the bridge under a dedicated path so it can coexist with other tailnet services:
 
 ```bash
 tailscale serve --bg --https=443 --set-path=/sheltie http://127.0.0.1:9847

@@ -116,7 +116,7 @@ xcodebuild -project Sheltie.xcodeproj \
 
 ## Tailnet deployment
 
-Configure the production variables in `bridge/.env.example`, run the bridge with a local service manager, and expose it under a path so it can coexist with Collie:
+Configure the production variables in `bridge/.env.example`, run the bridge with a local service manager, and expose it under a dedicated path. On macOS, [`bridge/citadel.service.json`](bridge/citadel.service.json) provides the reusable Citadel service contract:
 
 ```bash
 tailscale serve --bg --https=443 --set-path=/sheltie http://127.0.0.1:9847
