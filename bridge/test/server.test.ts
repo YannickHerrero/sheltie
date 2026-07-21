@@ -81,6 +81,10 @@ describe("bridge HTTP service", () => {
     expect(health.status).toBe(200);
     expect(await health.json()).toMatchObject({ ok: true, protocolVersion: 1, herdrReachable: true });
 
+    const internalHealth = await fetch(`${base}/internal/health`);
+    expect(internalHealth.status).toBe(200);
+    expect(await internalHealth.json()).toMatchObject({ ok: true, protocolVersion: 1, herdrReachable: true });
+
     const refresh = await fetch(`${base}/v1/session/refresh`, {
       method: "POST",
       headers: { authorization: "Bearer development" },

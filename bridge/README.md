@@ -56,7 +56,9 @@ Pairing creates a revocable device credential. The app exchanges that credential
 [`citadel.service.json`](citadel.service.json) is the machine-service contract used
 by Citadel. It provides the same command, health-check, restart, and graceful-stop
 metadata as other locally managed projects. `bun run service:start` is the stable
-production entry point consumed by that contract.
+production entry point consumed by that contract. Citadel checks
+`/internal/health` directly over loopback; the public `/v1/health` endpoint keeps
+its normal ingress validation.
 
 Citadel should reference a private `~/.config/sheltie/bridge.env` file rather than
 copying credentials into its service registry. The bridge remains loopback-only;

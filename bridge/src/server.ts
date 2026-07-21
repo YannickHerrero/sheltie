@@ -109,16 +109,25 @@ export function createBridgeServer(
     maxRequestBodySize: 128 * 1024,
     async fetch(request, bunServer) {
       try {
-        validateIngress(request, config);
         const url = new URL(request.url);
+        const health = () => json({
+          ok: true,
+          bridgeVersion: BRIDGE_VERSION,
+          protocolVersion: PROTOCOL_VERSION,
+          herdrReachable: state.hasReachableSession,
+        });
 
+        if (
+          request.method === "GET" &&
+          url.pathname === "/internal/health" &&
+          ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)
+        ) {
+          return health();
+        }
+
+        validateIngress(request, config);
         if (request.method === "GET" && url.pathname === "/v1/health") {
-          return json({
-            ok: true,
-            bridgeVersion: BRIDGE_VERSION,
-            protocolVersion: PROTOCOL_VERSION,
-            herdrReachable: state.hasReachableSession,
-          });
+          return health();
         }
 
         if (request.method === "POST" && url.pathname === "/v1/pair/start") {
