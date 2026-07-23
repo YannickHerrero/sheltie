@@ -61,9 +61,15 @@ production entry point consumed by that contract. Citadel checks
 its normal ingress validation.
 
 Citadel should reference a private `~/.config/sheltie/bridge.env` file rather than
-copying credentials into its service registry. The bridge remains loopback-only;
-Tailscale Serve is configured independently during deployment. Linux and WSL hosts
-should continue to use the systemd unit below.
+copying credentials into its service registry. For unattended access after a Mac
+login, register [`herdr.citadel.service.json`](herdr.citadel.service.json) alongside
+the bridge contract. Citadel then starts and supervises the persistent Herdr server
+before the bridge reconnects to its restored session. Stop or restart managed Herdr
+instances through Citadel so its desired-state record remains authoritative.
+
+The bridge remains loopback-only; Tailscale Serve is configured independently
+during deployment. Linux and WSL hosts should continue to use the systemd unit
+below.
 
 ## WSL2 and Linux service
 

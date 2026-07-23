@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "herdr-server",
+  "displayName": "Herdr Server",
+  "description": "Persistent local Herdr server used by the Sheltie bridge",
+  "workingDirectory": "~/.config/herdr",
+  "command": ["herdr", "server"],
+  "restart": "always",
+  "startAtLogin": true,
+  "stopTimeoutSeconds": 15
+}
