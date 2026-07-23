@@ -5,6 +5,10 @@
   "description": "Persistent local Herdr server used by the Sheltie bridge",
   "workingDirectory": "~/.config/herdr",
   "command": ["herdr", "server"],
+  "healthCheck": {
+    "command": ["herdr", "status", "server"],
+    "timeoutMilliseconds": 2000
+  },
   "restart": "always",
   "startAtLogin": true,
   "stopTimeoutSeconds": 15
